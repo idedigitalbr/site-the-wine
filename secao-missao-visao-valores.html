@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Missão, Visão e Valores | The Wine Experience</title>
+    <title>Experiência Gastronômica, Carta de Vinhos e Ambiente | The Wine Experience</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,6 +30,7 @@
             justify-content: center;
             min-height: 100vh;
             overflow-x: hidden;
+            padding: 2rem;
         }
 
         :root {
@@ -37,114 +38,124 @@
             --wine-black: #000000;
             --wine-white: #FFFFFF;
             --wine-muted: rgba(255, 255, 255, 0.7);
-            --wine-glow: 0 0 30px rgba(221, 185, 118, 0.22);
-            --transition-premium: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            --wine-glow: 0 0 30px rgba(221, 185, 118, 0.18);
+            --transition-premium: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         /* ========================================
-           SEÇÃO: MISSÃO, VISÃO E VALORES (INTERATIVO)
+           SEÇÃO: GASTRONOMIA, VINHOS E AMBIENTE
            ======================================== */
         .mvv-section {
-            position: relative;
             width: 100%;
-            min-height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Container Externo com Borda Dourada e Cantos Arredondados */
+        .mvv-outer-container {
+            border: 1px solid rgba(221, 185, 118, 0.25);
+            border-radius: 24px;
+            overflow: hidden;
+            width: 100%;
+            background-color: #050403;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Grid Principal de 3 Colunas */
+        .mvv-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            width: 100%;
+        }
+
+        /* Coluna Estilo Base */
+        .mvv-column {
+            position: relative;
+            overflow: hidden;
+            min-height: 620px;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
-            padding: 8rem 2rem;
+            padding: 3.5rem 2rem;
+            border-right: 1px solid rgba(221, 185, 118, 0.2);
+            cursor: pointer;
         }
 
-        /* Imagens de fundo com transição suave */
-        .mvv-bgs-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
+        .mvv-column:last-child {
+            border-right: none;
         }
 
-        .mvv-bg {
+        /* Imagem de Fundo de Cada Coluna */
+        .mvv-bg-img {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
-            opacity: 0;
-            transition: opacity 1.2s ease-in-out;
-            filter: brightness(0.25) contrast(1.05);
+            z-index: 1;
+            transition: transform 1.4s cubic-bezier(0.25, 1, 0.5, 1);
+            filter: brightness(0.35) contrast(1.1) saturate(0.85);
         }
 
-        .mvv-bg.active {
-            opacity: 1;
+        .mvv-column:hover .mvv-bg-img {
+            transform: scale(1.08);
         }
 
-        /* Overlay Escura para Legibilidade */
-        .mvv-overlay {
+        /* Overlay Escuro Adicional */
+        .mvv-column-overlay {
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.85) 100%);
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.6) 100%);
             z-index: 2;
+            transition: background 0.8s ease;
         }
 
-        /* Container de Conteúdo */
-        .mvv-container {
-            max-width: 1100px;
-            width: 100%;
-            margin: 0 auto;
-            position: relative;
-            z-index: 5;
+        .mvv-column:hover .mvv-column-overlay {
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.4) 100%);
         }
 
-        /* Grid dos Cards */
-        .mvv-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2.2rem;
-            width: 100%;
-        }
-
-        /* Card Estilo Base */
+        /* Card Inset Estilo Glassmorphism */
         .mvv-card {
-            background: rgba(11, 10, 8, 0.4);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(221, 185, 118, 0.08);
-            padding: 4.5rem 2.5rem;
-            text-align: center;
-            transition: var(--transition-premium);
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(221, 185, 118, 0.25);
+            border-radius: 16px;
+            background: rgba(11, 10, 8, 0.52);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 4.5rem 2.2rem;
             display: flex;
             flex-direction: column;
             align-items: center;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        /* Card Estado Ativo (Hover / Selecionado) */
-        .mvv-card.active {
-            border-color: var(--wine-gold);
-            box-shadow: var(--wine-glow);
-            background: rgba(11, 10, 8, 0.78);
-            transform: translateY(-8px);
-        }
-
-        /* Ícone Vetorial */
-        .mvv-icon {
-            width: 54px;
-            height: 54px;
-            margin-bottom: 2rem;
-            color: rgba(255, 255, 255, 0.7);
+            justify-content: center;
+            text-align: center;
             transition: var(--transition-premium);
         }
 
-        .mvv-card.active .mvv-icon {
+        /* Efeitos de Hover no Card */
+        .mvv-column:hover .mvv-card {
+            border-color: var(--wine-gold);
+            box-shadow: var(--wine-glow);
+            background: rgba(11, 10, 8, 0.72);
+            transform: translateY(-4px);
+        }
+
+        /* Ícone Dourado */
+        .mvv-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 1.2rem;
             color: var(--wine-gold);
-            transform: scale(1.08);
+            transition: var(--transition-premium);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .mvv-icon svg {
@@ -155,75 +166,89 @@
             fill: none;
         }
 
+        .mvv-column:hover .mvv-icon {
+            transform: scale(1.06);
+        }
+
+        /* Divisor Dourado (Linhas e Losango) */
+        .mvv-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 1.8rem;
+            gap: 12px;
+        }
+
+        .mvv-divider .line {
+            height: 1px;
+            width: 35px;
+            background: linear-gradient(90deg, rgba(221, 185, 118, 0) 0%, rgba(221, 185, 118, 0.6) 100%);
+        }
+
+        .mvv-divider .line:last-child {
+            background: linear-gradient(90deg, rgba(221, 185, 118, 0.6) 0%, rgba(221, 185, 118, 0) 100%);
+        }
+
+        .mvv-divider .diamond {
+            width: 6px;
+            height: 6px;
+            background-color: var(--wine-gold);
+            transform: rotate(45deg);
+            box-shadow: 0 0 8px rgba(221, 185, 118, 0.6);
+        }
+
         /* Título do Card */
         .mvv-card h3 {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 28px;
-            font-weight: 300;
+            font-size: 32px;
+            font-weight: 400;
             color: var(--wine-white);
-            margin-bottom: 1.5rem;
-            letter-spacing: 0.05em;
+            margin-bottom: 1.2rem;
+            letter-spacing: 0.04em;
+            transition: var(--transition-premium);
         }
 
-        .mvv-card.active h3 {
+        .mvv-column:hover .mvv-card h3 {
             color: var(--wine-gold);
         }
 
-        /* Parágrafo do Card */
+        /* Texto de Descrição */
         .mvv-card p {
-            font-size: 13.5px;
+            font-family: 'Albert Sans', sans-serif;
+            font-size: 14.5px;
             color: var(--wine-muted);
-            line-height: 1.8;
+            line-height: 1.75;
             font-weight: 300;
+            transition: var(--transition-premium);
         }
 
-        .mvv-card.active p {
+        .mvv-column:hover .mvv-card p {
             color: var(--wine-white);
-        }
-
-        /* Lista para Valores */
-        .mvv-list {
-            list-style: none;
-            text-align: left;
-            margin-top: 0.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            width: 100%;
-        }
-
-        .mvv-list li {
-            font-size: 13px;
-            color: var(--wine-muted);
-            position: relative;
-            padding-left: 1.3rem;
-            font-weight: 300;
-        }
-
-        .mvv-card.active .mvv-list li {
-            color: var(--wine-white);
-        }
-
-        .mvv-list li::before {
-            content: "•";
-            color: var(--wine-gold);
-            position: absolute;
-            left: 0;
-            font-size: 14px;
         }
 
         /* Responsividade */
         @media (max-width: 992px) {
-            .mvv-section {
-                padding: 6rem 1.5rem;
-                min-height: auto;
+            body {
+                padding: 1.5rem 1rem;
+            }
+            .mvv-outer-container {
+                border-radius: 16px;
             }
             .mvv-grid {
                 grid-template-columns: 1fr;
-                gap: 2rem;
+            }
+            .mvv-column {
+                min-height: 520px;
+                border-right: none;
+                border-bottom: 1px solid rgba(221, 185, 118, 0.2);
+                padding: 3rem 1.5rem;
+            }
+            .mvv-column:last-child {
+                border-bottom: none;
             }
             .mvv-card {
-                padding: 3.5rem 2rem;
+                padding: 3.5rem 1.5rem;
             }
         }
     </style>
@@ -231,122 +256,88 @@
 <body>
 
     <section class="mvv-section">
-        <!-- Elementos de fundo dinâmicos -->
-        <div class="mvv-bgs-container">
-            <img class="mvv-bg active" src="assets/S1 TOPO HERO/wine_pouring_hero_1920x1080-internet.webp" alt="Adega The Wine">
-            <img class="mvv-bg" src="assets/S4 Gastronomia/wine_pouring_otimizado-internet.webp" alt="Servindo Vinho">
-            <img class="mvv-bg" src="assets/S3 Experiencia/experiencia-internet.webp" alt="Ambiente The Wine">
-        </div>
-        <div class="mvv-overlay"></div>
-        
-        <div class="mvv-container">
+        <div class="mvv-outer-container">
             <div class="mvv-grid">
-                <!-- Card 1: Missão -->
-                <div class="mvv-card active">
-                    <div class="mvv-icon">
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <circle cx="12" cy="12" r="6"></circle>
-                            <circle cx="12" cy="12" r="2"></circle>
-                        </svg>
+                
+                <!-- Coluna 1: Gastronomia -->
+                <div class="mvv-column">
+                    <img src="assets/S4 Gastronomia/wine_pouring_otimizado-internet.webp" class="mvv-bg-img" alt="Gastronomia The Wine Experience">
+                    <div class="mvv-column-overlay"></div>
+                    <div class="mvv-card">
+                        <div class="mvv-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" />
+                                <path d="M3 16c0-4.97 4.03-9 9-9s9 4.03 9 9" />
+                                <path d="M2 16h20" />
+                                <path d="M4 16v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1" />
+                            </svg>
+                        </div>
+                        <div class="mvv-divider">
+                            <span class="line"></span>
+                            <span class="diamond"></span>
+                            <span class="line"></span>
+                        </div>
+                        <h3>Gastronomia</h3>
+                        <p>Menu autoral pensado para realçar sabores e transformar cada encontro em uma experiência memorável.</p>
                     </div>
-                    <h3>Missão</h3>
-                    <p>Damos asas à sua paixão por vinhos. Com um toque de sofisticação e curadoria criteriosa, transformamos jantares em vivências sensoriais marcantes, cultivando um legado de hospitalidade, sabor e momentos memoráveis.</p>
                 </div>
 
-                <!-- Card 2: Visão -->
-                <div class="mvv-card">
-                    <div class="mvv-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
+                <!-- Coluna 2: Carta de Vinhos -->
+                <div class="mvv-column">
+                    <img src="assets/S3 Experiencia/adega_vinhos_card_1200x900-internet.webp" class="mvv-bg-img" alt="Carta de Vinhos The Wine Experience">
+                    <div class="mvv-column-overlay"></div>
+                    <div class="mvv-card">
+                        <div class="mvv-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                                <!-- Garrafa maior -->
+                                <path d="M7 21h4.5V9.5c0-.8-.4-1.5-1-2V3.5h-2.5V7.5c-.6.5-1 1.2-1 2V21z" />
+                                <path d="M8 3.5h2.5" />
+                                <!-- Garrafa menor com sobreposição -->
+                                <path d="M12.5 21h3.5v-8.5c0-.6-.3-1.1-.8-1.5V5h-1.9v6c-.5.4-.8.9-.8 1.5V21z" />
+                                <path d="M13.2 5h1.9" />
+                                <!-- Taça de vinho à direita -->
+                                <path d="M15.5 15a2.5 2.5 0 0 0 5 0v-5h-5v5z" />
+                                <path d="M18 15v6" />
+                                <path d="M16 21h4" />
+                            </svg>
+                        </div>
+                        <div class="mvv-divider">
+                            <span class="line"></span>
+                            <span class="diamond"></span>
+                            <span class="line"></span>
+                        </div>
+                        <h3>Carta de Vinhos</h3>
+                        <p>Curadoria especial de rótulos nacionais e internacionais para harmonizações sofisticadas e momentos especiais.</p>
                     </div>
-                    <h3>Visão</h3>
-                    <p>Ser a principal referência em enogastronomia em Belém, expandindo os horizontes de nossos clientes através de harmonizações perfeitas, serviços excepcionais e uma atmosfera acolhedora e inspiradora.</p>
                 </div>
 
-                <!-- Card 3: Valores -->
-                <div class="mvv-card">
-                    <div class="mvv-icon">
-                        <svg viewBox="0 0 24 24">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
+                <!-- Coluna 3: Ambiente -->
+                <div class="mvv-column">
+                    <img src="assets/S3 Experiencia/experiencia-internet.webp" class="mvv-bg-img" alt="Ambiente The Wine Experience">
+                    <div class="mvv-column-overlay"></div>
+                    <div class="mvv-card">
+                        <div class="mvv-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2c-.6 1.8-2 3-2 4.5s1 2.5 2 2.5 2-1 2-2.5S12.6 3.8 12 2z" />
+                                <line x1="12" y1="7" x2="12" y2="9.5" />
+                                <path d="M10 9.5h4v7h-4z" />
+                                <path d="M6 16.5h12c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5H6c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5z" />
+                                <path d="M18 18c1.5 0 2.5-.7 2.5-1.5S19.5 15 18 15h-.5" />
+                            </svg>
+                        </div>
+                        <div class="mvv-divider">
+                            <span class="line"></span>
+                            <span class="diamond"></span>
+                            <span class="line"></span>
+                        </div>
+                        <h3>Ambiente</h3>
+                        <p>Atmosfera intimista e acolhedora, perfeita para brindar, desacelerar e celebrar bons encontros.</p>
                     </div>
-                    <h3>Valores</h3>
-                    <ul class="mvv-list">
-                        <li>Excelência em cada detalhe</li>
-                        <li>Respeito à essência de cada história</li>
-                        <li>Qualidade com padrão elevado</li>
-                        <li>Organização em todo o processo</li>
-                        <li>Compromisso com legados marcantes</li>
-                    </ul>
                 </div>
+
             </div>
         </div>
     </section>
 
-    <!-- Script de Lógica e Animação -->
-    <script>
-        const mvvCards = document.querySelectorAll('.mvv-card');
-        const mvvBgs = document.querySelectorAll('.mvv-bg');
-        let mvvIndex = 0;
-        let mvvInterval;
-
-        // Ativa um card e transiciona o respectivo background
-        function setMvvActive(index) {
-            mvvCards.forEach((c, idx) => {
-                if (idx === index) {
-                    c.classList.add('active');
-                    mvvBgs[idx].classList.add('active');
-                } else {
-                    c.classList.remove('active');
-                    mvvBgs[idx].classList.remove('active');
-                }
-            });
-        }
-
-        // Inicia rotação automática
-        function startMvvAutoplay() {
-            mvvInterval = setInterval(() => {
-                mvvIndex = (mvvIndex + 1) % mvvCards.length;
-                setMvvActive(mvvIndex);
-            }, 6000); // 6 segundos por card
-        }
-
-        // Para rotação automática
-        function stopMvvAutoplay() {
-            clearInterval(mvvInterval);
-        }
-
-        // Eventos para interação do usuário
-        mvvCards.forEach((card, index) => {
-            // Clique: fixa o slide selecionado e reinicia o timer
-            card.addEventListener('click', () => {
-                stopMvvAutoplay();
-                mvvIndex = index;
-                setMvvActive(mvvIndex);
-                startMvvAutoplay();
-            });
-            
-            // Hover: foca temporariamente no slide apontado pelo cursor
-            card.addEventListener('mouseenter', () => {
-                stopMvvAutoplay();
-                mvvIndex = index;
-                setMvvActive(mvvIndex);
-            });
-            
-            // Saída do cursor: retoma a rotação automática
-            card.addEventListener('mouseleave', () => {
-                startMvvAutoplay();
-            });
-        });
-
-        // Inicialização
-        if (mvvCards.length > 0) {
-            setMvvActive(0);
-            startMvvAutoplay();
-        }
-    </script>
 </body>
 </html>

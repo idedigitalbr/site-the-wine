@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: thewine-web
+    restart: always
+    networks:
+      - default
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.thewine-router.rule=Host(`thewine.suporteide.digital`)"
+      - "traefik.http.routers.thewine-router.entrypoints=websecure"
+      - "traefik.http.routers.thewine-router.tls=true"
+      - "traefik.http.routers.thewine-router.tls.certresolver=letsencrypt"
+      - "traefik.http.services.thewine-service.loadbalancer.server.port=80"
+
+networks:
+  proxy:
+    external: true
