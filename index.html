@@ -528,10 +528,7 @@
         .historia-section {
             position: relative;
             width: 100%;
-            background-image: url('assets/S2 Sobre Nossa Historia/bg-sobernoszinho-internet.webp');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            background-color: var(--wine-black);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -548,13 +545,13 @@
             right: 0;
             bottom: 0;
             background: radial-gradient(circle at center, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.7) 100%);
-            z-index: 1;
+            z-index: 2;
             pointer-events: none;
         }
 
         .historia-content {
             position: relative;
-            z-index: 2;
+            z-index: 3;
             width: 100%;
             max-width: 900px;
             display: flex;
@@ -944,6 +941,41 @@
         }
 
         /* ========================================
+           EFEITO PARALLAX FLUIDO (SUPORTE GERAL)
+           ======================================== */
+        .parallax-container {
+            position: relative;
+            overflow: hidden !important;
+        }
+
+        .parallax-img {
+            position: absolute !important;
+            top: -15% !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 130% !important;
+            object-fit: cover !important;
+            z-index: 1;
+            transform: translate3d(0, 0, 0);
+            will-change: transform;
+            pointer-events: none;
+            transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @media (max-width: 992px) {
+            /* Desativa translação no mobile para economizar processamento e manter legível */
+            .parallax-img {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                transform: none !important;
+                transition: none !important;
+            }
+        }
+
+        /* ========================================
            SEÇÃO 4: HARMONIZAÇÕES EXCLUSIVAS (SPLIT LAYOUT)
            ======================================== */
         .split-section {
@@ -1103,6 +1135,17 @@
             justify-content: center;
         }
 
+        .cream-right-visual.parallax-container {
+            width: 100%;
+            max-width: 380px;
+            height: 480px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            margin: 0 auto;
+        }
+
         .cream-right-visual img {
             max-width: 380px;
             height: auto;
@@ -1187,13 +1230,29 @@
         }
 
         .eventos-right-side-img {
-            border-radius: 0;
+            position: relative;
             overflow: hidden;
             border: 1px solid rgba(221, 185, 118, 0.1);
             height: 440px;
         }
 
-        .eventos-right-side-img img {
+        .eventos-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            z-index: 1;
+        }
+
+        .eventos-slide.active {
+            opacity: 1;
+            z-index: 2;
+        }
+
+        .eventos-slide img {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -2039,9 +2098,9 @@
     <!-- ========================================
          HERO SECTION
          ======================================== -->
-    <section id="home" class="hero">
+    <section id="home" class="hero parallax-container">
         <div class="hero-bg">
-            <img src="assets/S1 TOPO HERO/wine_pouring_hero_1920x1080-internet.webp" alt="Vinho tinto sendo vertido em taça">
+            <img src="assets/S1 TOPO HERO/hero-restaurant-oficial.webp" class="parallax-img" alt="Salão The Wine Experience">
         </div>
         
         <div class="hero-overlay-dark"></div>
@@ -2070,7 +2129,8 @@
     <!-- ========================================
          SEÇÃO 2: NOSSA HISTÓRIA (SOBRE)
          ======================================== -->
-    <section id="sobre" class="historia-section">
+    <section id="sobre" class="historia-section parallax-container">
+        <img src="assets/S2 Sobre Nossa Historia/bg-sobernoszinho-internet.webp" class="parallax-img" alt="Nossa História">
         <div class="historia-overlay"></div>
         <div class="historia-content">
             <!-- Ornamento de Folhas (SVG) -->
@@ -2159,8 +2219,8 @@
             <div class="mvv-grid">
                 
                 <!-- Coluna 1: Gastronomia -->
-                <div class="mvv-column">
-                    <img src="assets/S3 Experiencia/IAG_6967-oficial.webp" class="mvv-bg-img" alt="Gastronomia The Wine Experience">
+                <div class="mvv-column parallax-container">
+                    <img src="assets/S3 Experiencia/IAG_6967-oficial.webp" class="mvv-bg-img parallax-img" alt="Gastronomia The Wine Experience">
                     <div class="mvv-column-overlay"></div>
                     <div class="mvv-card">
                         <div class="mvv-icon">
@@ -2182,8 +2242,8 @@
                 </div>
 
                 <!-- Coluna 2: Carta de Vinhos -->
-                <div class="mvv-column">
-                    <img src="assets/S3 Experiencia/IAG_6530-oficial.webp" class="mvv-bg-img" alt="Carta de Vinhos The Wine Experience">
+                <div class="mvv-column parallax-container">
+                    <img src="assets/S3 Experiencia/IAG_6530-oficial.webp" class="mvv-bg-img parallax-img" alt="Carta de Vinhos The Wine Experience">
                     <div class="mvv-column-overlay"></div>
                     <div class="mvv-card">
                         <div class="mvv-icon">
@@ -2211,8 +2271,8 @@
                 </div>
 
                 <!-- Coluna 3: Ambiente -->
-                <div class="mvv-column">
-                    <img src="assets/S6 Local/Sessão The Wine 15032023 - 156-oficial.webp" class="mvv-bg-img" alt="Ambiente The Wine Experience">
+                <div class="mvv-column parallax-container">
+                    <img src="assets/S6 Local/Sessão The Wine 15032023 - 156-oficial.webp" class="mvv-bg-img parallax-img" alt="Ambiente The Wine Experience">
                     <div class="mvv-column-overlay"></div>
                     <div class="mvv-card">
                         <div class="mvv-icon">
@@ -2243,8 +2303,8 @@
          ======================================== -->
     <section id="gastronomia" class="split-section">
         <!-- Imagem lado Esquerdo -->
-        <div class="split-img-side reveal-up">
-            <img src="assets/S4 Gastronomia/wine_pouring_otimizado-internet.webp" alt="Vinho sendo vertido em taça à mesa">
+        <div class="split-img-side parallax-container reveal-up">
+            <img src="assets/S4 Gastronomia/IMG_3986-oficial.webp" class="parallax-img" alt="Vinho sendo vertido em taça à mesa">
         </div>
         
         <!-- Conteúdo lado Direito -->
@@ -2287,9 +2347,9 @@
                 <button class="link-cardapio-btn trigger-modal">Ver Cardápio →</button>
             </div>
 
-            <!-- Imagem Livretos Lado Direito -->
-            <div class="cream-right-visual reveal-up" style="transition-delay: 0.1s;">
-                <img src="assets/S5 Vinhos/menu_booklets-internet.webp" alt="Folder de menu preto e folha branca de cardápio">
+            <!-- Imagem Lado Direito (Vinho Oficial com Parallax) -->
+            <div class="cream-right-visual parallax-container reveal-up" style="transition-delay: 0.1s;">
+                <img src="assets/S5 Vinhos/IMG_7386-oficial.webp" class="parallax-img" alt="Vinho selecionado The Wine Experience">
             </div>
         </div>
     </section>
@@ -2351,9 +2411,17 @@
                 <button class="btn-gold-outline trigger-modal">Saiba mais sobre eventos</button>
             </div>
 
-            <!-- Imagem Taças Lado Direito -->
-            <div class="eventos-right-side-img reveal-up" style="transition-delay: 0.1s;">
-                <img src="assets/S6 Eventos/evento-degustacao-internet.webp" alt="Taças de vinho enfileiradas sob iluminação aconchegante">
+            <!-- Imagem Lado Direito (Eventos Slideshow com Parallax) -->
+            <div class="eventos-right-side-img parallax-container reveal-up" style="transition-delay: 0.1s;">
+                <div class="eventos-slide active">
+                    <img src="assets/S6 Local/Sessão The Wine 15032023 - 162-oficial.webp" class="parallax-img" alt="Degustação e eventos no salão do The Wine">
+                </div>
+                <div class="eventos-slide">
+                    <img src="assets/S6 Local/Sessão The Wine 15032023 - 166-oficial.webp" class="parallax-img" alt="Aconchego e sofisticação no The Wine">
+                </div>
+                <div class="eventos-slide">
+                    <img src="assets/S6 Local/Sessão The Wine 15032023 - 172-oficial.webp" class="parallax-img" alt="Experiência enogastronômica exclusiva no The Wine">
+                </div>
             </div>
         </div>
     </section>
@@ -2362,9 +2430,9 @@
          SEÇÃO 7: RESERVE SUA EXPERIÊNCIA (MESA ESPERANDO)
          ======================================== -->
     <section class="reserva-banner-section">
-        <!-- Camarão na lateral esquerda -->
+        <!-- Sobremesa na lateral esquerda (Oficial) -->
         <div class="reserva-edge-left reveal-up">
-            <img src="assets/S4 Gastronomia/shrimp_plate-internet.webp" alt="Prato com frutos do mar gourmet">
+            <img src="assets/S4 Gastronomia/foto_sobremesa_harmonizacao-oficial.webp" alt="Sobremesa fina The Wine Experience">
         </div>
 
         <div class="reserva-center-box reveal-up" style="transition-delay: 0.05s;">
@@ -2376,9 +2444,9 @@
             <button class="btn-reserva-final trigger-modal">Reservar Agora</button>
         </div>
 
-        <!-- Rolha na lateral direita -->
+        <!-- Vinho na lateral direita (Oficial) -->
         <div class="reserva-edge-right reveal-up">
-            <img src="assets/S5 Vinhos/cork_logo-internet.webp" alt="Rolha timbrada The Wine Experience">
+            <img src="assets/S5 Vinhos/IMG_7386-oficial.webp" alt="Vinho premium The Wine Experience">
         </div>
     </section>
 
@@ -2781,6 +2849,107 @@
             window.requestAnimationFrame(scrollSpy);
         });
         window.addEventListener('load', scrollSpy);
+
+        // =============================================================
+        // Fluid Parallax Engine (High Performance 60fps Scroll)
+        // =============================================================
+        class FluidParallax {
+            constructor() {
+                this.elements = [];
+                this.init();
+            }
+
+            init() {
+                if (window.innerWidth <= 992) return; // Desativa em telas pequenas/mobile
+
+                const parallaxContainers = document.querySelectorAll('.parallax-container');
+                parallaxContainers.forEach(container => {
+                    const img = container.querySelector('.parallax-img');
+                    if (!img) return;
+
+                    // Cria um registro para o elemento
+                    const item = {
+                        container: container,
+                        img: img,
+                        speed: parseFloat(container.dataset.parallaxSpeed) || 0.18,
+                        visible: false
+                    };
+
+                    this.elements.push(item);
+                });
+
+                // Utiliza IntersectionObserver para rodar efeito apenas quando a seção estiver visível
+                const observerOptions = {
+                    root: null,
+                    threshold: 0,
+                    rootMargin: "0px"
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        const index = this.elements.findIndex(el => el.container === entry.target);
+                        if (index !== -1) {
+                            this.elements[index].visible = entry.isIntersecting;
+                        }
+                    });
+                }, observerOptions);
+
+                this.elements.forEach(item => {
+                    observer.observe(item.container);
+                });
+
+                // Inicia o loop de renderização no scroll
+                window.addEventListener('scroll', () => this.onScroll(), { passive: true });
+                window.addEventListener('resize', () => this.onResize());
+                
+                // Primeiro posicionamento
+                this.tick();
+            }
+
+            onScroll() {
+                if (this.scrollRequested) return;
+                this.scrollRequested = true;
+                window.requestAnimationFrame(() => this.tick());
+            }
+
+            onResize() {
+                // Atualiza em caso de mudança de tamanho
+                this.scrollRequested = true;
+                window.requestAnimationFrame(() => this.tick());
+            }
+
+            tick() {
+                this.scrollRequested = false;
+                const viewHeight = window.innerHeight;
+                const viewTop = window.scrollY;
+
+                this.elements.forEach(item => {
+                    if (!item.visible) return;
+
+                    const rect = item.container.getBoundingClientRect();
+                    const containerHeight = rect.height;
+                    const containerTop = viewTop + rect.top;
+                    const containerCenter = containerTop + containerHeight / 2;
+
+                    // Ponto médio da janela
+                    const viewCenter = viewTop + viewHeight / 2;
+
+                    // Distância do centro do container ao centro da tela
+                    const distance = viewCenter - containerCenter;
+
+                    // Calcula o offset de tradução suave baseado na distância e velocidade
+                    const translateVal = distance * item.speed;
+
+                    // Aplica translate3d para garantir aceleração por GPU
+                    item.img.style.transform = `translate3d(0, ${translateVal}px, 0)`;
+                });
+            }
+        }
+
+        // Inicializa o Parallax após o carregamento completo do documento
+        window.addEventListener('DOMContentLoaded', () => {
+            new FluidParallax();
+        });
     </script>
 </body>
 </html>
