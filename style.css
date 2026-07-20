@@ -365,12 +365,18 @@
             z-index: 1;
         }
 
-        .hero-bg img,
-        .hero-bg video {
+        .hero-bg img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             filter: brightness(0.35);
+        }
+
+        .hero-bg video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: none;
         }
 
         .hero-overlay-dark {
@@ -379,7 +385,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.1) 60%, var(--wine-black) 100%);
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 35%);
             z-index: 2;
         }
 
