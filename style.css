@@ -1045,12 +1045,12 @@
         }
 
         /* ========================================
-           SEÇÃO 4: HARMONIZAÇÕES EXCLUSIVAS (SPLIT V2 - 2 COLUMNS)
+           SEÇÃO 4: HARMONIZAÇÕES EXCLUSIVAS (SPLIT V2 - 3 COLUMNS)
            ======================================== */
         .split-section-v2 {
             padding: 0;
             display: grid;
-            grid-template-columns: 1.3fr 1fr;
+            grid-template-columns: 1.4fr 1fr 0.45fr;
             background-color: var(--wine-black);
             height: 100vh;
         }
