@@ -79,7 +79,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="style.css?v=20260720_v15">
+    <link rel="stylesheet" href="style.css?v=20260720_v16">
 </head>
 <body>
 
@@ -1490,12 +1490,14 @@
                 const animate = () => {
                     this.items.forEach(item => {
                         if (item.direction === 'horizontal') {
-                            item.currentX += (item.targetX - item.currentX) * 0.09;
+                            item.currentX += (item.targetX - item.currentX) * 0.1;
                             const roundedX = Math.round(item.currentX * 100) / 100;
+                            item.target.style.transform = `translate3d(calc(-50% + ${roundedX}px), 0, 0)`;
                             item.target.style.setProperty('--parallax-x', `${roundedX}px`);
                         } else {
-                            item.currentY += (item.targetY - item.currentY) * 0.09;
+                            item.currentY += (item.targetY - item.currentY) * 0.1;
                             const roundedY = Math.round(item.currentY * 100) / 100;
+                            item.target.style.transform = `translate3d(0, ${roundedY}px, 0)`;
                             item.target.style.setProperty('--parallax-y', `${roundedY}px`);
                         }
                     });
