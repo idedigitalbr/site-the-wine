@@ -486,7 +486,7 @@
             max-width: 1440px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: 1.1fr 0.9fr 1.15fr 1.5fr 1.05fr 1fr;
+            grid-template-columns: 1.05fr 0.85fr 1.1fr 1.8fr 0.8fr 1.05fr;
             gap: 0;
             min-height: 280px;
             align-items: center;
@@ -519,7 +519,7 @@
         }
 
         .footer-col-map {
-            padding: 0.8rem 1rem;
+            padding: 0.8rem 1.2rem;
             align-items: center;
             justify-content: center;
         }
@@ -540,13 +540,13 @@
             font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.2em;
+            letter-spacing: 0.18em;
             color: var(--footer-gold);
             margin-bottom: 0.6rem;
             display: flex;
             align-items: center;
             gap: 0.4rem;
-            white-space: nowrap;
+            line-height: 1.3;
         }
 
         /* Nossos Links Column with ✦ bullet icons */
@@ -689,13 +689,13 @@
             color: var(--footer-gold-light);
         }
 
-        /* Column 4: Map (Center) */
+        /* Column 4: Map (Center) - Expanded Width */
         .footer-map-link {
             display: block;
             position: relative;
             width: 100%;
-            max-width: 320px;
-            height: 200px;
+            max-width: 380px;
+            height: 205px;
             overflow: hidden;
             border-radius: 12px;
             border: 1.5px solid var(--footer-gold-muted);
@@ -745,6 +745,7 @@
 
         .footer-col-hours .footer-col__title {
             justify-content: center;
+            text-align: center;
             margin-bottom: 0.3rem;
         }
 
@@ -837,7 +838,7 @@
         .footer-whatsapp-icon {
             width: 32px;
             height: 32px;
-            margin: 0.3rem auto 0.5rem;
+            margin: 0.2rem auto 0.4rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -861,12 +862,13 @@
         }
 
         .footer-whatsapp-number {
-            font-family: var(--font-display);
-            font-size: 1.65rem;
-            font-weight: 400;
+            font-family: var(--font-body);
+            font-size: 1.35rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
             color: var(--footer-gold-light);
             display: block;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.5rem;
             transition: color 300ms ease;
             white-space: nowrap;
             text-decoration: none;
@@ -876,13 +878,32 @@
             color: var(--footer-gold);
         }
 
-        .footer-whatsapp-text {
-            font-size: 0.76rem;
-            color: var(--footer-text-muted);
-            font-weight: 300;
-            line-height: 1.45;
-            text-align: center;
-            max-width: 200px;
+        .footer-whatsapp-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            padding: 0.45rem 1rem;
+            font-family: var(--font-body);
+            font-size: 0.65rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--footer-gold-light);
+            border: 1px solid var(--footer-gold-muted);
+            background: rgba(210, 154, 60, 0.06);
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 300ms ease;
+            white-space: nowrap;
+        }
+
+        .footer-whatsapp-btn:hover {
+            border-color: var(--footer-gold);
+            color: #ffffff;
+            background: rgba(210, 154, 60, 0.18);
+            box-shadow: 0 0 15px rgba(210, 154, 60, 0.25);
+            transform: translateY(-1px);
         }
 
         /* ========================================
@@ -1384,7 +1405,7 @@
             <!-- Column 5: Hours -->
             <div class="footer-col footer-col-hours">
                 <h3 class="footer-col__title">
-                    Horário de Funcionamento
+                    Horário de<br>Funcionamento
                 </h3>
 
                 <div class="footer-hours-ornament">
@@ -1439,6 +1460,12 @@
                    target="_blank" 
                    class="footer-whatsapp-number">
                     (91) 98404-0710
+                </a>
+
+                <a href="https://api.whatsapp.com/send?phone=5591984040710&text=Ol%C3%A1%2C%20gostaria%20de%20fazer%20uma%20reserva%20no%20The%20Wine%20Experience." 
+                   target="_blank" 
+                   class="footer-whatsapp-btn">
+                    Chamar no WhatsApp
                 </a>
             </div>
 
