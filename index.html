@@ -79,7 +79,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="style.css?v=20260720_v14">
+    <link rel="stylesheet" href="style.css?v=20260720_v15">
 </head>
 <body>
 
@@ -1440,69 +1440,42 @@
             }
 
             init() {
-                if (window.innerWidth <= 768) return; // Ativo em todas as telas > 768px (notebooks, desktops e tablets)
+                if (window.innerWidth <= 768) return;
 
-                const containers = document.querySelectorAll('.parallax-container');
-                containers.forEach(container => {
-                    const targets = container.querySelectorAll('.parallax-img, .parallax-img-h, .parallax-element');
-                    targets.forEach(target => {
-                        const speedAttr = target.dataset.parallaxSpeed || container.dataset.parallaxSpeed;
-                        const speed = parseFloat(speedAttr) || 0.22;
-                        const direction = target.dataset.parallaxDirection || (target.classList.contains('parallax-img-h') ? 'horizontal' : 'vertical');
-                        this.items.push({
-                            container: container,
-                            target: target,
-                            speed: speed,
-                            direction: direction,
-                            currentY: 0,
-                            targetY: 0,
-                            currentX: 0,
-                            targetX: 0,
-                            visible: true
-                        });
+                const targets = document.querySelectorAll('.parallax-img, .parallax-img-h, .parallax-element');
+                targets.forEach(target => {
+                    const container = target.closest('.parallax-container') || target.parentElement;
+                    const speedAttr = target.dataset.parallaxSpeed || (container && container.dataset ? container.dataset.parallaxSpeed : null);
+                    const speed = parseFloat(speedAttr) || 0.35;
+                    const direction = target.dataset.parallaxDirection || (target.classList.contains('parallax-img-h') ? 'horizontal' : 'vertical');
+
+                    this.items.push({
+                        container: container,
+                        target: target,
+                        speed: speed,
+                        direction: direction,
+                        currentY: 0,
+                        targetY: 0,
+                        currentX: 0,
+                        targetX: 0
                     });
                 });
 
                 if (this.items.length === 0) return;
 
-                // IntersectionObserver para pausar renderização de seções fora da viewport
-                const observerOptions = {
-                    root: null,
-                    threshold: 0,
-                    rootMargin: "150px"
-                };
-
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        this.items.forEach(item => {
-                            if (item.container === entry.target) {
-                                item.visible = entry.isIntersecting;
-                            }
-                        });
-                    });
-                }, observerOptions);
-
-                const observedContainers = new Set(this.items.map(i => i.container));
-                observedContainers.forEach(c => observer.observe(c));
-
                 window.addEventListener('scroll', () => this.updateTargets(), { passive: true });
                 window.addEventListener('resize', () => this.updateTargets(), { passive: true });
-                
+
                 this.updateTargets();
                 this.startAnimationLoop();
             }
 
             updateTargets() {
-                const viewHeight = window.innerHeight;
-                const viewCenter = viewHeight / 2;
+                const viewCenter = window.innerHeight / 2;
 
                 this.items.forEach(item => {
-                    if (!item.visible) return;
-
                     const rect = item.container.getBoundingClientRect();
                     const containerCenter = rect.top + rect.height / 2;
-
-                    // Distância do centro do container ao centro da janela
                     const distance = viewCenter - containerCenter;
 
                     if (item.direction === 'horizontal') {
@@ -1516,14 +1489,12 @@
             startAnimationLoop() {
                 const animate = () => {
                     this.items.forEach(item => {
-                        if (!item.visible) return;
-
                         if (item.direction === 'horizontal') {
-                            item.currentX += (item.targetX - item.currentX) * 0.085;
+                            item.currentX += (item.targetX - item.currentX) * 0.09;
                             const roundedX = Math.round(item.currentX * 100) / 100;
                             item.target.style.setProperty('--parallax-x', `${roundedX}px`);
                         } else {
-                            item.currentY += (item.targetY - item.currentY) * 0.085;
+                            item.currentY += (item.targetY - item.currentY) * 0.09;
                             const roundedY = Math.round(item.currentY * 100) / 100;
                             item.target.style.setProperty('--parallax-y', `${roundedY}px`);
                         }
