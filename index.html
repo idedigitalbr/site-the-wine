@@ -305,57 +305,56 @@
     <!-- ========================================
          SEÇÃO 4: HARMONIZAÇÕES EXCLUSIVAS (SPLIT LAYOUT)
          ======================================== -->
-    <section id="gastronomia" class="split-section">
-        <!-- Imagem lado Esquerdo -->
-        <div class="split-img-side reveal-up">
-            <img src="assets/Vinhos/servindo-vinho-tinto.webp" alt="Vinho sendo vertido em taça à mesa">
+    <section id="gastronomia" class="split-section-v2">
+        <!-- Imagem lado Esquerdo - Parede de Vinhos -->
+        <div class="split-v2-img-left reveal-up">
+            <img src="assets/Vinhos/parede-vinhos-decoracao-use.png" alt="Adega com parede de vinhos e relógio vintage">
         </div>
         
-        <!-- Conteúdo lado Direito -->
-        <div class="split-content-side reveal-up" style="transition-delay: 0.1s;">
+        <!-- Conteúdo Central -->
+        <div class="split-v2-content reveal-up" style="transition-delay: 0.1s;">
             <span class="split-tag">Harmonizações exclusivas</span>
             <h2 class="split-title">Cada detalhe pensado para <span class="italic-script">encantar</span> seu paladar</h2>
             <p class="split-text">
-                Nossos sommeliers e chefs trabalham juntos para criar harmonizações que despertam sentidos e elevam cada momento à sua melhor versão.
+                Nossos sommeliers e chefs unem técnica, sensibilidade e curadoria para criar combinações que valorizam cada prato, cada rótulo e cada momento.
             </p>
 
             <div style="align-self: flex-start;">
                 <button class="btn-gold-outline trigger-modal">Explorar Harmonizações</button>
             </div>
+        </div>
 
-            <!-- Fina Marca D'água Taça de Vinho -->
-            <div class="glass-watermark">
-                <svg viewBox="0 0 100 200" fill="none" stroke="rgba(221, 185, 118, 0.04)" stroke-width="1.2">
-                    <path d="M25 20h50v50c0 20-15 38-35 41v64H25m15 0h20" />
-                </svg>
-            </div>
+        <!-- Imagem lado Direito - Taça de Vinho -->
+        <div class="split-v2-img-right reveal-up" style="transition-delay: 0.2s;">
+            <img src="assets/Vinhos/objeto-taca-vinho-use.png" alt="Taça de vinho tinto sendo servida">
         </div>
     </section>
 
     <!-- ========================================
-         SEÇÃO 5: CARDÁPIO À LA CARTE (SECÇÃO CREME CLARO)
+         SEÇÃO 5: CARDÁPIO À LA CARTE (SPLIT CREAM + VIDEO)
          ======================================== -->
-    <section id="vinhos" class="section-cream">
-        <!-- Marcas d'água orientais nas laterais do fundo -->
-        <img class="cream-watermark-left" src="assets/Logos/logo_the_wine_branco_dourado_transparente.webp" alt="Watermark Kanji">
-        <img class="cream-watermark-right" src="assets/Logos/logo_the_wine_branco_dourado_transparente.webp" alt="Watermark Kanji">
-
-        <div class="cream-container">
-            <!-- Informações Lado Esquerdo -->
-            <div class="cream-left-info reveal-up">
-                <span class="split-tag">Menu</span>
-                <h2>Cardápio à la carte</h2>
+    <section id="vinhos" class="cardapio-split-section">
+        <!-- Lado Esquerdo: Fundo Creme com Texto -->
+        <div class="cardapio-left-cream">
+            <div class="cardapio-left-content reveal-up">
+                <span class="split-tag">Confira o nosso menu</span>
+                <h2>Confira o nosso Cardápio</h2>
                 <p>
                     Pratos autorais elaborados com ingredientes selecionados e apresentação impecável.
                 </p>
                 <button class="link-cardapio-btn trigger-modal">Ver Cardápio →</button>
             </div>
-
-            <!-- Imagem Lado Direito (Vinho Oficial) -->
-            <div class="cream-right-visual reveal-up" style="transition-delay: 0.1s;">
-                <img src="assets/MENU-THE-WINE-MOCKUP.webp" alt="Cardápio The Wine Experience">
-            </div>
         </div>
+
+        <!-- Lado Direito: Vídeo de Fundo -->
+        <div class="cardapio-right-video">
+            <video autoplay muted loop playsinline>
+                <source src="assets/CardapioMenu/video-cardapio.mp4" type="video/mp4">
+            </video>
+        </div>
+
+        <!-- Imagem do Menu Flutuante -->
+        <img class="cardapio-menu-float" src="assets/CardapioMenu/MENU-THE-WINE-MOCKUP.webp" alt="Cardápio The Wine Experience">
     </section>
 
     <!-- ========================================
