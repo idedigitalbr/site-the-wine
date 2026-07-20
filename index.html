@@ -6,12 +6,80 @@
     <title>The Wine Experience | Experiência Enogastronômica em Belém</title>
     <meta name="description" content="The Wine Experience - Uma jornada sensorial por rótulos selecionados, gastronomia autoral contemporânea e momentos memoráveis no mezanino do +B Supermercados em Belém.">
     
+    <link rel="canonical" href="https://thewine.suporteide.digital/">
+    <meta name="theme-color" content="#050505">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="The Wine Experience | Experiência Enogastronômica em Belém">
+    <meta property="og:description" content="Uma jornada sensorial por rótulos selecionados, gastronomia autoral contemporânea e momentos memoráveis no mezanino do +B Supermercados em Belém.">
+    <meta property="og:image" content="assets/Ambiente/IMG_7390-oficial.webp">
+    <meta property="og:url" content="https://thewine.suporteide.digital/">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="The Wine Experience | Experiência Enogastronômica em Belém">
+    <meta name="twitter:description" content="Uma jornada sensorial por rótulos selecionados, gastronomia autoral em Belém.">
+    <meta name="twitter:image" content="assets/Ambiente/IMG_7390-oficial.webp">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Pinyon+Script&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="style.css?v=20260720_v11">
+    <!-- Structured Data (Schema.org JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "The Wine Experience",
+      "image": "https://thewine.suporteide.digital/assets/Logos/logo_the_wine_branco_dourado_transparente.webp",
+      "description": "Uma jornada sensorial por rótulos selecionados, gastronomia autoral contemporânea e momentos memoráveis em Belém.",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Av. Alcindo Cacela, 1848 - Mezanino do +B Supermercados",
+        "addressLocality": "Belém",
+        "addressRegion": "PA",
+        "postalCode": "66060-000",
+        "addressCountry": "BR"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": -1.4557003,
+        "longitude": -48.4773089
+      },
+      "url": "https://thewine.suporteide.digital/",
+      "telephone": "+5591984040710",
+      "servesCuisine": "Contemporânea, Enogastronômica, Vinhos",
+      "priceRange": "$$$",
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+          "opens": "12:00",
+          "closes": "15:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+          "opens": "19:00",
+          "closes": "23:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Sunday",
+          "opens": "12:00",
+          "closes": "15:00"
+        }
+      ],
+      "sameAs": [
+        "https://www.instagram.com/thewinebelem/",
+        "https://www.facebook.com/thewinebelem/"
+      ]
+    }
+    </script>
+
+    <link rel="stylesheet" href="style.css?v=20260720_v12">
 </head>
 <body>
 
@@ -1466,10 +1534,19 @@
             }
         }
 
-        // Inicializa o Parallax após o carregamento completo do documento
-        window.addEventListener('DOMContentLoaded', () => {
-            new FluidParallax();
-        });
-    </script>
+    <!-- ========================================
+         FLOATING WHATSAPP CTA WIDGET (CRO)
+         ======================================== -->
+    <a href="https://api.whatsapp.com/send?phone=5591984040710&text=Ol%C3%A1%2C%20gostaria%20de%20fazer%20uma%20reserva%20no%20The%20Wine%20Experience." 
+       target="_blank" 
+       class="whatsapp-float-btn" 
+       aria-label="Fazer reserva via WhatsApp">
+        <svg viewBox="0 0 24 24">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 0 0 .611.611l4.458-1.495A11.952 11.952 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.319 0-4.476-.696-6.28-1.886l-.438-.296-3.197 1.072 1.072-3.197-.296-.438A9.958 9.958 0 0 1 2 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/>
+        </svg>
+        <span class="whatsapp-float-tooltip">Reservar Mesa</span>
+    </a>
+
 </body>
 </html>
