@@ -1050,8 +1050,9 @@
         .parallax-img-h {
             position: absolute !important;
             top: -10% !important;
-            left: -20% !important;
-            width: 140% !important;
+            left: -25% !important;
+            width: 150% !important;
+            max-width: none !important;
             height: 120% !important;
             object-fit: cover !important;
             z-index: 1;
