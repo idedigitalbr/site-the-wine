@@ -568,11 +568,18 @@
             object-fit: cover;
             z-index: 1;
             pointer-events: none;
-            filter: brightness(1.1);
+            filter: brightness(0.70);
         }
 
         .historia-overlay {
-            display: none !important;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, rgba(5, 5, 5, 0.75) 0%, rgba(5, 5, 5, 0.40) 70%, rgba(5, 5, 5, 0.85) 100%);
+            z-index: 2;
+            pointer-events: none;
         }
 
         .historia-content {
@@ -1045,12 +1052,8 @@
             }
         }
 
-        .historia-overlay {
-            display: none !important;
-        }
-
         .historia-section .historia-bg-img {
-            filter: brightness(1.1);
+            filter: brightness(0.70);
         }
 
         .parallax-img-h {
@@ -1218,7 +1221,7 @@
             color: #15110C;
             margin-bottom: 1.2rem;
             line-height: 1.15;
-            white-space: nowrap;
+            white-space: normal !important;
         }
 
         .cardapio-left-content p {
@@ -2288,14 +2291,14 @@
            SCROLL REVEAL ANIMATIONS
            ======================================== */
         .reveal-up {
-            opacity: 0;
-            transform: translateY(40px);
-            transition: opacity 1s cubic-bezier(0.25, 1, 0.5, 1), transform 1s cubic-bezier(0.25, 1, 0.5, 1);
+            opacity: 1;
+            transform: none;
+            transition: opacity 0.8s ease;
         }
 
         .reveal-up.active {
             opacity: 1;
-            transform: translateY(0);
+            transform: none;
         }
 
         /* ========================================
