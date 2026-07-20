@@ -3362,13 +3362,142 @@
         }
 
         @media (max-width: 768px) {
-            .footer-premium { padding: 3.5rem 1.5rem 0; }
-            .footer-premium__inner { grid-template-columns: 1fr; gap: 2.5rem; }
-            .footer-col-contact, .footer-col-hours, .footer-col-whatsapp { border-left: none; }
-            .footer-col { padding: 0; }
-            .footer-col-whatsapp { text-align: left; }
-            .footer-bottom__inner { flex-direction: column; gap: 1rem; text-align: center; }
-            .footer-bottom__center { order: -1; }
+            /* CTA Reservation Banner Mobile */
+            .cta-reservation {
+                min-height: 440px;
+                padding: 3.5rem 1.2rem;
+            }
+
+            .cta-reservation__content {
+                padding: 1.5rem 1rem;
+            }
+
+            .cta-reservation__headline {
+                font-size: 2.1rem;
+                line-height: 1.15;
+            }
+
+            .cta-reservation__headline-script {
+                font-size: 3.6rem;
+                margin-top: 0;
+            }
+
+            .cta-reservation__subtitle {
+                font-size: 0.82rem;
+                line-height: 1.6;
+                margin-top: 0.8rem;
+                margin-bottom: 2rem;
+            }
+
+            .cta-reservation__btn {
+                max-width: 260px;
+                padding: 0.95rem 1.5rem;
+                font-size: 0.68rem;
+            }
+
+            /* Gallery Carousel Mobile */
+            .gallery-item {
+                height: 170px;
+            }
+            .gallery-arrow {
+                display: none;
+            }
+
+            /* Footer Premium Mobile */
+            .footer-premium {
+                padding: 3.5rem 1.5rem 0;
+            }
+
+            .footer-premium__inner {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+                text-align: center;
+            }
+
+            .footer-col-contact, .footer-col-hours, .footer-col-whatsapp {
+                border-left: none;
+            }
+
+            .footer-col {
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .footer-col-logo .footer-logo-img {
+                margin: 0 auto;
+            }
+
+            .footer-social-links {
+                justify-content: center;
+            }
+
+            .footer-contact-item {
+                justify-content: center;
+                text-align: center;
+                flex-direction: column;
+                gap: 0.4rem;
+            }
+
+            .footer-map-link {
+                max-width: 280px;
+                margin: 0 auto;
+                display: block;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            }
+
+            .footer-hours-ornament,
+            .footer-hours-divider {
+                justify-content: center;
+            }
+
+            .footer-hours-day {
+                justify-content: center;
+            }
+
+            .footer-col-whatsapp {
+                text-align: center;
+            }
+
+            .footer-whatsapp-icon {
+                margin: 0 auto 0.8rem;
+            }
+
+            .footer-whatsapp-number {
+                display: block;
+                text-align: center;
+                margin-bottom: 1rem;
+            }
+
+            .footer-whatsapp-btn {
+                margin: 0.8rem auto 0;
+                width: 100%;
+                max-width: 240px;
+            }
+
+            /* Footer Bottom Mobile */
+            .footer-bottom {
+                padding-bottom: 5.5rem; /* Espaço para não cobrir pelo botão do WhatsApp */
+            }
+
+            .footer-bottom__inner {
+                flex-direction: column;
+                gap: 1.2rem;
+                text-align: center;
+            }
+
+            .footer-bottom__center {
+                order: 0;
+                justify-content: center;
+            }
+
+            .footer-bottom__right {
+                justify-content: center;
+            }
         }
 
         /* ========================================
