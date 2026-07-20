@@ -1229,26 +1229,29 @@
             max-width: 380px;
         }
 
-        .cardapio-left-content .link-cardapio-btn {
-            font-size: 11px;
+        .cardapio-left-content .btn-cardapio {
+            font-family: var(--font-body);
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 0.15em;
-            color: #15110C;
-            font-weight: 700;
-            border: none;
-            border-bottom: 1.5px solid #15110C;
-            padding-bottom: 3px;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            background: none;
+            letter-spacing: 0.25em;
+            color: #F1E6D5;
+            font-weight: 600;
+            background-color: #15110C;
+            border: 1px solid #15110C;
+            padding: 1.1rem 2.6rem;
+            display: inline-block;
             cursor: pointer;
-            transition: var(--transition-premium);
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            border-radius: 0;
+            box-shadow: 0 4px 15px rgba(21, 17, 12, 0.15);
         }
 
-        .cardapio-left-content .link-cardapio-btn:hover {
-            color: var(--wine-gold-dark);
-            border-bottom-color: var(--wine-gold-dark);
+        .cardapio-left-content .btn-cardapio:hover {
+            background-color: var(--wine-gold-dark, #a37528);
+            border-color: var(--wine-gold-dark, #a37528);
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(163, 117, 40, 0.35);
         }
 
         /* --- Lado Direito: Vídeo de Fundo (34%) --- */
