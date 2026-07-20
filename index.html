@@ -357,75 +357,109 @@
     </section>
 
     <!-- ========================================
-         SEÇÃO 6: EVENTOS & EXPERIÊNCIAS ESPECIAIS
+         SEÇÃO 6: EVENTOS & EXPERIÊNCIAS (ACCORDION)
          ======================================== -->
-    <section id="eventos" class="eventos-section parallax-container">
-        <div class="eventos-container-split">
-            <!-- Conteúdos e Ícones SVGs Lado Esquerdo -->
-            <div class="eventos-left-side reveal-up parallax-element" data-parallax-speed="-0.10">
-                <span class="split-tag">Eventos & Experiências</span>
-                <h2>Momentos que se tornam <span class="italic-script">memórias</span></h2>
-                
-                <div class="eventos-row-grid">
-                    <!-- Item 1: Jantares Harmonizados -->
-                    <div class="evento-item-col">
-                        <div class="evento-item-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 2v20M4 2v6a4 4 0 0 0 4 4h0a4 4 0 0 0 4-4V2M8 2v10" />
-                            </svg>
-                        </div>
-                        <span class="evento-item-label">Jantares Harmonizados</span>
-                    </div>
+    <!-- Header (seção separada, acima das fotos) -->
+    <div class="tw-acc-header" id="eventos">
+        <span class="tw-acc-header__tag">O que você encontra no The Wine</span>
+        <h2 class="tw-acc-header__title">Nossos Eventos <em>&</em> Experiências</h2>
+    </div>
 
-                    <!-- Item 2: Wine Tasting -->
-                    <div class="evento-item-col">
-                        <div class="evento-item-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M8 2h8M12 15v7M8 22h8M12 15a5 5 0 0 0 5-5V2H7v8a5 5 0 0 0 5 5z" />
-                            </svg>
-                        </div>
-                        <span class="evento-item-label">Wine Tasting</span>
-                    </div>
+    <!-- Accordion Photos — 100vh full bleed -->
+    <section class="tw-acc" aria-label="Eventos e Experiências do The Wine">
+      <ul class="tw-acc__row">
 
-                    <!-- Item 3: Eventos Corporativos -->
-                    <div class="evento-item-col">
-                        <div class="evento-item-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                            </svg>
-                        </div>
-                        <span class="evento-item-label">Eventos Corporativos</span>
-                    </div>
+        <!-- 1. Jantar Harmonizado (inicia aberto) -->
+        <li class="tw-acc__panel tw-acc__panel--active">
+          <a class="tw-acc__link" href="#eventos">
+            <img src="assets/Gastronomia/prato-carne-grelhada-gnocchi.webp" width="700" height="900" alt="Prato gourmet do jantar harmonizado no The Wine">
+            <span class="tw-acc__cap">
+              <svg class="tw-acc__cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 2v20M4 2v6a4 4 0 0 0 4 4h0a4 4 0 0 0 4-4V2M8 2v10"/>
+              </svg>
+              <span class="tw-acc__cap-title">Jantar Harmonizado</span>
+              <span class="tw-acc__cap-sub">Menu especial</span>
+              <span class="tw-acc__extra">
+                <span class="tw-acc__desc">Menus exclusivos criados pelo chef, onde cada prato encontra seu vinho perfeito em uma experiência enogastronômica completa.</span>
+                <span class="tw-acc__btn">
+                  Saiba mais
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+              </span>
+            </span>
+          </a>
+        </li>
 
-                    <!-- Item 4: Celebrações Privadas -->
-                    <div class="evento-item-col">
-                        <div class="evento-item-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="14" r="7" />
-                                <path d="M12 2l3 3-3 3-3-3z" />
-                            </svg>
-                        </div>
-                        <span class="evento-item-label">Celebrações Privadas</span>
-                    </div>
-                </div>
+        <!-- 2. Noite de Degustação -->
+        <li class="tw-acc__panel">
+          <a class="tw-acc__link" href="#eventos">
+            <img src="assets/Experiencias/evento-degustacao-brinde.webp" width="700" height="900" alt="Noite de degustação com taças de vinho no The Wine">
+            <span class="tw-acc__cap">
+              <svg class="tw-acc__cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 2h8M12 15v7M8 22h8M12 15a5 5 0 0 0 5-5V2H7v8a5 5 0 0 0 5 5z"/>
+              </svg>
+              <span class="tw-acc__cap-title">Noite de Degustação</span>
+              <span class="tw-acc__cap-sub">1ª sexta-feira</span>
+              <span class="tw-acc__extra">
+                <span class="tw-acc__desc">Uma noite dedicada a descobrir novos rótulos, com curadoria especial e harmonizações que surpreendem o paladar.</span>
+                <span class="tw-acc__btn">
+                  Saiba mais
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+              </span>
+            </span>
+          </a>
+        </li>
 
-                <button class="btn-gold-outline trigger-modal">Saiba mais sobre eventos</button>
-            </div>
+        <!-- 3. Wine Tasting -->
+        <li class="tw-acc__panel">
+          <a class="tw-acc__link" href="#eventos">
+            <img src="assets/Experiencias/evento-wine-tasting-clientes.webp" width="700" height="900" alt="Clientes em experiência de wine tasting no The Wine">
+            <span class="tw-acc__cap">
+              <svg class="tw-acc__cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2"/>
+                <path d="M7 8h4M7 12h10M7 16h6"/>
+              </svg>
+              <span class="tw-acc__cap-title">Wine Tasting</span>
+              <span class="tw-acc__cap-sub">Sob agendamento</span>
+              <span class="tw-acc__extra">
+                <span class="tw-acc__desc">Degustações guiadas para pequenos grupos, com seleção de rótulos e aprendizado sensorial em ambiente exclusivo.</span>
+                <span class="tw-acc__btn">
+                  Saiba mais
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+              </span>
+            </span>
+          </a>
+        </li>
 
-            <!-- Imagem Lado Direito (Eventos Slideshow) -->
-            <div class="eventos-right-side-img reveal-up parallax-element" data-parallax-speed="0.30" style="transition-delay: 0.1s;">
-                <div class="eventos-slide active">
-                    <img src="assets/Ambiente/mesa-reservada-adega.webp" alt="Degustação e eventos no salão do The Wine">
-                </div>
-                <div class="eventos-slide">
-                    <img src="assets/Ambiente/parede-vinhos-decoracao.webp" alt="Aconchego e sofisticação no The Wine">
-                </div>
-                <div class="eventos-slide">
-                    <img src="assets/Gastronomia/chef-finalizando-prato.webp" alt="Experiência enogastronômica exclusiva no The Wine">
-                </div>
-            </div>
-        </div>
+        <!-- 4. Eventos Privados -->
+        <li class="tw-acc__panel">
+          <a class="tw-acc__link" href="#eventos">
+            <img src="assets/Ambiente/mesa-reservada-adega.webp" width="700" height="900" alt="Mesa reservada para evento privado na adega do The Wine">
+            <span class="tw-acc__cap">
+              <svg class="tw-acc__cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="7" r="3"/>
+                <circle cx="15" cy="7" r="3"/>
+                <path d="M3 21v-2a4 4 0 0 1 4-4h2"/>
+                <path d="M15 15h2a4 4 0 0 1 4 4v2"/>
+                <circle cx="12" cy="11" r="3"/>
+                <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+              </svg>
+              <span class="tw-acc__cap-title">Eventos Privados</span>
+              <span class="tw-acc__cap-sub">Sob consulta</span>
+              <span class="tw-acc__extra">
+                <span class="tw-acc__desc">Celebrações íntimas, encontros corporativos e ocasiões especiais com ambientação personalizada e serviço impecável.</span>
+                <span class="tw-acc__btn">
+                  Saiba mais
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
+              </span>
+            </span>
+          </a>
+        </li>
+
+      </ul>
     </section>
 
     <!-- ========================================

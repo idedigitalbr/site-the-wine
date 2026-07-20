@@ -1309,107 +1309,380 @@
 
 
         /* ========================================
-           SEÇÃO 6: EVENTOS & EXPERIÊNCIAS ESPECIAIS
+           SEÇÃO 6: EVENTOS & EXPERIÊNCIAS (ACCORDION)
            ======================================== */
-        .eventos-section {
-            padding: 9rem 4rem;
-            background-color: var(--wine-panel-2);
-            border-top: 1px solid rgba(221, 185, 118, 0.08);
-            border-bottom: 1px solid rgba(221, 185, 118, 0.08);
-            position: relative;
-        }
-
-        .eventos-container-split {
-            max-width: 1300px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1.15fr 0.85fr;
-            gap: 5rem;
-            align-items: center;
-        }
-
-        .eventos-left-side h2 {
-            font-size: 2.8rem;
-            color: var(--wine-white);
-            margin-bottom: 2.5rem;
-            line-height: 1.2;
-        }
-
-        .eventos-row-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 2.5rem 2rem;
-            margin-bottom: 3rem;
-        }
-
-        .evento-item-col {
-            display: flex;
-            align-items: center;
-            gap: 1.2rem;
-        }
-
-        .evento-item-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background-color: rgba(221, 185, 118, 0.08);
-            border: 1px solid rgba(221, 185, 118, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            color: var(--wine-gold);
-        }
-
-        .evento-item-icon svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        .evento-item-label {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--wine-cream);
-            letter-spacing: 0.05em;
-        }
-
-        .eventos-right-side-img {
+        .tw-acc-header {
             width: 100%;
-            height: 480px;
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
-            border: 1px solid var(--wine-border);
+            text-align: center;
+            padding: 80px 20px 52px;
+            background: var(--wine-black);
         }
 
-        .eventos-slide {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .tw-acc-header__tag {
+            font-family: var(--font-body);
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--wine-gold);
+            margin-bottom: 14px;
+            display: block;
+        }
+
+        .tw-acc-header__title {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4.2vw, 3.2rem);
+            font-weight: 300;
+            color: var(--wine-white);
+            line-height: 1.15;
+        }
+
+        .tw-acc-header__title em {
+            font-family: var(--font-display);
+            font-style: italic;
+            color: var(--wine-gold-soft);
+        }
+
+        .tw-acc {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .tw-acc__row {
+            list-style: none;
+            display: flex;
             width: 100%;
             height: 100%;
-            opacity: 0;
-            transition: opacity 1.5s ease-in-out;
-            z-index: 1;
+            gap: 3px;
         }
 
-        .eventos-slide.active {
+        .tw-acc__panel {
+            flex: 1 1 0;
+            min-width: 0;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: flex-grow 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .tw-acc__panel:hover,
+        .tw-acc__panel:focus-within {
+            flex-grow: 4;
+        }
+
+        /* Panel que inicia aberto */
+        .tw-acc__panel--active {
+            flex-grow: 4;
+        }
+
+        .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) {
+            flex-grow: 1;
+        }
+
+        .tw-acc__panel--active .tw-acc__link img {
+            filter: brightness(0.92) saturate(1.05);
+        }
+
+        .tw-acc__panel--active .tw-acc__cap-icon {
+            transform: scale(1.15);
+        }
+
+        .tw-acc__panel--active .tw-acc__cap-title {
+            font-size: 1.5rem;
+        }
+
+        .tw-acc__panel--active .tw-acc__extra {
+            max-height: 220px;
             opacity: 1;
-            z-index: 2;
         }
 
-        .eventos-slide img {
+        .tw-acc__panel--active .tw-acc__link::after {
+            opacity: 0.8;
+        }
+
+        .tw-acc__panel--active::before {
+            transform: translateX(-50%) scaleX(1);
+        }
+
+        /* Quando hover em outro, reseta estilos do --active */
+        .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) .tw-acc__link img {
+            filter: brightness(0.85) saturate(0.95);
+        }
+
+        .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) .tw-acc__cap-icon {
+            transform: scale(1);
+        }
+
+        .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) .tw-acc__cap-title {
+            font-size: 1.15rem;
+        }
+
+        .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) .tw-acc__extra {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) .tw-acc__link::after {
+            opacity: 1;
+        }
+
+        .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within)::before {
+            transform: translateX(-50%) scaleX(0);
+        }
+
+        .tw-acc__link {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            height: 100%;
+            text-decoration: none;
+            color: inherit;
+            outline: none;
+        }
+
+        .tw-acc__link img {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: brightness(0.85);
-            transition: var(--transition-premium);
+            display: block;
+            filter: brightness(0.85) saturate(0.95);
+            transition: filter 0.7s cubic-bezier(0.25, 1, 0.5, 1),
+                        transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        .eventos-right-side-img:hover img {
-            transform: scale(1.03);
-            filter: brightness(1.0);
+        .tw-acc__panel:hover .tw-acc__link img,
+        .tw-acc__panel:focus-within .tw-acc__link img {
+            filter: brightness(0.92) saturate(1.05);
+            transform: scale(1.04);
+        }
+
+        .tw-acc__link::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 100%;
+            background: linear-gradient(
+                to top,
+                rgba(0, 0, 0, 0.95) 0%,
+                rgba(0, 0, 0, 0.80) 15%,
+                rgba(0, 0, 0, 0.50) 35%,
+                rgba(0, 0, 0, 0.10) 50%,
+                transparent 55%
+            );
+            z-index: 1;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+        }
+
+        .tw-acc__panel:hover .tw-acc__link::after,
+        .tw-acc__panel:focus-within .tw-acc__link::after {
+            opacity: 0.8;
+        }
+
+        .tw-acc__cap {
+            position: relative;
+            z-index: 2;
+            padding: 0 20px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+        }
+
+        .tw-acc__cap-icon {
+            width: 28px;
+            height: 28px;
+            color: var(--wine-gold);
+            margin-bottom: 10px;
+            stroke-width: 1.3;
+            flex-shrink: 0;
+            transition: transform 0.5s ease;
+        }
+
+        .tw-acc__panel:hover .tw-acc__cap-icon,
+        .tw-acc__panel:focus-within .tw-acc__cap-icon {
+            transform: scale(1.15);
+        }
+
+        .tw-acc__cap-title {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            font-weight: 400;
+            letter-spacing: 0.03em;
+            color: var(--wine-white);
+            white-space: nowrap;
+            transition: font-size 0.5s ease;
+        }
+
+        .tw-acc__panel:hover .tw-acc__cap-title,
+        .tw-acc__panel:focus-within .tw-acc__cap-title {
+            font-size: 1.5rem;
+        }
+
+        .tw-acc__cap-sub {
+            font-family: var(--font-body);
+            font-size: 0.73rem;
+            font-weight: 300;
+            color: var(--wine-gold-soft);
+            margin-top: 4px;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+        }
+
+        .tw-acc__extra {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.6s cubic-bezier(0.25, 1, 0.5, 1) 0.05s,
+                        opacity 0.5s ease 0.12s;
+        }
+
+        .tw-acc__panel:hover .tw-acc__extra,
+        .tw-acc__panel:focus-within .tw-acc__extra {
+            max-height: 220px;
+            opacity: 1;
+        }
+
+        .tw-acc__desc {
+            font-family: var(--font-body);
+            font-size: 0.82rem;
+            font-weight: 300;
+            color: var(--wine-muted);
+            line-height: 1.6;
+            margin-top: 14px;
+            max-width: 300px;
+            text-wrap: balance;
+        }
+
+        .tw-acc__btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 18px;
+            font-family: var(--font-body);
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--wine-gold);
+            border: 1px solid var(--wine-border);
+            padding: 9px 22px;
+            text-decoration: none;
+            background: transparent;
+            transition: all 0.4s ease;
+            white-space: nowrap;
+        }
+
+        .tw-acc__btn:hover {
+            background: rgba(211, 185, 123, 0.1);
+            border-color: var(--wine-gold);
+        }
+
+        .tw-acc__btn svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .tw-acc__panel::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) scaleX(0);
+            width: 50px;
+            height: 2px;
+            background: var(--wine-gold);
+            z-index: 3;
+            transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .tw-acc__panel:hover::before,
+        .tw-acc__panel:focus-within::before {
+            transform: translateX(-50%) scaleX(1);
+        }
+
+        .tw-acc__panel + .tw-acc__panel {
+            border-left: 1px solid rgba(211, 185, 123, 0.12);
+        }
+
+        .tw-acc__link:focus-visible {
+            outline: 2px solid var(--wine-gold);
+            outline-offset: -4px;
+        }
+
+        /* Responsive Media Query para Accordion */
+        @media (max-width: 860px) {
+            .tw-acc-header {
+                padding: 56px 16px 36px;
+            }
+
+            .tw-acc {
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .tw-acc__row {
+                flex-direction: column;
+                gap: 2px;
+            }
+
+            .tw-acc__panel {
+                flex: none;
+                height: 22vh;
+                min-height: 140px;
+                transition: height 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            }
+
+            .tw-acc__panel:hover,
+            .tw-acc__panel:focus-within,
+            .tw-acc__panel--active {
+                flex-grow: 1;
+                height: 50vh;
+            }
+
+            .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) {
+                height: 22vh;
+            }
+
+            .tw-acc__panel + .tw-acc__panel {
+                border-left: none;
+                border-top: 1px solid rgba(211, 185, 123, 0.12);
+            }
+
+            .tw-acc__panel::before {
+                display: none;
+            }
+
+            .tw-acc__cap {
+                padding: 0 20px 24px;
+            }
+
+            .tw-acc__cap-title {
+                font-size: 1rem;
+            }
+
+            .tw-acc__panel:hover .tw-acc__cap-title,
+            .tw-acc__panel:focus-within .tw-acc__cap-title,
+            .tw-acc__panel--active .tw-acc__cap-title {
+                font-size: 1.25rem;
+            }
+
+            .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) .tw-acc__cap-title {
+                font-size: 1rem;
+            }
         }
 
         /* ========================================
