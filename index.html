@@ -79,7 +79,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="style.css?v=20260720_v16">
+    <link rel="stylesheet" href="style.css?v=20260720_v17">
 </head>
 <body>
 
@@ -1508,12 +1508,9 @@
         }
 
         // Inicializa o Parallax 3D
-        if (document.readyState === 'loading') {
-            window.addEventListener('DOMContentLoaded', () => new FluidParallax());
-        } else {
+        window.addEventListener('DOMContentLoaded', () => {
             new FluidParallax();
-        }
-    })();
+        });
     </script>
 
     <!-- ========================================
