@@ -1288,7 +1288,7 @@
             z-index: 3;
             left: 66%;
             top: 50%;
-            transform: translate(-90%, calc(-50% + var(--parallax-y, 0px))) !important;
+            transform: translate(-90%, -50%) !important;
             height: 72%;
             width: auto;
             object-fit: contain;
@@ -1296,14 +1296,12 @@
             box-shadow:
                 0 20px 50px rgba(0, 0, 0, 0.4),
                 0 6px 16px rgba(0, 0, 0, 0.25);
-            will-change: transform;
-            transition: none !important;
             pointer-events: none;
         }
 
         .cardapio-menu-float.reveal-up.active {
             opacity: 1;
-            transform: translate(-90%, calc(-50% + var(--parallax-y, 0px))) !important;
+            transform: translate(-90%, -50%) !important;
             transition: opacity 1s cubic-bezier(0.25, 1, 0.5, 1) !important;
         }
 
