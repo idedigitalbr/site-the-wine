@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Pinyon+Script&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="style.css?v=20260720_v3">
+    <link rel="stylesheet" href="style.css?v=20260720_v4">
 </head>
 <body>
 
@@ -247,9 +247,9 @@
 
                 <!-- Coluna 2: Carta de Vinhos -->
                 <div class="mvv-column parallax-container">
-                    <img src="assets/Vinhos/garrafas-vinho-cartuxa-tapada.webp" class="mvv-bg-img parallax-img" data-parallax-speed="0.18" alt="Carta de Vinhos The Wine Experience">
+                    <img src="assets/Vinhos/garrafas-vinho-cartuxa-tapada.webp" class="mvv-bg-img parallax-img" data-parallax-speed="-0.25" alt="Carta de Vinhos The Wine Experience">
                     <div class="mvv-column-overlay"></div>
-                    <div class="mvv-card parallax-element" data-parallax-speed="-0.14">
+                    <div class="mvv-card parallax-element" data-parallax-speed="0.14">
                         <div class="mvv-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
                                 <!-- Garrafa maior -->
@@ -306,12 +306,12 @@
          SEÇÃO 4: HARMONIZAÇÕES EXCLUSIVAS (SPLIT LAYOUT)
          ======================================== -->
     <section id="gastronomia" class="split-section-v2 parallax-container">
-        <!-- Imagem lado Esquerdo - Parede de Vinhos -->
+        <!-- Imagem lado Esquerdo - Foto Harmonizações com Parallax Horizontal (Esquerda -> Direita) -->
         <div class="split-v2-img-left reveal-up">
-            <img src="assets/Vinhos/parede-vinhos-decoracao-use.png" class="parallax-img" data-parallax-speed="-0.38" alt="Adega com parede de vinhos e relógio vintage">
+            <img src="assets/S3 Harmonizacoes/S3 Harmonizacoes-Foto.webp" class="parallax-img-h" data-parallax-direction="horizontal" data-parallax-speed="0.45" alt="Harmonizações Exclusivas The Wine Experience">
         </div>
         
-        <!-- Conteúdo Central -->
+        <!-- Conteúdo Central / Lado Direito -->
         <div class="split-v2-content reveal-up parallax-element" data-parallax-speed="0.10" style="transition-delay: 0.1s;">
             <span class="split-tag">Harmonizações exclusivas</span>
             <h2 class="split-title">Cada detalhe pensado para <span class="italic-script">encantar</span> seu paladar</h2>
@@ -322,11 +322,6 @@
             <div style="align-self: flex-start;">
                 <button class="btn-gold-outline trigger-modal">Explorar Harmonizações</button>
             </div>
-        </div>
-
-        <!-- Imagem lado Direito - Taça de Vinho -->
-        <div class="split-v2-img-right reveal-up">
-            <img src="assets/Vinhos/objeto-taca-vinho-use.png" class="parallax-img" data-parallax-speed="0.38" alt="Taça de vinho tinto sendo servida">
         </div>
     </section>
 
@@ -887,16 +882,20 @@
 
                 const containers = document.querySelectorAll('.parallax-container');
                 containers.forEach(container => {
-                    const targets = container.querySelectorAll('.parallax-img, .parallax-element');
+                    const targets = container.querySelectorAll('.parallax-img, .parallax-img-h, .parallax-element');
                     targets.forEach(target => {
                         const speedAttr = target.dataset.parallaxSpeed || container.dataset.parallaxSpeed;
                         const speed = parseFloat(speedAttr) || 0.22;
+                        const direction = target.dataset.parallaxDirection || (target.classList.contains('parallax-img-h') ? 'horizontal' : 'vertical');
                         this.items.push({
                             container: container,
                             target: target,
                             speed: speed,
+                            direction: direction,
                             currentY: 0,
                             targetY: 0,
+                            currentX: 0,
+                            targetX: 0,
                             visible: true
                         });
                     });
@@ -944,8 +943,11 @@
                     // Distância do centro do container ao centro da janela
                     const distance = viewCenter - containerCenter;
 
-                    // Offset alvo com base na força definida
-                    item.targetY = distance * item.speed;
+                    if (item.direction === 'horizontal') {
+                        item.targetX = distance * item.speed;
+                    } else {
+                        item.targetY = distance * item.speed;
+                    }
                 });
             }
 
@@ -954,11 +956,15 @@
                     this.items.forEach(item => {
                         if (!item.visible) return;
 
-                        // Interpolação suave (Lerp com inércia para fluidez de luxo 60fps)
-                        item.currentY += (item.targetY - item.currentY) * 0.085;
-                        const roundedY = Math.round(item.currentY * 100) / 100;
-
-                        item.target.style.setProperty('--parallax-y', `${roundedY}px`);
+                        if (item.direction === 'horizontal') {
+                            item.currentX += (item.targetX - item.currentX) * 0.085;
+                            const roundedX = Math.round(item.currentX * 100) / 100;
+                            item.target.style.setProperty('--parallax-x', `${roundedX}px`);
+                        } else {
+                            item.currentY += (item.targetY - item.currentY) * 0.085;
+                            const roundedY = Math.round(item.currentY * 100) / 100;
+                            item.target.style.setProperty('--parallax-y', `${roundedY}px`);
+                        }
                     });
                     requestAnimationFrame(animate);
                 };
