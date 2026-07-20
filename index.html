@@ -79,7 +79,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="style.css?v=20260720_v13">
+    <link rel="stylesheet" href="style.css?v=20260720_v14">
 </head>
 <body>
 
@@ -1533,6 +1533,15 @@
                 requestAnimationFrame(animate);
             }
         }
+
+        // Inicializa o Parallax 3D
+        if (document.readyState === 'loading') {
+            window.addEventListener('DOMContentLoaded', () => new FluidParallax());
+        } else {
+            new FluidParallax();
+        }
+    })();
+    </script>
 
     <!-- ========================================
          FLOATING WHATSAPP CTA WIDGET (CRO)
