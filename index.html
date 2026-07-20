@@ -79,7 +79,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="style.css?v=20260720_v17">
+    <link rel="stylesheet" href="style.css?v=20260720_v18">
 </head>
 <body>
 
@@ -136,6 +136,7 @@
     <!-- Mobile Drawer Overlay & Drawer -->
     <div class="mobile-overlay" id="mobileOverlay"></div>
     <nav class="mobile-nav" id="mobileNav">
+        <button class="mobile-nav-close" id="mobileNavClose" aria-label="Fechar menu">&times;</button>
         <a href="#sobre" class="mobile-nav-link">Sobre</a>
         <a href="#experiencia" class="mobile-nav-link">Experiência</a>
         <a href="#gastronomia" class="mobile-nav-link">Gastronomia</a>
@@ -1230,6 +1231,7 @@
         // Mobile Nav Hamburger Toggle
         const hamburgerBtn = document.getElementById('hamburgerBtn');
         const mobileOverlay = document.getElementById('mobileOverlay');
+        const mobileNavClose = document.getElementById('mobileNavClose');
 
         function toggleMenu() {
             mobileNav.classList.toggle('open');
@@ -1249,8 +1251,9 @@
             }
         }
 
-        hamburgerBtn.addEventListener('click', toggleMenu);
-        mobileOverlay.addEventListener('click', toggleMenu);
+        if (hamburgerBtn) hamburgerBtn.addEventListener('click', toggleMenu);
+        if (mobileOverlay) mobileOverlay.addEventListener('click', toggleMenu);
+        if (mobileNavClose) mobileNavClose.addEventListener('click', toggleMenu);
 
         document.querySelectorAll('.mobile-nav-link').forEach(link => {
             link.addEventListener('click', toggleMenu);
