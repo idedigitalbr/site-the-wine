@@ -1055,14 +1055,16 @@
 
         .parallax-img-h {
             position: absolute !important;
-            top: -10% !important;
-            left: -25% !important;
-            width: 150% !important;
+            top: -5% !important;
+            left: 50% !important;
+            width: auto !important;
+            min-width: 220% !important;
             max-width: none !important;
-            height: 120% !important;
+            height: 110% !important;
             object-fit: cover !important;
+            object-position: center !important;
             z-index: 1;
-            transform: translate3d(var(--parallax-x, 0px), 0, 0) !important;
+            transform: translate3d(calc(-50% + var(--parallax-x, 0px)), 0, 0) !important;
             will-change: transform;
             pointer-events: none;
             transition: none !important;
@@ -1070,7 +1072,7 @@
 
         .reveal-up.parallax-img-h,
         .reveal-up.parallax-img-h.active {
-            transform: translate3d(var(--parallax-x, 0px), 0, 0) !important;
+            transform: translate3d(calc(-50% + var(--parallax-x, 0px)), 0, 0) !important;
             transition: opacity 1s cubic-bezier(0.25, 1, 0.5, 1) !important;
         }
 
