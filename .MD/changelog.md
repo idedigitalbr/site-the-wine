@@ -2,6 +2,10 @@
 
 ## 2026-07-29
 
+- **Atualização da Foto do Álbum (Galeria Rodapé)**:
+  - Alterada a imagem do item 4 da galeria para `assets/Experiencias/evento-degustacao-brindezada.jpg`.
+  - Atualizado `index.html` e realizada sincronização Git/GitHub (`c625ddc431918b9ffb057d063bb5749d46a89fcd`) e deploy automático na VPS (`https://thewine.suporteide.digital`).
+
 - **Correção de Carregamento da Foto "Noite de Degustação" (VPS)**:
   - Adicionada a imagem `assets/Experiencias/evento-degustacao-brinde.jpg` ao rastreamento do Git e repositório remoto.
   - Resolvido o erro de imagem não carregada (quadro preto/404) na VPS na seção Nossos Eventos & Experiências.
