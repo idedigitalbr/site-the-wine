@@ -2,6 +2,10 @@
 
 ## 2026-07-29
 
+- **Correção de Carregamento da Foto "Noite de Degustação" (VPS)**:
+  - Adicionada a imagem `assets/Experiencias/evento-degustacao-brinde.jpg` ao rastreamento do Git e repositório remoto.
+  - Resolvido o erro de imagem não carregada (quadro preto/404) na VPS na seção Nossos Eventos & Experiências.
+
 - **Aumento dos Textos e Títulos da Seção Eventos & Experiências (Accordion)**:
   - Títulos dos cards em hover/ativo aumentados de `1.5rem` (24px) para **`2.1rem`** (33.6px) com `font-weight: 600`.
   - Títulos colapsados aumentados de `1.15rem` (18px) para **`1.45rem`** (23px) com `font-weight: 500`.
