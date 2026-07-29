@@ -2303,31 +2303,7 @@
         }
 
         /* Floating buttons & WhatsApp link */
-        .whatsapp-float-btn {
-            position: fixed;
-            bottom: 2rem;
-            left: 2rem;
-            width: 48px;
-            height: 48px;
-            background-color: #25D366;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 90;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            transition: var(--transition-premium);
-        }
-
-        .whatsapp-float-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4);
-        }
-
-        .whatsapp-float-btn img {
-            width: 25px;
-            height: 25px;
-        }
+        /* (Consolidado na seção FLOATING WHATSAPP CTA WIDGET) */
 
         /* ========================================
            SCROLL REVEAL ANIMATIONS
@@ -3581,6 +3557,7 @@
             position: fixed;
             bottom: 28px;
             right: 28px;
+            left: auto;
             z-index: 999;
             width: 58px;
             height: 58px;
@@ -3654,8 +3631,10 @@
             .whatsapp-float-btn {
                 bottom: 20px;
                 right: 20px;
+                left: auto;
                 width: 52px;
                 height: 52px;
+                z-index: 999;
             }
             .whatsapp-float-btn svg {
                 width: 26px;
@@ -3663,5 +3642,19 @@
             }
             .whatsapp-float-tooltip {
                 display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .whatsapp-float-btn {
+                bottom: 16px;
+                right: 16px;
+                left: auto;
+                width: 48px;
+                height: 48px;
+            }
+            .whatsapp-float-btn svg {
+                width: 24px;
+                height: 24px;
             }
         }
