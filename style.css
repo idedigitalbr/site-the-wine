@@ -3678,4 +3678,12 @@
 .df-ui-btn:hover {
     color: #FFFFFF !important;
 }
+
+.menu-pdf-viewer {
+    width: 100vw !important;
+    height: 100vh !important;
+    border: none !important;
+    background: #060504 !important;
+    display: block !important;
+}
 
