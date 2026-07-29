@@ -2,6 +2,12 @@
 
 ## 2026-07-29
 
+- **Centralização Estrita da Imagem dos Cards de Experiências (Com e Sem Zoom)**:
+  - Adicionados `object-position: center center` e `transform-origin: center center` em `.tw-acc__link img` (`style.css`).
+  - Garantida a centralização perfeita do enquadramento e do ponto focal da foto tanto no estado normal (sem zoom) quanto no hover/expansão (com zoom).
+  - Atualizada a versão do CSS no `index.html` (`v=20260729_v43`) para forçar o cache buster nos navegadores.
+  - Sincronizado no GitHub (`8a22f117e465a339787df28ffed03b77908aed25`) e deploy automático na VPS (`https://thewine.suporteide.digital`).
+
 - **Atualização da Imagem de Fundo do Card "Noite de Degustação"**:
   - Imagem enviada convertida e otimizada para WebP (`assets/Experiencias/evento-degustacao-noite.webp`, 53 KB).
   - Atualizado `index.html` (card da seção Nossos Eventos & Experiências).
