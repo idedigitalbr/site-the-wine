@@ -27,6 +27,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Pinyon+Script&display=swap" rel="stylesheet">
 
+    <!-- PDF.js for Custom PDF Rendering & Custom Scrollbars -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
     <!-- Structured Data (Schema.org JSON-LD) -->
     <script type="application/ld+json">
     {
@@ -1111,7 +1114,12 @@
                 </svg>
             </button>
             <div class="menu-modal-body" id="menuModalBody">
-                <iframe src="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf#toolbar=1&navpanes=0&view=FitH&zoom=page-width" class="menu-pdf-viewer" title="Cardápio The Wine"></iframe>
+                <div class="menu-pdf-container" id="menuPdfContainer">
+                    <div class="menu-pdf-loading" id="menuPdfLoading">
+                        <div class="pdf-spinner"></div>
+                        <p>Carregando Cardápio The Wine...</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1241,13 +1249,73 @@
         const menuModal = document.getElementById('menuModal');
         const menuModalCloseBtn = document.getElementById('menuModalCloseBtn');
 
+        // Menu Modal Custom PDF Renderer & Controls
+        let isPdfRendering = false;
+
+        async function initCustomPdfViewer() {
+            const container = document.getElementById('menuPdfContainer');
+            if (!container) return;
+
+            if (container.querySelectorAll('canvas').length > 0 || isPdfRendering) return;
+            isPdfRendering = true;
+
+            if (typeof pdfjsLib === 'undefined') {
+                container.innerHTML = '<iframe src="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf#toolbar=1&navpanes=0&view=Fit" class="menu-pdf-viewer" title="Cardápio The Wine"></iframe>';
+                isPdfRendering = false;
+                return;
+            }
+
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+            try {
+                const pdf = await pdfjsLib.getDocument('assets/CardapioMenu/CARDAPIO_THE_WINE.pdf').promise;
+                const loadingEl = document.getElementById('menuPdfLoading');
+                if (loadingEl) loadingEl.remove();
+
+                const dpr = window.devicePixelRatio || 1;
+                const containerWidth = Math.min(container.clientWidth - 30, 960);
+                const containerHeight = window.innerHeight * 0.90;
+
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const unscaledViewport = page.getViewport({ scale: 1.0 });
+
+                    // Scale to fit page height (Ajustar à página)
+                    const scaleH = containerHeight / unscaledViewport.height;
+                    const scaleW = containerWidth / unscaledViewport.width;
+                    const scale = Math.min(scaleH, scaleW);
+
+                    const viewport = page.getViewport({ scale: scale });
+
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'pdf-page-canvas';
+                    canvas.width = Math.floor(viewport.width * dpr);
+                    canvas.height = Math.floor(viewport.height * dpr);
+                    canvas.style.width = Math.floor(viewport.width) + 'px';
+                    canvas.style.height = Math.floor(viewport.height) + 'px';
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.scale(dpr, dpr);
+
+                    container.appendChild(canvas);
+
+                    await page.render({
+                        canvasContext: ctx,
+                        viewport: viewport
+                    }).promise;
+                }
+            } catch (err) {
+                console.error('PDF.js Error:', err);
+                container.innerHTML = '<iframe src="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf#toolbar=1&navpanes=0&view=Fit" class="menu-pdf-viewer" title="Cardápio The Wine"></iframe>';
+            } finally {
+                isPdfRendering = false;
+            }
+        }
+
         function openMenuModal() {
             const modal = document.getElementById('menuModal');
             if (!modal) return;
-            const iframe = modal.querySelector('iframe');
-            if (iframe && !iframe.src.includes('#view=FitH')) {
-                iframe.src = 'assets/CardapioMenu/CARDAPIO_THE_WINE.pdf#toolbar=1&navpanes=0&view=FitH&zoom=page-width';
-            }
+
             modal.style.display = 'flex';
             modal.style.opacity = '1';
             modal.style.visibility = 'visible';
@@ -1257,6 +1325,8 @@
             document.body.classList.add('menu-modal-open');
             document.body.style.overflow = 'hidden';
             document.documentElement.style.overflow = 'hidden';
+
+            initCustomPdfViewer();
         }
         window.openMenuModal = openMenuModal;
 
