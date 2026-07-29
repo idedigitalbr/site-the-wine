@@ -2,6 +2,12 @@
 
 ## 2026-07-29
 
+- **Aumento dos Textos e Títulos da Seção Eventos & Experiências (Accordion)**:
+  - Títulos dos cards em hover/ativo aumentados de `1.5rem` (24px) para **`2.1rem`** (33.6px) com `font-weight: 600`.
+  - Títulos colapsados aumentados de `1.15rem` (18px) para **`1.45rem`** (23px) com `font-weight: 500`.
+  - Subtítulos em amarelo/dourado aumentados de `0.73rem` (11.6px) para **`0.95rem`** (15.2px).
+  - Descrições completas dentro dos cards expandidos aumentadas de `0.82rem` (13px) para **`1.05rem`** (16.8px).
+
 - **Padronização Global Estrita de Headlines e Textos de Apoio**:
   - Padronizadas todas as headlines/títulos principais de seções para **`41px !important`** (`font-weight: 600`, `letter-spacing: 0.04em`, *Cormorant Garamond*).
   - Padronizados todos os textos de apoio e descrições para **`17px !important`** (`font-weight: 400`, `line-height: 1.7`, *Albert Sans*).
