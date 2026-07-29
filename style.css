@@ -3596,4 +3596,86 @@
                 font-size: 0.75rem !important;
             }
         }
+
+/* =============================================================
+   MINIMALIST FULLSCREEN FLIPBOOK MODAL (#menuModal)
+   ============================================================= */
+.menu-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(6, 5, 4, 0.96) !important;
+    backdrop-filter: blur(15px) !important;
+    z-index: 999999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.menu-modal-overlay.active {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.menu-modal-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 25px !important;
+    font-size: 40px !important;
+    line-height: 1 !important;
+    color: var(--wine-gold, #d29a3c) !important;
+    cursor: pointer !important;
+    z-index: 1000005 !important;
+    transition: all 0.25s ease !important;
+    opacity: 0.85;
+    font-weight: 300;
+}
+
+.menu-modal-close:hover {
+    opacity: 1 !important;
+    color: #FFFFFF !important;
+    transform: scale(1.15) rotate(90deg);
+}
+
+.menu-modal-body {
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+#df_cardapio_book {
+    width: 100vw !important;
+    height: 100vh !important;
+}
+
+/* DearFlip Minimalist Controls & Theme Overrides */
+.df-container {
+    background: transparent !important;
+}
+
+.df-ui-wrapper, .df-ui-controls {
+    background: rgba(11, 10, 8, 0.85) !important;
+    backdrop-filter: blur(10px) !important;
+    border-top: 1px solid rgba(210, 154, 60, 0.3) !important;
+}
+
+.df-ui-btn {
+    color: var(--wine-gold, #d29a3c) !important;
+}
+
+.df-ui-btn:hover {
+    color: #FFFFFF !important;
+}
 

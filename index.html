@@ -1107,28 +1107,14 @@
     </div>
 
     <!-- ========================================
-           CARDÁPIO POPUP MODAL (DEARFLIP 3D PDF FLIPBOOK)
+           CARDÁPIO POPUP MODAL (MINIMALIST FULLSCREEN FLIPBOOK)
            ======================================== -->
-    <div class="modal-overlay" id="menuModal">
-        <div class="modal-card" style="text-align: center; padding: 2rem 1.8rem; max-width: 1000px; width: 95%; max-height: 92vh; display: flex; flex-direction: column;">
-            <span class="modal-close-btn" id="menuModalCloseBtn">&times;</span>
-            
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.8rem; border-bottom: 1px solid rgba(221, 185, 118, 0.2); padding-bottom: 0.8rem; text-align: left;">
-                <div>
-                    <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 500; color: var(--wine-gold); margin: 0; letter-spacing: 0.03em;">Cardápio The Wine</h3>
-                    <p style="font-family: 'Albert Sans', sans-serif; font-size: 0.88rem; color: rgba(255, 255, 255, 0.75); margin: 0.2rem 0 0 0; font-weight: 300;">Passe as páginas para explorar nossa alta gastronomia e carta de vinhos.</p>
-                </div>
-                <a href="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf" download="CARDAPIO_THE_WINE.pdf" target="_blank" class="btn-header-reserve" style="font-size: 10px; padding: 0.45rem 1rem;">
-                    📥 BAIXAR PDF
-                </a>
-            </div>
-            
-            <div id="df_cardapio_container" style="flex: 1; width: 100%; min-height: 540px; border-radius: 6px; overflow: hidden; background: #0b0a08; border: 1px solid rgba(221, 185, 118, 0.25);">
-                <div class="_df_book" id="df_cardapio_book" source="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf" webgl="true" height="540"></div>
-            </div>
+    <div class="modal-overlay menu-modal-overlay" id="menuModal">
+        <span class="menu-modal-close" id="menuModalCloseBtn" aria-label="Fechar Cardápio">&times;</span>
+        <div class="menu-modal-body">
+            <div class="_df_book" id="df_cardapio_book" source="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf" webgl="true"></div>
         </div>
     </div>
-
     <!-- Success Toast Notification -->
     <div class="toast-notification" id="toastNotification">
         <div class="toast-icon">✓</div>
@@ -1149,7 +1135,7 @@
             let lastVideoTime = 0;
             const resetHeroLogoAnim = () => {
                 heroContent.style.animation = 'none';
-                void heroContent.offsetHeight; // force reflow
+                void heroContent.offsetHeight;
                 heroContent.style.animation = '';
             };
             heroVideo.addEventListener('timeupdate', () => {
@@ -1164,7 +1150,6 @@
             });
         }
 
-        // Navbar Scrolled State
         // Navbar Scrolled & Autohide State
         const navbar = document.getElementById('navbar');
         const mobileNav = document.getElementById('mobileNav');
@@ -1175,20 +1160,16 @@
             if (!isTicking) {
                 window.requestAnimationFrame(() => {
                     const currentScrollY = window.scrollY;
-
-                    // 1. Estilização de fundo (scrolled)
                     if (currentScrollY > 60) {
-                        navbar.classList.add('scrolled');
+                        if (navbar) navbar.classList.add('scrolled');
                     } else {
-                        navbar.classList.remove('scrolled');
+                        if (navbar) navbar.classList.remove('scrolled');
                     }
 
-                    // 2. Ocultar/Exibir baseado na direção do scroll
-                    // Só oculta se rolar abaixo do limite inicial para evitar oscilações no topo
-                    if (currentScrollY > lastScrollY && currentScrollY > 120 && !mobileNav.classList.contains('open')) {
-                        navbar.classList.add('header-hidden');
+                    if (currentScrollY > lastScrollY && currentScrollY > 120 && mobileNav && !mobileNav.classList.contains('open')) {
+                        if (navbar) navbar.classList.add('header-hidden');
                     } else {
-                        navbar.classList.remove('header-hidden');
+                        if (navbar) navbar.classList.remove('header-hidden');
                     }
 
                     lastScrollY = currentScrollY;
@@ -1204,20 +1185,21 @@
         const mobileNavClose = document.getElementById('mobileNavClose');
 
         function toggleMenu() {
-            mobileNav.classList.toggle('open');
-            mobileOverlay.classList.toggle('visible');
-            const isOpen = mobileNav.classList.contains('open');
+            if (mobileNav) mobileNav.classList.toggle('open');
+            if (mobileOverlay) mobileOverlay.classList.toggle('visible');
+            const isOpen = mobileNav && mobileNav.classList.contains('open');
             
-            // Hamburger icon bars transition
-            const spans = hamburgerBtn.querySelectorAll('span');
-            if (isOpen) {
-                spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                spans[1].style.opacity = '0';
-                spans[2].style.transform = 'rotate(-45deg) translate(5px, -5px)';
-            } else {
-                spans[0].style.transform = 'none';
-                spans[1].style.opacity = '1';
-                spans[2].style.transform = 'none';
+            if (hamburgerBtn) {
+                const spans = hamburgerBtn.querySelectorAll('span');
+                if (isOpen) {
+                    if (spans[0]) spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                    if (spans[1]) spans[1].style.opacity = '0';
+                    if (spans[2]) spans[2].style.transform = 'rotate(-45deg) translate(5px, -5px)';
+                } else {
+                    if (spans[0]) spans[0].style.transform = 'none';
+                    if (spans[1]) spans[1].style.opacity = '1';
+                    if (spans[2]) spans[2].style.transform = 'none';
+                }
             }
         }
 
@@ -1229,71 +1211,78 @@
             link.addEventListener('click', toggleMenu);
         });
 
-        // Modal reservation triggers
+        // Booking Modal reservation triggers
         const bookingModal = document.getElementById('bookingModal');
         const modalCloseBtn = document.getElementById('modalCloseBtn');
         const triggers = document.querySelectorAll('.trigger-modal');
 
-        triggers.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                bookingModal.classList.add('active');
-            });
-        });
-
-        modalCloseBtn.addEventListener('click', () => {
-            bookingModal.classList.remove('active');
-        });
-
-        bookingModal.addEventListener('click', (e) => {
-            if (e.target === bookingModal) {
-                bookingModal.classList.remove('active');
-            }
-        });
-
-        // Menu Modal Trigger logic
-        const menuModal = document.getElementById('menuModal');
-        const menuModalCloseBtn = document.getElementById('menuModalCloseBtn');
-        const menuTriggers = document.querySelectorAll('.trigger-menu-modal');
-
-        if (menuModal) {
-            menuTriggers.forEach(btn => {
+        if (bookingModal) {
+            triggers.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    menuModal.classList.add('active');
+                    bookingModal.classList.add('active');
                 });
             });
 
-            if (menuModalCloseBtn) {
-                menuModalCloseBtn.addEventListener('click', () => {
-                    menuModal.classList.remove('active');
+            if (modalCloseBtn) {
+                modalCloseBtn.addEventListener('click', () => {
+                    bookingModal.classList.remove('active');
                 });
             }
 
-            menuModal.addEventListener('click', (e) => {
-                if (e.target === menuModal) {
-                    menuModal.classList.remove('active');
+            bookingModal.addEventListener('click', (e) => {
+                if (e.target === bookingModal) {
+                    bookingModal.classList.remove('active');
                 }
             });
         }
 
-        // Booking Form Submission & Toast success notification
-        const modalBookingForm = document.getElementById('modalBookingForm');
-        const toastNotification = document.getElementById('toastNotification');
+        // Menu Modal (Minimalist Fullscreen PDF 3D Flipbook)
+        const menuModal = document.getElementById('menuModal');
+        const menuModalCloseBtn = document.getElementById('menuModalCloseBtn');
+        const menuTriggers = document.querySelectorAll('.trigger-menu-modal');
 
-        if (modalBookingForm) {
-            modalBookingForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                bookingModal.classList.remove('active');
-                if (toastNotification) toastNotification.classList.add('visible');
+        window.dFlipLocation = "https://cdn.jsdelivr.net/npm/dflip@1.7.27/";
+
+        if (menuModal) {
+            function openMenuModal() {
+                menuModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
                 setTimeout(() => {
-                    if (toastNotification) toastNotification.classList.remove('visible');
-                }, 4500);
-                modalBookingForm.reset();
+                    window.dispatchEvent(new Event('resize'));
+                }, 100);
+            }
+
+            function closeMenuModal() {
+                menuModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            menuTriggers.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    openMenuModal();
+                });
+            });
+
+            if (menuModalCloseBtn) {
+                menuModalCloseBtn.addEventListener('click', closeMenuModal);
+            }
+
+            menuModal.addEventListener('click', (e) => {
+                if (e.target === menuModal || e.target.classList.contains('menu-modal-body')) {
+                    closeMenuModal();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && menuModal.classList.contains('active')) {
+                    closeMenuModal();
+                }
             });
         }
 
-        // Intersection Observer for scroll animations (fade-in-up effect)
+        // Intersection Observer for scroll animations
         const revealObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -1310,8 +1299,6 @@
             revealObserver.observe(element);
         });
 
-
-
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
@@ -1325,6 +1312,7 @@
                 }
             });
         });
+
         // Navigation Scroll Spy
         const sections = document.querySelectorAll('section[id], footer[id], div[id].tw-acc-header');
         const navLinks = document.querySelectorAll('.nav-link');
@@ -1339,14 +1327,12 @@
                 const sectionId = section.getAttribute('id');
 
                 if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
-                    // Update Desktop Links
                     navLinks.forEach(link => {
                         link.classList.remove('active');
                         if (link.getAttribute('href') === `#${sectionId}`) {
                             link.classList.add('active');
                         }
                     });
-                    // Update Mobile Links
                     mobileNavLinks.forEach(link => {
                         link.classList.remove('active');
                         if (link.getAttribute('href') === `#${sectionId}`) {
@@ -1362,9 +1348,7 @@
         });
         window.addEventListener('load', scrollSpy);
 
-        // =============================================================
-        // Fluid Parallax Engine (60fps Ultra Smooth Inertia Lerp Physics)
-        // =============================================================
+        // Fluid Parallax Engine
         class FluidParallax {
             constructor(intensity = 0.22) {
                 this.intensity = intensity;
@@ -1404,8 +1388,6 @@
                 this.startAnimationLoop();
             }
 
-
-
             updateTargets() {
                 const viewCenter = window.innerHeight / 2;
 
@@ -1443,7 +1425,6 @@
             }
         }
 
-        // Inicializa o Parallax 3D
         window.addEventListener('DOMContentLoaded', () => {
             new FluidParallax();
         });
