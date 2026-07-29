@@ -27,6 +27,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Pinyon+Script&display=swap" rel="stylesheet">
 
+    <!-- DearFlip 3D Flipbook PDF Viewer -->
+    <link href="https://cdn.jsdelivr.net/npm/dflip@1.7.27/css/dflip.min.css" rel="stylesheet" type="text/css">
+    <link href="https://cdn.jsdelivr.net/npm/dflip@1.7.27/css/themify-icons.min.css" rel="stylesheet" type="text/css">
+
     <!-- Structured Data (Schema.org JSON-LD) -->
     <script type="application/ld+json">
     {
@@ -1103,29 +1107,25 @@
     </div>
 
     <!-- ========================================
-           CARDÁPIO POPUP MODAL (GLASSMORPHISM)
+           CARDÁPIO POPUP MODAL (DEARFLIP 3D PDF FLIPBOOK)
            ======================================== -->
     <div class="modal-overlay" id="menuModal">
-        <div class="modal-card" style="text-align: center; padding: 3rem 2rem; max-width: 680px; width: 92%; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-card" style="text-align: center; padding: 2rem 1.8rem; max-width: 1000px; width: 95%; max-height: 92vh; display: flex; flex-direction: column;">
             <span class="modal-close-btn" id="menuModalCloseBtn">&times;</span>
             
-            <div class="modal-icon-wrap" style="display: flex; justify-content: center; margin-bottom: 0.8rem;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width: 42px; height: 42px; color: var(--wine-gold);">
-                    <path d="M12 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" />
-                    <path d="M3 16c0-4.97 4.03-9 9-9s9 4.03 9 9" />
-                    <path d="M2 16h20" />
-                    <path d="M4 16v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1" />
-                </svg>
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.8rem; border-bottom: 1px solid rgba(221, 185, 118, 0.2); padding-bottom: 0.8rem; text-align: left;">
+                <div>
+                    <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 500; color: var(--wine-gold); margin: 0; letter-spacing: 0.03em;">Cardápio The Wine</h3>
+                    <p style="font-family: 'Albert Sans', sans-serif; font-size: 0.88rem; color: rgba(255, 255, 255, 0.75); margin: 0.2rem 0 0 0; font-weight: 300;">Passe as páginas para explorar nossa alta gastronomia e carta de vinhos.</p>
+                </div>
+                <a href="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf" download="CARDAPIO_THE_WINE.pdf" target="_blank" class="btn-header-reserve" style="font-size: 10px; padding: 0.45rem 1rem;">
+                    📥 BAIXAR PDF
+                </a>
             </div>
             
-            <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 500; color: var(--wine-gold); margin-bottom: 0.5rem; letter-spacing: 0.03em;">Nosso Cardápio</h3>
-            <p style="font-family: 'Albert Sans', sans-serif; font-size: 0.95rem; color: rgba(255, 255, 255, 0.85); font-weight: 300; margin-bottom: 1.5rem; letter-spacing: 0.02em;">Confira a seleção autoral da alta gastronomia The Wine Experience.</p>
-            
-            <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(221, 185, 118, 0.25); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: center; align-items: center;">
-                <img src="assets/CardapioMenu/MENU-THE-WINE-MOCKUP.webp" alt="Cardápio Oficial The Wine Experience" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 8px 30px rgba(0,0,0,0.6);">
+            <div id="df_cardapio_container" style="flex: 1; width: 100%; min-height: 540px; border-radius: 6px; overflow: hidden; background: #0b0a08; border: 1px solid rgba(221, 185, 118, 0.25);">
+                <div class="_df_book" id="df_cardapio_book" source="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf" webgl="true" height="540"></div>
             </div>
-            
-            <button type="button" class="btn-gold-outline" onclick="document.getElementById('menuModal').classList.remove('active')" style="margin: 0 auto; padding: 0.7rem 2.4rem; font-size: 0.8rem; letter-spacing: 0.18em;">FECHAR CARDÁPIO</button>
         </div>
     </div>
 
@@ -1404,6 +1404,8 @@
                 this.startAnimationLoop();
             }
 
+
+
             updateTargets() {
                 const viewCenter = window.innerHeight / 2;
 
@@ -1447,7 +1449,9 @@
         });
     </script>
 
-
+    <!-- jQuery & DearFlip 3D Flipbook PDF Engine -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dflip@1.7.27/js/dflip.min.js"></script>
 
 </body>
 </html>
