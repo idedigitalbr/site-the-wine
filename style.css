@@ -79,11 +79,12 @@
             font-size: 3.8rem;
             color: var(--wine-gold);
             font-style: normal;
-            font-weight: 400;
+            font-weight: 700;
             vertical-align: middle;
             margin: 0 0.15em;
             line-height: 0.5;
             display: inline-block;
+            text-shadow: 0 0 1px currentColor, 0 2px 12px rgba(0, 0, 0, 0.8);
         }
 
         /* ========================================
@@ -716,6 +717,7 @@
             font-weight: 600 !important;
             margin: 0.2rem 0;
             text-transform: uppercase;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 0, 0, 0.9);
         }
 
         .divider-diamond {
@@ -1255,6 +1257,7 @@
             color: var(--wine-white);
             margin-bottom: 1rem;
             line-height: 1.2;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 0, 0, 0.9);
         }
 
         .split-text {
@@ -1312,6 +1315,7 @@
             margin-bottom: 1.2rem;
             line-height: 1.15;
             white-space: normal !important;
+            text-shadow: 0 0 1px #15110C, 0 2px 8px rgba(21, 17, 12, 0.25);
         }
 
         .cardapio-left-content p {
@@ -1434,6 +1438,7 @@
             letter-spacing: 0.04em !important;
             color: var(--wine-white);
             line-height: 1.15;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 0, 0, 0.9);
         }
 
         .tw-acc-header__title em {
@@ -1848,6 +1853,7 @@
             color: var(--wine-white);
             margin-bottom: 1.2rem;
             line-height: 1.25;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 0, 0, 0.9);
         }
 
         .reserva-center-box p {
@@ -1902,6 +1908,7 @@
             font-size: 2.6rem;
             color: var(--wine-white);
             margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 0, 0, 0.9);
         }
 
         .instagram-handle {
@@ -3636,6 +3643,15 @@
     scrollbar-color: rgba(210, 154, 60, 0.4) #0e0c0a;
 }
 
+/* Strict Body/HTML Scroll Lock when Menu Modal is active */
+html.menu-modal-open,
+body.menu-modal-open {
+    overflow: hidden !important;
+    height: 100vh !important;
+    touch-action: none !important;
+    overscroll-behavior: contain !important;
+}
+
 /* =============================================================
    ELEGANT FULL-HEIGHT CENTERED PDF POPUP MODAL (#menuModal)
    ============================================================= */
@@ -3645,9 +3661,9 @@
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    background: rgba(6, 5, 4, 0.88) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
+    background: rgba(4, 3, 2, 0.93) !important;
+    backdrop-filter: blur(28px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(140%) !important;
     z-index: 999999 !important;
     display: flex !important;
     align-items: center !important;

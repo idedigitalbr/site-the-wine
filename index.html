@@ -1253,7 +1253,10 @@
             modal.style.visibility = 'visible';
             modal.style.pointerEvents = 'auto';
             modal.classList.add('active');
+            document.documentElement.classList.add('menu-modal-open');
+            document.body.classList.add('menu-modal-open');
             document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
         }
         window.openMenuModal = openMenuModal;
 
@@ -1265,7 +1268,10 @@
             modal.style.visibility = 'hidden';
             modal.style.pointerEvents = 'none';
             modal.classList.remove('active');
+            document.documentElement.classList.remove('menu-modal-open');
+            document.body.classList.remove('menu-modal-open');
             document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
         }
         window.closeMenuModal = closeMenuModal;
 
