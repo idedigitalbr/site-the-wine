@@ -1104,9 +1104,14 @@
            ======================================== -->
     <div class="modal-overlay menu-modal-overlay" id="menuModal">
         <div class="menu-modal-card">
-            <span class="menu-modal-close" id="menuModalCloseBtn" onclick="closeMenuModal()" aria-label="Fechar Cardápio">&times;</span>
+            <button class="menu-modal-close" id="menuModalCloseBtn" onclick="closeMenuModal()" aria-label="Fechar Cardápio">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
             <div class="menu-modal-body" id="menuModalBody">
-                <iframe src="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf#toolbar=1&navpanes=0&view=Fit&zoom=Fit" class="menu-pdf-viewer" title="Cardápio The Wine"></iframe>
+                <iframe src="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf#toolbar=1&navpanes=0&view=FitH&zoom=page-width" class="menu-pdf-viewer" title="Cardápio The Wine"></iframe>
             </div>
         </div>
     </div>
@@ -1239,6 +1244,10 @@
         function openMenuModal() {
             const modal = document.getElementById('menuModal');
             if (!modal) return;
+            const iframe = modal.querySelector('iframe');
+            if (iframe && !iframe.src.includes('#view=FitH')) {
+                iframe.src = 'assets/CardapioMenu/CARDAPIO_THE_WINE.pdf#toolbar=1&navpanes=0&view=FitH&zoom=page-width';
+            }
             modal.style.display = 'flex';
             modal.style.opacity = '1';
             modal.style.visibility = 'visible';

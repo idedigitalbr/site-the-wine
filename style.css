@@ -3608,7 +3608,36 @@
         }
 
 /* =============================================================
-   ELEGANT CENTERED PDF POPUP MODAL (#menuModal)
+   CUSTOM MINIMALIST WINE SCROLLBARS
+   ============================================================= */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0e0c0a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(210, 154, 60, 0.4);
+    border-radius: 4px;
+    border: 1px solid rgba(210, 154, 60, 0.2);
+    transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--wine-gold, #d29a3c);
+    box-shadow: 0 0 12px rgba(210, 154, 60, 0.6);
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(210, 154, 60, 0.4) #0e0c0a;
+}
+
+/* =============================================================
+   ELEGANT FULL-HEIGHT CENTERED PDF POPUP MODAL (#menuModal)
    ============================================================= */
 .menu-modal-overlay {
     position: fixed !important;
@@ -3627,7 +3656,7 @@
     visibility: hidden;
     pointer-events: none;
     transition: opacity 0.35s ease, visibility 0.35s ease;
-    padding: 1.5rem !important;
+    padding: 10px 1.8rem !important;
     margin: 0 !important;
 }
 
@@ -3639,13 +3668,13 @@
 
 .menu-modal-card {
     width: 100%;
-    max-width: 960px;
-    height: 88vh;
-    max-height: 900px;
+    max-width: 1080px;
+    height: 98vh;
+    max-height: 98vh;
     background: #0e0c0a;
-    border: 1px solid rgba(210, 154, 60, 0.35);
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(210, 154, 60, 0.15);
-    border-radius: 8px;
+    border: 1px solid rgba(210, 154, 60, 0.4);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(210, 154, 60, 0.2);
+    border-radius: 10px;
     display: flex;
     flex-direction: column;
     overflow: visible !important;
@@ -3654,31 +3683,36 @@
 
 .menu-modal-close {
     position: absolute !important;
-    top: -18px !important;
-    right: -18px !important;
-    width: 44px !important;
-    height: 44px !important;
-    background: #12100d !important;
-    border: 1px solid var(--wine-gold, #d29a3c) !important;
+    top: -20px !important;
+    right: -28px !important;
+    width: 52px !important;
+    height: 52px !important;
+    background: #14110e !important;
+    border: 2px solid var(--wine-gold, #d29a3c) !important;
     border-radius: 50% !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 32px !important;
-    line-height: 1 !important;
     color: var(--wine-gold, #d29a3c) !important;
     cursor: pointer !important;
     z-index: 1000010 !important;
-    transition: all 0.25s ease !important;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.7);
-    opacity: 0.95;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    box-shadow: 0 0 20px rgba(210, 154, 60, 0.55), 0 0 10px rgba(210, 154, 60, 0.3), 0 6px 20px rgba(0, 0, 0, 0.8);
+    opacity: 1 !important;
+    outline: none !important;
+    padding: 0 !important;
 }
 
 .menu-modal-close:hover {
-    opacity: 1 !important;
-    color: #FFFFFF !important;
+    color: #0e0c0a !important;
     background: var(--wine-gold, #d29a3c) !important;
     transform: scale(1.12) rotate(90deg);
+    box-shadow: 0 0 28px rgba(210, 154, 60, 0.85), 0 0 14px rgba(210, 154, 60, 0.6), 0 8px 25px rgba(0, 0, 0, 0.9);
+}
+
+.menu-modal-close svg {
+    stroke: currentColor;
+    transition: stroke 0.3s ease;
 }
 
 .menu-modal-body {
@@ -3704,18 +3738,17 @@
 
 @media (max-width: 768px) {
     .menu-modal-overlay {
-        padding: 0.5rem !important;
+        padding: 0.3rem !important;
     }
     .menu-modal-card {
-        height: 92vh;
-        max-height: 92vh;
+        height: 96vh;
+        max-height: 96vh;
     }
     .menu-modal-close {
-        top: -14px !important;
-        right: -10px !important;
-        width: 38px !important;
-        height: 38px !important;
-        font-size: 26px !important;
+        top: -16px !important;
+        right: -12px !important;
+        width: 44px !important;
+        height: 44px !important;
     }
 }
 
