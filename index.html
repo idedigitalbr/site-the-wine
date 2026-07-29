@@ -98,7 +98,8 @@
                 <li><a href="#gastronomia" class="nav-link">Gastronomia</a></li>
                 <li><a href="#vinhos" class="nav-link">Vinhos</a></li>
                 <li><a href="#eventos" class="nav-link">Eventos</a></li>
-                <li><a href="#" class="nav-link trigger-modal">Reservas</a></li>
+                <li><a href="#reserva" class="nav-link">Reservas</a></li>
+                <li><a href="#galeria" class="nav-link">Galeria</a></li>
                 <li><a href="#localizacao" class="nav-link">Contato e Localização</a></li>
             </ul>
 
@@ -142,6 +143,8 @@
         <a href="#gastronomia" class="mobile-nav-link">Gastronomia</a>
         <a href="#vinhos" class="mobile-nav-link">Vinhos</a>
         <a href="#eventos" class="mobile-nav-link">Eventos</a>
+        <a href="#reserva" class="mobile-nav-link">Reservas</a>
+        <a href="#galeria" class="mobile-nav-link">Galeria</a>
         <a href="#localizacao" class="mobile-nav-link">Contato e Localização</a>
         <button class="mobile-nav-link trigger-modal" style="color: var(--wine-gold); margin-top: 1rem; text-align: left;">Reservar Mesa</button>
         <div class="mobile-socials" style="margin-top: auto; display: flex; gap: 1.5rem; padding-top: 2rem;">
@@ -1397,7 +1400,7 @@
             });
         });
         // Navigation Scroll Spy
-        const sections = document.querySelectorAll('section[id]');
+        const sections = document.querySelectorAll('section[id], footer[id], div[id].tw-acc-header');
         const navLinks = document.querySelectorAll('.nav-link');
         const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
 
