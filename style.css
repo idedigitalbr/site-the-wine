@@ -2906,7 +2906,7 @@
             max-width: 1440px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: 1.05fr 0.85fr 1.1fr 1.8fr 0.8fr 1.05fr;
+            grid-template-columns: 1.1fr 1.2fr 1.8fr 0.9fr 1.1fr;
             gap: 0;
             min-height: 280px;
             align-items: center;
@@ -2927,10 +2927,6 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-        }
-
-        .footer-col-links {
-            border-right: 1px solid rgba(210, 154, 60, 0.22);
         }
 
         .footer-col-contact {
@@ -3444,7 +3440,6 @@
 
             .footer-col,
             .footer-col-logo,
-            .footer-col-links,
             .footer-col-contact,
             .footer-col-map,
             .footer-col-hours,
