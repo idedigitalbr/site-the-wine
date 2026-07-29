@@ -243,11 +243,34 @@
          }
 
          .header-right-side {
-             display: flex;
-             align-items: center;
-             gap: 1.8rem;
-             justify-self: end;
-         }
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            justify-self: end;
+        }
+
+        .btn-header-reserve {
+            background: transparent;
+            border: 1px solid var(--wine-gold);
+            color: var(--wine-gold);
+            padding: 0.45rem 1.1rem;
+            font-family: var(--font-body);
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .btn-header-reserve:hover {
+            background: var(--wine-gold);
+            color: var(--wine-black);
+            box-shadow: 0 0 15px rgba(221, 185, 118, 0.4);
+            transform: translateY(-1px);
+        }
 
          .header-separator {
              color: rgba(255, 255, 255, 0.25);
