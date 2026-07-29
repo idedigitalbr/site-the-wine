@@ -3593,7 +3593,7 @@
         }
 
 /* =============================================================
-   MINIMALIST FULLSCREEN FLIPBOOK MODAL (#menuModal)
+   ELEGANT CENTERED PDF POPUP MODAL (#menuModal)
    ============================================================= */
 .menu-modal-overlay {
     position: fixed !important;
@@ -3601,8 +3601,9 @@
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    background: rgba(6, 5, 4, 0.96) !important;
-    backdrop-filter: blur(15px) !important;
+    background: rgba(6, 5, 4, 0.88) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
     z-index: 999999 !important;
     display: flex !important;
     align-items: center !important;
@@ -3611,7 +3612,7 @@
     visibility: hidden;
     pointer-events: none;
     transition: opacity 0.35s ease, visibility 0.35s ease;
-    padding: 0 !important;
+    padding: 1.5rem !important;
     margin: 0 !important;
 }
 
@@ -3621,66 +3622,125 @@
     pointer-events: auto !important;
 }
 
+.menu-modal-card {
+    width: 100%;
+    max-width: 960px;
+    height: 88vh;
+    max-height: 900px;
+    background: #0e0c0a;
+    border: 1px solid rgba(210, 154, 60, 0.35);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(210, 154, 60, 0.15);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.menu-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: rgba(18, 16, 13, 0.95);
+    border-bottom: 1px solid rgba(210, 154, 60, 0.25);
+    flex-shrink: 0;
+}
+
+.menu-modal-header__title h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--wine-gold, #d29a3c);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.menu-modal-header__title span {
+    font-family: 'Albert Sans', sans-serif;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 300;
+    display: block;
+    margin-top: 0.15rem;
+}
+
+.menu-modal-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.menu-modal-download-btn {
+    font-family: 'Albert Sans', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--wine-gold, #d29a3c);
+    border: 1px solid rgba(210, 154, 60, 0.5);
+    padding: 0.45rem 1rem;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    background: rgba(210, 154, 60, 0.08);
+}
+
+.menu-modal-download-btn:hover {
+    background: var(--wine-gold, #d29a3c);
+    color: #0e0c0a;
+}
+
 .menu-modal-close {
-    position: fixed !important;
-    top: 20px !important;
-    right: 25px !important;
-    font-size: 40px !important;
-    line-height: 1 !important;
-    color: var(--wine-gold, #d29a3c) !important;
-    cursor: pointer !important;
-    z-index: 1000005 !important;
-    transition: all 0.25s ease !important;
+    font-size: 32px;
+    line-height: 1;
+    color: var(--wine-gold, #d29a3c);
+    cursor: pointer;
+    transition: all 0.25s ease;
     opacity: 0.85;
     font-weight: 300;
 }
 
 .menu-modal-close:hover {
-    opacity: 1 !important;
-    color: #FFFFFF !important;
+    opacity: 1;
+    color: #FFFFFF;
     transform: scale(1.15) rotate(90deg);
 }
 
 .menu-modal-body {
-    width: 100vw !important;
-    height: 100vh !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    flex: 1;
+    width: 100% !important;
+    height: 100% !important;
     position: relative !important;
+    background: #060504 !important;
+    overflow: hidden !important;
     padding: 0 !important;
     margin: 0 !important;
 }
 
-#df_cardapio_book {
-    width: 100vw !important;
-    height: 100vh !important;
-}
-
-/* DearFlip Minimalist Controls & Theme Overrides */
-.df-container {
-    background: transparent !important;
-}
-
-.df-ui-wrapper, .df-ui-controls {
-    background: rgba(11, 10, 8, 0.85) !important;
-    backdrop-filter: blur(10px) !important;
-    border-top: 1px solid rgba(210, 154, 60, 0.3) !important;
-}
-
-.df-ui-btn {
-    color: var(--wine-gold, #d29a3c) !important;
-}
-
-.df-ui-btn:hover {
-    color: #FFFFFF !important;
-}
-
 .menu-pdf-viewer {
-    width: 100vw !important;
-    height: 100vh !important;
+    width: 100% !important;
+    height: 100% !important;
     border: none !important;
     background: #060504 !important;
     display: block !important;
+}
+
+@media (max-width: 768px) {
+    .menu-modal-overlay {
+        padding: 0.5rem !important;
+    }
+    .menu-modal-card {
+        height: 94vh;
+        max-height: 94vh;
+    }
+    .menu-modal-header {
+        padding: 0.8rem 1rem;
+    }
+    .menu-modal-header__title h3 {
+        font-size: 1.25rem;
+    }
+    .menu-modal-header__title span {
+        display: none;
+    }
 }
 
