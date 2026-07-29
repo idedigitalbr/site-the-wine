@@ -406,7 +406,7 @@
                 <p>
                     Pratos autorais elaborados com ingredientes selecionados e apresentação impecável.
                 </p>
-                <button class="btn-cardapio trigger-modal">FAÇA SUA RESERVA</button>
+                <button class="btn-cardapio trigger-menu-modal">VER CARDÁPIO</button>
             </div>
         </div>
 
@@ -1099,7 +1099,33 @@
             <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 500; color: var(--wine-gold); margin-bottom: 0.6rem; letter-spacing: 0.03em;">Fazer reserva</h3>
             <p style="font-family: 'Albert Sans', sans-serif; font-size: 1.05rem; color: rgba(255, 255, 255, 0.9); font-weight: 300; margin-bottom: 2rem; line-height: 1.6; letter-spacing: 0.02em;">Sistema de reservas em construção...</p>
             
-            <button type="button" class="btn-gold-outline" onclick="document.getElementById('bookingModal').classList.remove('active')" style="margin: 0 auto; padding: 0.7rem 2.4rem; font-size: 0.8rem; letter-spacing: 0.18em;">ENTENDIDO</button>
+        </div>
+    </div>
+
+    <!-- ========================================
+           CARDÁPIO POPUP MODAL (GLASSMORPHISM)
+           ======================================== -->
+    <div class="modal-overlay" id="menuModal">
+        <div class="modal-card" style="text-align: center; padding: 3rem 2rem; max-width: 680px; width: 92%; max-height: 90vh; overflow-y: auto;">
+            <span class="modal-close-btn" id="menuModalCloseBtn">&times;</span>
+            
+            <div class="modal-icon-wrap" style="display: flex; justify-content: center; margin-bottom: 0.8rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width: 42px; height: 42px; color: var(--wine-gold);">
+                    <path d="M12 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" />
+                    <path d="M3 16c0-4.97 4.03-9 9-9s9 4.03 9 9" />
+                    <path d="M2 16h20" />
+                    <path d="M4 16v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1" />
+                </svg>
+            </div>
+            
+            <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 500; color: var(--wine-gold); margin-bottom: 0.5rem; letter-spacing: 0.03em;">Nosso Cardápio</h3>
+            <p style="font-family: 'Albert Sans', sans-serif; font-size: 0.95rem; color: rgba(255, 255, 255, 0.85); font-weight: 300; margin-bottom: 1.5rem; letter-spacing: 0.02em;">Confira a seleção autoral da alta gastronomia The Wine Experience.</p>
+            
+            <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(221, 185, 118, 0.25); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: center; align-items: center;">
+                <img src="assets/CardapioMenu/MENU-THE-WINE-MOCKUP.webp" alt="Cardápio Oficial The Wine Experience" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 8px 30px rgba(0,0,0,0.6);">
+            </div>
+            
+            <button type="button" class="btn-gold-outline" onclick="document.getElementById('menuModal').classList.remove('active')" style="margin: 0 auto; padding: 0.7rem 2.4rem; font-size: 0.8rem; letter-spacing: 0.18em;">FECHAR CARDÁPIO</button>
         </div>
     </div>
 
@@ -1224,6 +1250,32 @@
                 bookingModal.classList.remove('active');
             }
         });
+
+        // Menu Modal Trigger logic
+        const menuModal = document.getElementById('menuModal');
+        const menuModalCloseBtn = document.getElementById('menuModalCloseBtn');
+        const menuTriggers = document.querySelectorAll('.trigger-menu-modal');
+
+        if (menuModal) {
+            menuTriggers.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    menuModal.classList.add('active');
+                });
+            });
+
+            if (menuModalCloseBtn) {
+                menuModalCloseBtn.addEventListener('click', () => {
+                    menuModal.classList.remove('active');
+                });
+            }
+
+            menuModal.addEventListener('click', (e) => {
+                if (e.target === menuModal) {
+                    menuModal.classList.remove('active');
+                }
+            });
+        }
 
         // Booking Form Submission & Toast success notification
         const modalBookingForm = document.getElementById('modalBookingForm');
