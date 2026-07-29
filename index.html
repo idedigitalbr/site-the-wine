@@ -1440,7 +1440,8 @@
         // Fluid Parallax Engine (60fps Ultra Smooth Inertia Lerp Physics)
         // =============================================================
         class FluidParallax {
-            constructor() {
+            constructor(intensity = 0.45) {
+                this.intensity = intensity;
                 this.items = [];
                 this.init();
             }
@@ -1452,7 +1453,8 @@
                 targets.forEach(target => {
                     const container = target.closest('.parallax-container') || target.parentElement;
                     const speedAttr = target.dataset.parallaxSpeed || (container && container.dataset ? container.dataset.parallaxSpeed : null);
-                    const speed = parseFloat(speedAttr) || 0.35;
+                    const baseSpeed = parseFloat(speedAttr) || 0.18;
+                    const speed = baseSpeed * this.intensity;
                     const direction = target.dataset.parallaxDirection || (target.classList.contains('parallax-img-h') ? 'horizontal' : 'vertical');
 
                     this.items.push({
@@ -1496,12 +1498,12 @@
                 const animate = () => {
                     this.items.forEach(item => {
                         if (item.direction === 'horizontal') {
-                            item.currentX += (item.targetX - item.currentX) * 0.1;
+                            item.currentX += (item.targetX - item.currentX) * 0.08;
                             const roundedX = Math.round(item.currentX * 100) / 100;
                             item.target.style.transform = `translate3d(calc(-50% + ${roundedX}px), 0, 0)`;
                             item.target.style.setProperty('--parallax-x', `${roundedX}px`);
                         } else {
-                            item.currentY += (item.targetY - item.currentY) * 0.1;
+                            item.currentY += (item.targetY - item.currentY) * 0.08;
                             const roundedY = Math.round(item.currentY * 100) / 100;
                             item.target.style.transform = `translate3d(0, ${roundedY}px, 0)`;
                             item.target.style.setProperty('--parallax-y', `${roundedY}px`);
