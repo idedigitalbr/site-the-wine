@@ -422,7 +422,7 @@
         </div>
 
         <!-- Imagem do Menu Flutuante -->
-        <img class="cardapio-menu-float" src="assets/CardapioMenu/MENU-THE-WINE-MOCKUP.webp" alt="Cardápio The Wine Experience">
+        <img class="cardapio-menu-float trigger-menu-modal" src="assets/CardapioMenu/MENU-THE-WINE-MOCKUP.webp" alt="Cardápio The Wine Experience" onclick="openMenuModal()" style="cursor: pointer;">
     </section>
 
     <!-- ========================================
@@ -689,10 +689,10 @@
                 </h3>
 
                 <ul class="footer-links-list">
-                    <li><span class="footer-links-list__bullet">✦</span><a href="#cardapio">Ver Cardápio</a></li>
+                    <li><span class="footer-links-list__bullet">✦</span><a href="#cardapio" onclick="openMenuModal()">Ver Cardápio</a></li>
                     <li><span class="footer-links-list__bullet">✦</span><a href="https://api.whatsapp.com/send?phone=5591984040710&text=Ol%C3%A1%2C%20gostaria%20de%20fazer%20uma%20reserva%20no%20The%20Wine%20Experience." target="_blank">Fazer Reserva</a></li>
                     <li><span class="footer-links-list__bullet">✦</span><a href="https://api.whatsapp.com/send?phone=5591992793187&text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20eventos." target="_blank">Agendar Evento</a></li>
-                    <li><span class="footer-links-list__bullet">✦</span><a href="#cardapio">Cardápio & Vinhos</a></li>
+                    <li><span class="footer-links-list__bullet">✦</span><a href="#cardapio" onclick="openMenuModal()">Cardápio & Vinhos</a></li>
                     <li><span class="footer-links-list__bullet">✦</span><a href="#">Trabalhe Conosco</a></li>
                 </ul>
             </div>
@@ -901,201 +901,6 @@
 
         function scheduleResume(delay = 3000) {
             clearTimeout(resumeTimeout);
-            resumeTimeout = setTimeout(() => {
-                isAutoScrolling = true;
-            }, delay);
-        }
-
-        gallery.addEventListener('mouseenter', () => { autoSpeed = 0.25; });
-        gallery.addEventListener('mouseleave', () => { autoSpeed = 0.5; });
-
-        function getAverageItemWidth() {
-            return setWidth / totalOriginal;
-        }
-
-        function smoothScrollTo(target, duration = 500) {
-            const start = scrollPos;
-            const diff = target - start;
-            const startTime = performance.now();
-            pauseAutoScroll();
-
-            function step(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const ease = 1 - Math.pow(1 - progress, 3);
-                scrollPos = start + diff * ease;
-
-                if (scrollPos >= setWidth * 2) scrollPos -= setWidth;
-                if (scrollPos < 0) scrollPos += setWidth;
-
-                track.style.transform = `translateX(${-scrollPos}px)`;
-
-                if (progress < 1) {
-                    requestAnimationFrame(step);
-                } else {
-                    scheduleResume();
-                }
-            }
-            requestAnimationFrame(step);
-        }
-
-        if (arrowLeft) {
-            arrowLeft.addEventListener('click', () => {
-                const avgWidth = getAverageItemWidth();
-                smoothScrollTo(scrollPos - avgWidth);
-            });
-        }
-
-        if (arrowRight) {
-            arrowRight.addEventListener('click', () => {
-                const avgWidth = getAverageItemWidth();
-                smoothScrollTo(scrollPos + avgWidth);
-            });
-        }
-
-        function handleDragStart(x) {
-            isDragging = true;
-            startX = x;
-            dragStartScroll = scrollPos;
-            pauseAutoScroll();
-            gallery.style.cursor = 'grabbing';
-        }
-
-        function handleDragMove(x) {
-            if (!isDragging) return;
-            const diff = startX - x;
-            scrollPos = dragStartScroll + diff;
-
-            if (scrollPos >= setWidth * 2) scrollPos -= setWidth;
-            if (scrollPos < 0) scrollPos += setWidth;
-
-            track.style.transform = `translateX(${-scrollPos}px)`;
-        }
-
-        function handleDragEnd() {
-            if (!isDragging) return;
-            isDragging = false;
-            gallery.style.cursor = 'grab';
-            scheduleResume();
-        }
-
-        gallery.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            handleDragStart(e.clientX);
-        });
-        window.addEventListener('mousemove', (e) => handleDragMove(e.clientX));
-        window.addEventListener('mouseup', handleDragEnd);
-
-        gallery.addEventListener('touchstart', (e) => {
-            handleDragStart(e.touches[0].clientX);
-        }, { passive: true });
-        gallery.addEventListener('touchmove', (e) => {
-            handleDragMove(e.touches[0].clientX);
-        }, { passive: true });
-        gallery.addEventListener('touchend', handleDragEnd);
-
-        let resizeTimer;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                setWidth = getSetWidth();
-            }, 200);
-        });
-
-        // LIGHTBOX
-        const lightbox = document.getElementById('lightbox');
-        const lightboxImage = document.getElementById('lightboxImage');
-        const lightboxCounter = document.getElementById('lightboxCounter');
-        const lightboxClose = document.getElementById('lightboxClose');
-        const lightboxPrev = document.getElementById('lightboxPrev');
-        const lightboxNext = document.getElementById('lightboxNext');
-
-        if (!lightbox) return;
-
-        let currentLightboxIndex = 0;
-
-        function openLightbox(index) {
-            currentLightboxIndex = index;
-            updateLightboxImage();
-            lightbox.classList.add('active');
-            document.body.classList.add('lightbox-open');
-        }
-
-        function closeLightbox() {
-            lightbox.classList.remove('active');
-            document.body.classList.remove('lightbox-open');
-        }
-
-        function updateLightboxImage() {
-            if (!lightboxImage) return;
-            lightboxImage.style.opacity = '0';
-            lightboxImage.style.transform = 'scale(0.96)';
-
-            setTimeout(() => {
-                lightboxImage.src = imageSources[currentLightboxIndex];
-                lightboxImage.alt = imageAlts[currentLightboxIndex];
-                if (lightboxCounter) {
-                    lightboxCounter.textContent = String(currentLightboxIndex + 1).padStart(2, '0') + ' / ' + String(totalOriginal).padStart(2, '0');
-                }
-                lightboxImage.style.opacity = '1';
-                lightboxImage.style.transform = 'scale(1)';
-            }, 150);
-        }
-
-        function nextImage() {
-            currentLightboxIndex = (currentLightboxIndex + 1) % totalOriginal;
-            updateLightboxImage();
-        }
-
-        function prevImage() {
-            currentLightboxIndex = (currentLightboxIndex - 1 + totalOriginal) % totalOriginal;
-            updateLightboxImage();
-        }
-
-        track.addEventListener('click', (e) => {
-            if (isDragging) return;
-            const item = e.target.closest('.gallery-item');
-            if (!item) return;
-
-            const movedDistance = Math.abs(scrollPos - dragStartScroll);
-            if (movedDistance > 5) return;
-
-            const index = parseInt(item.dataset.index);
-            if (!isNaN(index) && index < totalOriginal) {
-                openLightbox(index);
-            }
-        });
-
-        if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
-        if (lightboxPrev) lightboxPrev.addEventListener('click', prevImage);
-        if (lightboxNext) lightboxNext.addEventListener('click', nextImage);
-
-        lightbox.addEventListener('click', (e) => {
-            if (e.target === lightbox) {
-                closeLightbox();
-            }
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (!lightbox.classList.contains('active')) return;
-            switch(e.key) {
-                case 'Escape': closeLightbox(); break;
-                case 'ArrowLeft': prevImage(); break;
-                case 'ArrowRight': nextImage(); break;
-            }
-        });
-    })();
-    </script>
-
-    <!-- ========================================
-           RESERVAS POPUP MODAL (GLASSMORPHISM)
-           ======================================== -->
-    <div class="modal-overlay" id="bookingModal">
-        <div class="modal-card" style="text-align: center; padding: 3.5rem 2.5rem; max-width: 460px; width: 90%;">
-            <span class="modal-close-btn" id="modalCloseBtn">&times;</span>
-            
-            <div class="modal-icon-wrap" style="display: flex; justify-content: center; margin-bottom: 1.2rem;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width: 46px; height: 46px; color: var(--wine-gold);">
             resumeTimeout = setTimeout(() => {
                 isAutoScrolling = true;
             }, delay);
