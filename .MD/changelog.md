@@ -2,6 +2,11 @@
 
 ## 2026-07-29
 
+- **Atualização da Imagem de Fundo do Card "Noite de Degustação"**:
+  - Imagem enviada convertida e otimizada para WebP (`assets/Experiencias/evento-degustacao-noite.webp`, 53 KB).
+  - Atualizado `index.html` (card da seção Nossos Eventos & Experiências).
+  - Sincronizado no GitHub (`929b9b31ea0910b2b5b18bd3721d54f20dc6dacc`) com deploy automático na VPS (`https://thewine.suporteide.digital`).
+
 - **Atualização da Foto do Álbum (Galeria Rodapé)**:
   - Alterada a imagem do item 4 da galeria para `assets/Experiencias/evento-degustacao-brindezada.jpg`.
   - Atualizado `index.html` e realizada sincronização Git/GitHub (`c625ddc431918b9ffb057d063bb5749d46a89fcd`) e deploy automático na VPS (`https://thewine.suporteide.digital`).
