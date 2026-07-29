@@ -709,11 +709,11 @@
         }
 
         .historia-headline {
-            font-family: var(--font-display);
-            font-size: 38px;
+            font-family: var(--font-display) !important;
+            font-size: 41px !important;
             color: var(--wine-white);
-            letter-spacing: 0.04em;
-            font-weight: 600;
+            letter-spacing: 0.04em !important;
+            font-weight: 600 !important;
             margin: 0.2rem 0;
             text-transform: uppercase;
         }
@@ -748,12 +748,12 @@
         }
 
         .historia-paragraph {
-            font-family: var(--font-body);
-            font-size: 16.5px;
+            font-family: var(--font-body) !important;
+            font-size: 17px !important;
             color: var(--wine-white);
             max-width: 700px;
-            line-height: 1.7;
-            font-weight: 400;
+            line-height: 1.7 !important;
+            font-weight: 400 !important;
             margin: 0.2rem auto;
         }
 
@@ -993,12 +993,12 @@
 
         /* Título do Card (Maior, mais forte e com sombra pronunciada) */
         .mvv-card h3 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 38px;
-            font-weight: 600;
+            font-family: 'Cormorant Garamond', serif !important;
+            font-size: 41px !important;
+            font-weight: 600 !important;
             color: #FFFFFF;
             margin-bottom: 1.2rem;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.04em !important;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 0 20px rgba(0, 0, 0, 0.9);
             transition: var(--transition-premium);
         }
@@ -1010,11 +1010,11 @@
 
         /* Texto de Descrição (Aumentado, mais espesso e com sombra de alto contraste) */
         .mvv-card p {
-            font-family: 'Albert Sans', sans-serif;
-            font-size: 16.5px;
+            font-family: 'Albert Sans', sans-serif !important;
+            font-size: 17px !important;
             color: rgba(255, 255, 255, 0.95);
-            line-height: 1.7;
-            font-weight: 400;
+            line-height: 1.7 !important;
+            font-weight: 400 !important;
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.95);
             transition: var(--transition-premium);
         }
@@ -1248,22 +1248,22 @@
         }
 
         .split-title {
-            font-family: var(--font-display);
-            font-size: 38px;
-            font-weight: 600;
-            letter-spacing: 0.04em;
+            font-family: var(--font-display) !important;
+            font-size: 41px !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.04em !important;
             color: var(--wine-white);
             margin-bottom: 1rem;
             line-height: 1.2;
         }
 
         .split-text {
-            font-family: var(--font-body);
-            font-size: 16.5px;
-            font-weight: 400;
+            font-family: var(--font-body) !important;
+            font-size: 17px !important;
+            font-weight: 400 !important;
             color: var(--wine-muted);
             margin-bottom: 1.8rem;
-            line-height: 1.7;
+            line-height: 1.7 !important;
             max-width: 420px;
         }
 
@@ -1304,10 +1304,10 @@
         }
 
         .cardapio-left-content h2 {
-            font-family: var(--font-display);
-            font-size: 38px;
-            font-weight: 600;
-            letter-spacing: 0.04em;
+            font-family: var(--font-display) !important;
+            font-size: 41px !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.04em !important;
             color: #15110C;
             margin-bottom: 1.2rem;
             line-height: 1.15;
@@ -1315,12 +1315,12 @@
         }
 
         .cardapio-left-content p {
-            font-family: var(--font-body);
-            font-size: 16.5px;
-            font-weight: 400;
+            font-family: var(--font-body) !important;
+            font-size: 17px !important;
+            font-weight: 400 !important;
             color: #4A3E31;
             margin-bottom: 2.2rem;
-            line-height: 1.7;
+            line-height: 1.7 !important;
             max-width: 380px;
         }
 
@@ -1428,10 +1428,10 @@
         }
 
         .tw-acc-header__title {
-            font-family: var(--font-display);
-            font-size: 38px;
-            font-weight: 600;
-            letter-spacing: 0.04em;
+            font-family: var(--font-display) !important;
+            font-size: 41px !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.04em !important;
             color: var(--wine-white);
             line-height: 1.15;
         }
@@ -2621,10 +2621,10 @@
         }
 
         .cta-reservation__headline {
-            font-family: var(--font-display);
-            font-weight: 600;
-            font-size: 38px;
-            letter-spacing: 0.04em;
+            font-family: var(--font-display) !important;
+            font-weight: 600 !important;
+            font-size: 41px !important;
+            letter-spacing: 0.04em !important;
             line-height: 1.1;
             color: #FFFFFF;
             margin-bottom: 0em;
@@ -2643,11 +2643,11 @@
         }
 
         .cta-reservation__subtitle {
-            font-family: var(--font-body);
-            font-size: 16.5px;
-            font-weight: 400;
+            font-family: var(--font-body) !important;
+            font-size: 17px !important;
+            font-weight: 400 !important;
             color: rgba(255, 255, 255, 0.82);
-            line-height: 1.7;
+            line-height: 1.7 !important;
             margin-top: 1rem;
             margin-bottom: 2.5rem;
             letter-spacing: 0.04em;
