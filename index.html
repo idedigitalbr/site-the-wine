@@ -391,7 +391,7 @@
             </p>
 
             <div style="align-self: flex-start;">
-                <button class="btn-gold-outline trigger-modal">Explorar Harmonizações</button>
+                <button class="btn-gold-outline trigger-modal">FAÇA SUA RESERVA</button>
             </div>
         </div>
 
@@ -413,7 +413,7 @@
                 <p>
                     Pratos autorais elaborados com ingredientes selecionados e apresentação impecável.
                 </p>
-                <button class="btn-cardapio trigger-modal">VER CARDÁPIO</button>
+                <button class="btn-cardapio trigger-modal">FAÇA SUA RESERVA</button>
             </div>
         </div>
 
@@ -554,12 +554,10 @@
                 Garanta seu lugar e viva uma experiência única<br>
                 em um ambiente exclusivo.
             </p>
-            <a href="https://api.whatsapp.com/send?phone=5591984040710&text=Ol%C3%A1%2C%20gostaria%20de%20fazer%20uma%20reserva%20no%20The%20Wine%20Experience." 
-               target="_blank" 
-               class="cta-reservation__btn" 
-               id="btn-reservar-agora">
-                Reservar Agora
-            </a>
+            <button class="cta-reservation__btn trigger-modal" 
+                    id="btn-reservar-agora">
+                FAÇA SUA RESERVA
+            </button>
         </div>
     </section>
 
@@ -1096,69 +1094,14 @@
            RESERVAS POPUP MODAL (GLASSMORPHISM)
            ======================================== -->
     <div class="modal-overlay" id="bookingModal">
-        <div class="modal-card">
+        <div class="modal-card" style="text-align: center; padding: 3.5rem 2.2rem; max-width: 480px; width: 90%;">
             <span class="modal-close-btn" id="modalCloseBtn">&times;</span>
             
-            <h3>Solicitar Reserva</h3>
-            <p>Garanta sua mesa preenchendo os dados abaixo. Confirmação instantânea via WhatsApp.</p>
+            <div style="font-size: 2.8rem; margin-bottom: 0.8rem; color: var(--wine-gold);">🍷</div>
+            <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 600; color: var(--wine-gold); margin-bottom: 0.8rem; letter-spacing: 0.04em;">The Wine Experience</h3>
+            <p style="font-family: 'Albert Sans', sans-serif; font-size: 1.15rem; color: #FFFFFF; font-weight: 400; margin-bottom: 1.8rem; line-height: 1.6;">Sistema de reservas em construção...</p>
             
-            <form class="modal-booking-form" id="modalBookingForm">
-                <div class="form-group">
-                    <label for="bookingName">Nome Completo</label>
-                    <input type="text" id="bookingName" required placeholder="Ex: Victor Williames">
-                </div>
-                <div class="form-group">
-                    <label for="bookingPhone">Telefone / WhatsApp</label>
-                    <input type="tel" id="bookingPhone" required placeholder="(91) 98404-0710">
-                </div>
-                <div class="form-group">
-                    <label for="bookingGuests">Número de Pessoas</label>
-                    <select id="bookingGuests" required>
-                        <option value="2">2 Pessoas</option>
-                        <option value="3">3 Pessoas</option>
-                        <option value="4">4 Pessoas</option>
-                        <option value="5">5 Pessoas</option>
-                        <option value="6">6 Pessoas</option>
-                        <option value="7+">Mais de 6 pessoas</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="bookingDate">Data Desejada</label>
-                    <input type="date" id="bookingDate" required>
-                </div>
-                <div class="form-group">
-                    <label for="bookingTime">Horário</label>
-                    <select id="bookingTime" required>
-                        <option value="19:00">19:00h</option>
-                        <option value="19:30">19:30h</option>
-                        <option value="20:00">20:00h</option>
-                        <option value="20:30">20:30h</option>
-                        <option value="21:00">21:00h</option>
-                        <option value="21:30">21:30h</option>
-                        <option value="22:00">22:00h</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="bookingArea">Ambiente Preferido</label>
-                    <select id="bookingArea">
-                        <option value="indiferente">Sem preferência</option>
-                        <option value="adega">Climatizado (Adega)</option>
-                        <option value="salao">Salão Principal</option>
-                    </select>
-                </div>
-                <div class="form-group full-width">
-                    <label for="bookingNotes">Notas Especiais</label>
-                    <textarea id="bookingNotes" placeholder="Escreva observações como aniversário, restrições alimentares ou solicitações de mesas específicas..."></textarea>
-                </div>
-                
-                <div class="booking-actions">
-                    <button type="submit" class="btn-submit-booking">Confirmar Reserva</button>
-                    <a href="https://api.whatsapp.com/send?phone=5591984040710" target="_blank" class="btn-whatsapp-booking">
-                        <img src="assets/Logos/whatsapp-logo-1.webp" alt="WhatsApp">
-                        Falar com a Equipe
-                    </a>
-                </div>
-            </form>
+            <button type="button" class="btn-gold-outline" onclick="document.getElementById('bookingModal').classList.remove('active')" style="margin: 0 auto; padding: 0.75rem 2.2rem; font-size: 0.85rem; letter-spacing: 0.15em;">ENTENDIDO</button>
         </div>
     </div>
 
@@ -1288,23 +1231,17 @@
         const modalBookingForm = document.getElementById('modalBookingForm');
         const toastNotification = document.getElementById('toastNotification');
 
-        modalBookingForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            // Close modal
-            bookingModal.classList.remove('active');
-            
-            // Show toast success
-            toastNotification.classList.add('visible');
-            
-            // Hide toast after 4.5 seconds
-            setTimeout(() => {
-                toastNotification.classList.remove('visible');
-            }, 4500);
-            
-            // Reset form
-            modalBookingForm.reset();
-        });
+        if (modalBookingForm) {
+            modalBookingForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                bookingModal.classList.remove('active');
+                if (toastNotification) toastNotification.classList.add('visible');
+                setTimeout(() => {
+                    if (toastNotification) toastNotification.classList.remove('visible');
+                }, 4500);
+                modalBookingForm.reset();
+            });
+        }
 
         // Intersection Observer for scroll animations (fade-in-up effect)
         const revealObserver = new IntersectionObserver((entries) => {
