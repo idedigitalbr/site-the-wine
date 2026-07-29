@@ -1087,14 +1087,19 @@
            RESERVAS POPUP MODAL (GLASSMORPHISM)
            ======================================== -->
     <div class="modal-overlay" id="bookingModal">
-        <div class="modal-card" style="text-align: center; padding: 3.5rem 2.2rem; max-width: 480px; width: 90%;">
+        <div class="modal-card" style="text-align: center; padding: 3.5rem 2.5rem; max-width: 460px; width: 90%;">
             <span class="modal-close-btn" id="modalCloseBtn">&times;</span>
             
-            <div style="font-size: 2.8rem; margin-bottom: 0.8rem; color: var(--wine-gold);">🍷</div>
-            <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 600; color: var(--wine-gold); margin-bottom: 0.8rem; letter-spacing: 0.04em;">The Wine Experience</h3>
-            <p style="font-family: 'Albert Sans', sans-serif; font-size: 1.15rem; color: #FFFFFF; font-weight: 400; margin-bottom: 1.8rem; line-height: 1.6;">Sistema de reservas em construção...</p>
+            <div class="modal-icon-wrap" style="display: flex; justify-content: center; margin-bottom: 1.2rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width: 46px; height: 46px; color: var(--wine-gold);">
+                    <path d="M8 2h8M12 15v7M8 22h8M12 15a5 5 0 0 0 5-5V2H7v8a5 5 0 0 0 5 5z"/>
+                </svg>
+            </div>
             
-            <button type="button" class="btn-gold-outline" onclick="document.getElementById('bookingModal').classList.remove('active')" style="margin: 0 auto; padding: 0.75rem 2.2rem; font-size: 0.85rem; letter-spacing: 0.15em;">ENTENDIDO</button>
+            <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 500; color: var(--wine-gold); margin-bottom: 0.6rem; letter-spacing: 0.03em;">Fazer reserva</h3>
+            <p style="font-family: 'Albert Sans', sans-serif; font-size: 1.05rem; color: rgba(255, 255, 255, 0.9); font-weight: 300; margin-bottom: 2rem; line-height: 1.6; letter-spacing: 0.02em;">Sistema de reservas em construção...</p>
+            
+            <button type="button" class="btn-gold-outline" onclick="document.getElementById('bookingModal').classList.remove('active')" style="margin: 0 auto; padding: 0.7rem 2.4rem; font-size: 0.8rem; letter-spacing: 0.18em;">ENTENDIDO</button>
         </div>
     </div>
 
