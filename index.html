@@ -410,7 +410,7 @@
                 <p>
                     Pratos autorais elaborados com ingredientes selecionados e apresentação impecável.
                 </p>
-                <button class="btn-cardapio trigger-menu-modal">VER CARDÁPIO</button>
+                <button class="btn-cardapio trigger-menu-modal" onclick="openMenuModal()">VER CARDÁPIO</button>
             </div>
         </div>
 
@@ -1435,7 +1435,6 @@
         // Menu Modal (Minimalist Fullscreen PDF 3D Flipbook)
         const menuModal = document.getElementById('menuModal');
         const menuModalCloseBtn = document.getElementById('menuModalCloseBtn');
-        const menuTriggers = document.querySelectorAll('.trigger-menu-modal');
 
         window.dFlipLocation = "https://cdn.jsdelivr.net/npm/dflip@1.7.27/";
         window.option_df_cardapio_book = {
@@ -1449,43 +1448,65 @@
             pageSize: 0
         };
 
+        function openMenuModal() {
+            if (!menuModal) return;
+            menuModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+                const dfBook = document.getElementById('df_cardapio_book');
+                if (dfBook && (!dfBook.children || dfBook.children.length === 0 || dfBook.offsetHeight === 0)) {
+                    // Fallback to embedded PDF viewer if dFlip CDN is blocked locally (e.g. file:// CORS)
+                    if (!document.getElementById('fallbackPdfViewer')) {
+                        const iframe = document.createElement('iframe');
+                        iframe.id = 'fallbackPdfViewer';
+                        iframe.src = 'assets/CardapioMenu/CARDAPIO_THE_WINE.pdf#toolbar=1&navpanes=1';
+                        iframe.className = 'menu-pdf-viewer';
+                        iframe.title = 'Cardápio The Wine';
+                        const body = menuModal.querySelector('.menu-modal-body');
+                        if (body) {
+                            body.appendChild(iframe);
+                        }
+                    }
+                }
+            }, 500);
+        }
+        window.openMenuModal = openMenuModal;
+
+        function closeMenuModal() {
+            if (!menuModal) return;
+            menuModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        window.closeMenuModal = closeMenuModal;
+
+        // Global Event Delegation for any button/link with .trigger-menu-modal
+        document.addEventListener('click', (e) => {
+            const trigger = e.target.closest('.trigger-menu-modal');
+            if (trigger) {
+                e.preventDefault();
+                openMenuModal();
+            }
+        });
+
+        if (menuModalCloseBtn) {
+            menuModalCloseBtn.addEventListener('click', closeMenuModal);
+        }
+
         if (menuModal) {
-            function openMenuModal() {
-                menuModal.classList.add('active');
-                document.body.style.overflow = 'hidden';
-                setTimeout(() => {
-                    window.dispatchEvent(new Event('resize'));
-                }, 100);
-            }
-
-            function closeMenuModal() {
-                menuModal.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-
-            menuTriggers.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    openMenuModal();
-                });
-            });
-
-            if (menuModalCloseBtn) {
-                menuModalCloseBtn.addEventListener('click', closeMenuModal);
-            }
-
             menuModal.addEventListener('click', (e) => {
                 if (e.target === menuModal || e.target.classList.contains('menu-modal-body')) {
                     closeMenuModal();
                 }
             });
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && menuModal.classList.contains('active')) {
-                    closeMenuModal();
-                }
-            });
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && menuModal && menuModal.classList.contains('active')) {
+                closeMenuModal();
+            }
+        });
 
         // Intersection Observer for scroll animations
         const revealObserver = new IntersectionObserver((entries) => {
