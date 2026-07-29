@@ -1453,24 +1453,24 @@
             menuModal.classList.add('active');
             document.body.style.overflow = 'hidden';
 
-            setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-                const dfBook = document.getElementById('df_cardapio_book');
-                if (dfBook && (!dfBook.children || dfBook.children.length === 0 || dfBook.offsetHeight === 0)) {
-                    // Fallback to embedded PDF viewer if dFlip CDN is blocked locally (e.g. file:// CORS)
-                    if (!document.getElementById('fallbackPdfViewer')) {
-                        const iframe = document.createElement('iframe');
-                        iframe.id = 'fallbackPdfViewer';
-                        iframe.src = 'assets/CardapioMenu/CARDAPIO_THE_WINE.pdf#toolbar=1&navpanes=1';
-                        iframe.className = 'menu-pdf-viewer';
-                        iframe.title = 'Cardápio The Wine';
-                        const body = menuModal.querySelector('.menu-modal-body');
-                        if (body) {
-                            body.appendChild(iframe);
-                        }
-                    }
+            const isFileProtocol = window.location.protocol === 'file:';
+            const body = menuModal.querySelector('.menu-modal-body');
+
+            if (isFileProtocol && body) {
+                // When opening locally via file:// protocol (double clicking index.html in Windows),
+                // embed PDF directly so Chrome doesn't block WebGL worker CORS requests
+                if (!document.getElementById('fallbackPdfViewer')) {
+                    body.innerHTML = `
+                        <object id="fallbackPdfViewer" data="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf#toolbar=1&navpanes=1&view=FitH" type="application/pdf" class="menu-pdf-viewer">
+                            <iframe src="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf#toolbar=1&navpanes=1&view=FitH" class="menu-pdf-viewer" title="Cardápio The Wine"></iframe>
+                        </object>
+                    `;
                 }
-            }, 500);
+            } else {
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 100);
+            }
         }
         window.openMenuModal = openMenuModal;
 

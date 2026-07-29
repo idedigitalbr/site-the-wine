@@ -3614,6 +3614,7 @@
     justify-content: center !important;
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
     transition: opacity 0.35s ease, visibility 0.35s ease;
     padding: 0 !important;
     margin: 0 !important;
@@ -3622,6 +3623,7 @@
 .menu-modal-overlay.active {
     opacity: 1 !important;
     visibility: visible !important;
+    pointer-events: auto !important;
 }
 
 .menu-modal-close {
