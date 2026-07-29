@@ -1323,68 +1323,7 @@
             revealObserver.observe(element);
         });
 
-        // Script para Blur e Opacidade Proporcionais à Distância do Cursor ao Centro (Seção Experiência)
-        if (window.innerWidth > 992) {
-            const columns = document.querySelectorAll('.mvv-column');
 
-            columns.forEach(column => {
-                const card = column.querySelector('.mvv-card');
-
-                column.addEventListener('mousemove', (e) => {
-                    const rect = card.getBoundingClientRect();
-                    const mouseX = e.clientX - rect.left;
-                    const mouseY = e.clientY - rect.top;
-
-                    // Centro do card
-                    const centerX = rect.width / 2;
-                    const centerY = rect.height / 2;
-
-                    // Distância euclidiana até o centro
-                    const dx = mouseX - centerX;
-                    const dy = mouseY - centerY;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-
-                    // Distância máxima (até os cantos)
-                    const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
-
-                    // Proximidade: 1 no centro, 0 nas extremidades
-                    let proximity = 1 - (distance / (maxDistance * 0.85));
-                    proximity = Math.max(0, Math.min(1, proximity));
-
-                    // Definição dos limites de Blur
-                    const minBlur = 1.5;
-                    const maxBlur = 5; 
-                    const blurVal = minBlur + (maxBlur - minBlur) * proximity;
-
-                    // Definição dos limites de Opacidade do Fundo
-                    const minOpacity = 0.06;
-                    const maxOpacity = 0.68;
-                    const opacityVal = minOpacity + (maxOpacity - minOpacity) * proximity;
-
-                    // Definição dos limites de Opacidade da Borda Dourada
-                    const borderOpacity = 0.08 + 0.67 * proximity;
-                    
-                    // Brilho dourado (glow) proporcional
-                    const glowVal = 0.18 * proximity;
-
-                    // Aplicar estilos dinamicamente
-                    card.style.background = `rgba(11, 10, 8, ${opacityVal})`;
-                    card.style.backdropFilter = `blur(${blurVal}px)`;
-                    card.style.webkitBackdropFilter = `blur(${blurVal}px)`;
-                    card.style.borderColor = `rgba(221, 185, 118, ${borderOpacity})`;
-                    card.style.boxShadow = `0 0 30px rgba(221, 185, 118, ${glowVal})`;
-                });
-
-                column.addEventListener('mouseleave', () => {
-                    // Resetar estilos para o estado inicial suave
-                    card.style.background = 'rgba(11, 10, 8, 0.06)';
-                    card.style.backdropFilter = 'blur(1.5px)';
-                    card.style.webkitBackdropFilter = 'blur(1.5px)';
-                    card.style.borderColor = 'rgba(221, 185, 118, 0.08)';
-                    card.style.boxShadow = 'none';
-                });
-            });
-        }
 
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
