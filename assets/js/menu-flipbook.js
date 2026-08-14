@@ -133,6 +133,30 @@ function updateResponsiveBookMode() {
     pageFlip.getSettings().minWidth = mobile ? 10000 : PAGE_FLIP_OPTIONS.minWidth;
 }
 
+function updateCanvasResolution() {
+    if (!pageFlip) return;
+
+    const canvas = pageFlip.getUI?.()?.getCanvas?.();
+    const render = pageFlip.getRender?.();
+    const context = render?.getContext?.();
+    if (!canvas || !render || !context) return;
+
+    const bounds = canvas.getBoundingClientRect();
+    const cssWidth = Math.max(1, Math.round(bounds.width));
+    const cssHeight = Math.max(1, Math.round(bounds.height));
+    const pixelRatio = Math.max(2, Math.min(window.devicePixelRatio || 1, 3));
+    const pixelWidth = Math.round(cssWidth * pixelRatio);
+    const pixelHeight = Math.round(cssHeight * pixelRatio);
+
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+        canvas.width = pixelWidth;
+        canvas.height = pixelHeight;
+    }
+
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    render.update();
+}
+
 function lockPageScroll(locked) {
     document.documentElement.classList.toggle('menu-modal-open', locked);
     document.body.classList.toggle('menu-modal-open', locked);
@@ -174,6 +198,7 @@ async function initializeReader() {
 
         updateControls();
         await new Promise((resolve) => window.setTimeout(resolve, 80));
+        updateCanvasResolution();
         setLoading(false);
         updateControls();
         return pageFlip;
@@ -366,6 +391,7 @@ function bindEvents() {
         resizeTimer = window.setTimeout(() => {
             updateResponsiveBookMode();
             pageFlip.update();
+            updateCanvasResolution();
             updateZoomState();
         }, 180);
     }, { passive: true });

@@ -57,7 +57,7 @@ test('loads the flipbook controller as a classic script for file URLs', () => {
 
 test('versiona os assets do flipbook para evitar mistura com cache antigo', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const version = 'v=20260814_v2';
+  const version = 'v=20260814_v3';
 
   for (const asset of [
     `style.css?${version}`,
@@ -113,6 +113,19 @@ test('keeps the unused canvas area transparent instead of white', () => {
     engine,
     /clear\(\)\{this\.ctx\.clearRect\(0,0,this\.canvas\.width,this\.canvas\.height\)\}/
   );
+});
+
+test('renderiza o canvas em alta densidade para manter o texto nítido', () => {
+  const controller = fs.readFileSync(path.join(root, 'assets/js/menu-flipbook.js'), 'utf8');
+
+  assert.match(controller, /devicePixelRatio/);
+  assert.match(controller, /setTransform\(pixelRatio, 0, 0, pixelRatio, 0, 0\)/);
+
+  const readyWait = controller.indexOf(
+    'await new Promise((resolve) => window.setTimeout(resolve, 80));'
+  );
+  const resolutionUpdate = controller.indexOf('updateCanvasResolution();');
+  assert.ok(readyWait < resolutionUpdate, 'resolution should be applied after StPageFlip initializes');
 });
 
 test('ships high-resolution local page assets for readable menu text', () => {
