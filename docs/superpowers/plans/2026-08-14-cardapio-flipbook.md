@@ -4,7 +4,7 @@
 
 **Goal:** Substituir o visualizador nativo de PDF do modal do cardápio por um flipbook responsivo com animação 3D, paginação e controles de leitura.
 
-**Architecture:** Manter `#menuModal` como shell de modal e mover a lógica de PDF, paginação e interação para `assets/js/menu-flipbook.js`, carregado como script clássico para permitir o uso direto por `file://`. Renderizar páginas com PDF.js em canvases dentro de uma página/spread ativo; trocar o estado com uma animação 3D e manter o PDF apenas como fonte local.
+**Architecture:** Manter `#menuModal` como shell de modal e mover a lógica de PDF, paginação e interação para `assets/js/menu-flipbook.js`, carregado como script clássico para permitir o uso direto por `file://`. Em HTTP/HTTPS, renderizar o PDF local com PDF.js; em `file://`, usar imagens locais derivadas do mesmo PDF porque o Chrome bloqueia o XHR do PDF. Renderizar páginas em canvases dentro de uma página/spread ativo; trocar o estado com uma animação 3D e manter o PDF original como fonte e download.
 
 **Tech Stack:** HTML estático, CSS existente, JavaScript ES modules, PDF.js 3.11.174 via CDN, Node.js built-in test runner.
 

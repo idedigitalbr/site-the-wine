@@ -49,3 +49,18 @@ test('loads the flipbook controller as a classic script for file URLs', () => {
   assert.match(html, /<script src="assets\/js\/menu-flipbook\.js"><\/script>/);
   assert.doesNotMatch(html, /<script\s+type="module"[^>]+menu-flipbook/);
 });
+
+test('keeps a local page-image fallback for the PDF file protocol', () => {
+  const controller = fs.readFileSync(path.join(root, 'assets/js/menu-flipbook.js'), 'utf8');
+  const fallbackDir = path.join(root, 'assets/CardapioMenu/pages');
+
+  assert.match(controller, /window\.location\.protocol === 'file:'/);
+  assert.match(controller, /if \(IS_FILE_PROTOCOL\) return loadLocalPageDocument\(\);/);
+  assert.match(controller, /LOCAL_PAGE_IMAGES/);
+  assert.match(controller, /CARDAPIO_THE_WINE\.pdf/);
+
+  for (let page = 1; page <= 12; page += 1) {
+    const filename = `page-${String(page).padStart(2, '0')}.jpg`;
+    assert.equal(fs.existsSync(path.join(fallbackDir, filename)), true, filename);
+  }
+});

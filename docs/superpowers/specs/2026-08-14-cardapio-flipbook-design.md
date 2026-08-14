@@ -21,7 +21,7 @@ O modal existente (`#menuModal`) continuará sendo a camada de abertura, fechame
 
 A lógica do flipbook ficará em `assets/js/menu-flipbook.js`, carregada como script clássico para funcionar também quando o `index.html` for aberto por `file://`. O controlador gerencia o ciclo de vida do PDF.js, estado de página, renderização sob demanda, transições, controles e acessibilidade. As funções puras de paginação ficarão em `assets/js/menu-flipbook-state.mjs` e serão exportadas para teste em Node.
 
-O PDF será carregado de `assets/CardapioMenu/CARDAPIO_THE_WINE.pdf`. Se PDF.js não estiver disponível ou o documento falhar, o modal exibirá uma mensagem de erro com ações para tentar novamente e baixar o PDF; o navegador não será aberto dentro de um iframe.
+O PDF será carregado de `assets/CardapioMenu/CARDAPIO_THE_WINE.pdf` quando o site estiver em HTTP/HTTPS. Quando o `index.html` for aberto diretamente por `file://`, o Chrome bloqueia o XHR do PDF.js; nesse caso o controlador usa as 12 imagens locais em `assets/CardapioMenu/pages/`, geradas a partir do mesmo PDF, preservando o conteúdo e o efeito de flipbook. Se uma fonte não estiver disponível, o modal exibirá uma mensagem de erro com ações para tentar novamente e baixar o PDF; o navegador não será aberto dentro de um iframe.
 
 ## Estado e paginação
 
