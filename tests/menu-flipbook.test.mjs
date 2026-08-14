@@ -57,7 +57,7 @@ test('loads the flipbook controller as a classic script for file URLs', () => {
 
 test('versiona os assets do flipbook para evitar mistura com cache antigo', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const version = 'v=20260814_v3';
+  const version = 'v=20260814_v4';
 
   for (const asset of [
     `style.css?${version}`,
@@ -67,6 +67,17 @@ test('versiona os assets do flipbook para evitar mistura com cache antigo', () =
   ]) {
     assert.ok(html.includes(asset), `${asset} should invalidate stale browser caches`);
   }
+});
+
+test('compacta o topo e amplia a área do leitor em telas grandes', () => {
+  const css = fs.readFileSync(path.join(root, 'assets/css/menu-flipbook.css'), 'utf8');
+
+  assert.match(css, /width:\s*min\(1440px,\s*calc\(100vw - 1rem\)\)/);
+  assert.match(css, /max-width:\s*1440px/);
+  assert.match(css, /height:\s*min\(96vh,\s*960px\)/);
+  assert.match(css, /min-height:\s*60px/);
+  assert.match(css, /\.flipbook-header > \.flipbook-toolbar[\s\S]*min-height:\s*44px/);
+  assert.match(css, /#menuFlipbookPages\.stf__parent[\s\S]*height:\s*calc\(100% - 0\.35rem\)/);
 });
 
 test('uses local PDF-derived page images so file URLs avoid PDF CORS requests', () => {
