@@ -1,0 +1,100 @@
+/* =============================================================
+   CARDÁPIO FLIPBOOK - PAGE TURN
+   ============================================================= */
+.flipbook-page-area {
+    perspective: 1600px;
+    transform-style: preserve-3d;
+}
+
+.flipbook-page-area.is-turning-next,
+.flipbook-page-area.is-turning-previous {
+    animation: none !important;
+}
+
+.flipbook-page-area .flipbook-page {
+    position: relative;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
+    transform-origin: center center;
+    will-change: transform, opacity, filter;
+}
+
+.flipbook-page-area .flipbook-page::after {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    content: '';
+    pointer-events: none;
+    background: linear-gradient(
+        90deg,
+        rgba(20, 12, 6, 0.52),
+        transparent 25%,
+        rgba(255, 255, 255, 0.14) 52%,
+        rgba(20, 12, 6, 0.46)
+    );
+    opacity: 0;
+}
+
+.flipbook-page-area.is-turning-next .flipbook-page {
+    animation: menuPageTurnNext 500ms cubic-bezier(0.22, 0.72, 0.2, 1) both;
+}
+
+.flipbook-page-area.is-turning-previous .flipbook-page {
+    animation: menuPageTurnPrevious 500ms cubic-bezier(0.22, 0.72, 0.2, 1) both;
+}
+
+.flipbook-page-area.is-turning-next .flipbook-page::after,
+.flipbook-page-area.is-turning-previous .flipbook-page::after {
+    animation: menuPageTurnShade 500ms ease both;
+}
+
+@keyframes menuPageTurnNext {
+    0% {
+        opacity: 0.18;
+        filter: brightness(0.58);
+        transform: rotateY(-180deg) translateX(22px) scale(0.97);
+    }
+    48% {
+        opacity: 0.92;
+        filter: brightness(0.78);
+        transform: rotateY(-58deg) translateX(9px) scale(0.99);
+    }
+    100% {
+        opacity: 1;
+        filter: brightness(1);
+        transform: rotateY(0deg) translateX(0) scale(1);
+    }
+}
+
+@keyframes menuPageTurnPrevious {
+    0% {
+        opacity: 0.18;
+        filter: brightness(0.58);
+        transform: rotateY(180deg) translateX(-22px) scale(0.97);
+    }
+    48% {
+        opacity: 0.92;
+        filter: brightness(0.78);
+        transform: rotateY(58deg) translateX(-9px) scale(0.99);
+    }
+    100% {
+        opacity: 1;
+        filter: brightness(1);
+        transform: rotateY(0deg) translateX(0) scale(1);
+    }
+}
+
+@keyframes menuPageTurnShade {
+    0% { opacity: 0.92; }
+    48% { opacity: 0.42; }
+    100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .flipbook-page-area.is-turning-next .flipbook-page,
+    .flipbook-page-area.is-turning-previous .flipbook-page,
+    .flipbook-page-area.is-turning-next .flipbook-page::after,
+    .flipbook-page-area.is-turning-previous .flipbook-page::after {
+        animation: none;
+    }
+}

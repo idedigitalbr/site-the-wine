@@ -64,3 +64,13 @@ test('keeps a local page-image fallback for the PDF file protocol', () => {
     assert.equal(fs.existsSync(path.join(fallbackDir, filename)), true, filename);
   }
 });
+
+test('defines a 3D page-turn animation on the individual pages', () => {
+  const css = fs.readFileSync(path.join(root, 'assets/css/menu-flipbook.css'), 'utf8');
+
+  assert.match(css, /\.flipbook-page-area\s*\{[\s\S]*perspective:\s*1600px/);
+  assert.match(css, /\.flipbook-page\s*\{[\s\S]*backface-visibility:\s*hidden/);
+  assert.match(css, /\.flipbook-page-area\.is-turning-next\s+\.flipbook-page/);
+  assert.match(css, /\.flipbook-page-area\.is-turning-previous\s+\.flipbook-page/);
+  assert.match(css, /rotateY\(-180deg\)/);
+});
