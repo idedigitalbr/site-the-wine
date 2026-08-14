@@ -29,6 +29,7 @@
 
     <!-- PDF.js for Custom PDF Rendering & Custom Scrollbars -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script type="module" src="assets/js/menu-flipbook.mjs"></script>
 
     <!-- Structured Data (Schema.org JSON-LD) -->
     <script type="application/ld+json">
@@ -409,7 +410,7 @@
                 <p>
                     Pratos autorais elaborados com ingredientes selecionados e apresentação impecável.
                 </p>
-                <button class="btn-cardapio trigger-menu-modal" onclick="openMenuModal()">VER CARDÁPIO</button>
+                <button class="btn-cardapio trigger-menu-modal" type="button">VER CARDÁPIO</button>
             </div>
         </div>
 
@@ -421,7 +422,7 @@
         </div>
 
         <!-- Imagem do Menu Flutuante -->
-        <img class="cardapio-menu-float trigger-menu-modal" src="assets/CardapioMenu/MENU-THE-WINE-MOCKUP.webp" alt="Cardápio The Wine Experience" onclick="openMenuModal()" style="cursor: pointer;">
+        <img class="cardapio-menu-float trigger-menu-modal" src="assets/CardapioMenu/MENU-THE-WINE-MOCKUP.webp" alt="Abrir cardápio The Wine Experience" style="cursor: pointer;">
     </section>
 
     <!-- ========================================
@@ -1103,22 +1104,57 @@
     </div>
 
     <!-- ========================================
-           CARDÁPIO POPUP MODAL (ELEGANT CENTERED POPUP VIEWER)
+           CARDÁPIO FLIPBOOK MODAL
            ======================================== -->
-    <div class="modal-overlay menu-modal-overlay" id="menuModal">
-        <div class="menu-modal-card">
-            <button class="menu-modal-close" id="menuModalCloseBtn" onclick="closeMenuModal()" aria-label="Fechar Cardápio">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-            <div class="menu-modal-body" id="menuModalBody">
-                <div class="menu-pdf-container" id="menuPdfContainer">
-                    <div class="menu-pdf-loading" id="menuPdfLoading">
-                        <div class="pdf-spinner"></div>
-                        <p>Carregando Cardápio The Wine...</p>
+    <div class="modal-overlay menu-modal-overlay" id="menuModal" role="dialog" aria-modal="true" aria-labelledby="menuModalTitle" aria-hidden="true">
+        <div class="menu-modal-card" role="document">
+            <div class="flipbook-header">
+                <div>
+                    <span class="flipbook-kicker">THE WINE EXPERIENCE</span>
+                    <h2 id="menuModalTitle">Cardápio</h2>
+                </div>
+                <button class="menu-modal-close" id="menuModalCloseBtn" type="button" aria-label="Fechar cardápio">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="flipbook-reader" id="menuFlipbookStage" tabindex="0" aria-label="Leitor do cardápio">
+                <button class="flipbook-nav flipbook-nav-prev" id="menuPrevBtn" type="button" aria-label="Página anterior">‹</button>
+                <div class="flipbook-page-area" id="menuFlipbookPages" aria-live="polite"></div>
+                <button class="flipbook-nav flipbook-nav-next" id="menuNextBtn" type="button" aria-label="Próxima página">›</button>
+
+                <div class="menu-pdf-loading" id="menuPdfLoading" role="status">
+                    <span class="pdf-spinner" aria-hidden="true"></span>
+                    <span>Carregando cardápio...</span>
+                </div>
+
+                <div class="menu-pdf-error" id="menuPdfError" role="alert" hidden>
+                    <strong>Não foi possível carregar o cardápio.</strong>
+                    <span>Verifique sua conexão ou baixe o PDF para continuar.</span>
+                    <div class="flipbook-error-actions">
+                        <button id="menuRetryBtn" type="button">Tentar novamente</button>
+                        <a href="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf" download>Baixar PDF</a>
                     </div>
+                </div>
+            </div>
+
+            <div class="flipbook-toolbar" aria-label="Controles do cardápio">
+                <div class="flipbook-tool-group">
+                    <button id="menuZoomOut" type="button" aria-label="Diminuir zoom">−</button>
+                    <button id="menuFitBtn" type="button">Ajustar</button>
+                    <button id="menuZoomIn" type="button" aria-label="Aumentar zoom">+</button>
+                </div>
+                <label class="flipbook-page-control">
+                    <span>Página</span>
+                    <input id="menuPageInput" type="number" min="1" value="1" aria-label="Número da página">
+                    <span>/ <strong id="menuPageTotal">—</strong></span>
+                </label>
+                <div class="flipbook-tool-group flipbook-tool-group-end">
+                    <button id="menuFullscreenBtn" type="button">Tela cheia</button>
+                    <a id="menuDownloadBtn" href="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf" download>Baixar PDF</a>
                 </div>
             </div>
         </div>
@@ -1244,133 +1280,6 @@
                 }
             });
         }
-
-        // Menu Modal (Elegant Centered PDF Viewer)
-        const menuModal = document.getElementById('menuModal');
-        const menuModalCloseBtn = document.getElementById('menuModalCloseBtn');
-
-        // Menu Modal Custom PDF Renderer & Controls
-        let isPdfRendering = false;
-
-        async function initCustomPdfViewer() {
-            const container = document.getElementById('menuPdfContainer');
-            if (!container) return;
-
-            if (container.querySelectorAll('canvas').length > 0 || isPdfRendering) return;
-            isPdfRendering = true;
-
-            if (typeof pdfjsLib === 'undefined') {
-                container.innerHTML = '<iframe src="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf#toolbar=1&navpanes=0&view=Fit" class="menu-pdf-viewer" title="Cardápio The Wine"></iframe>';
-                isPdfRendering = false;
-                return;
-            }
-
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-            try {
-                const pdf = await pdfjsLib.getDocument('assets/CardapioMenu/CARDAPIO_THE_WINE.pdf').promise;
-                const loadingEl = document.getElementById('menuPdfLoading');
-                if (loadingEl) loadingEl.remove();
-
-                const dpr = window.devicePixelRatio || 1;
-                const containerWidth = Math.min(container.clientWidth - 30, 960);
-                const containerHeight = window.innerHeight * 0.90;
-
-                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                    const page = await pdf.getPage(pageNum);
-                    const unscaledViewport = page.getViewport({ scale: 1.0 });
-
-                    // Scale to fit page height (Ajustar à página)
-                    const scaleH = containerHeight / unscaledViewport.height;
-                    const scaleW = containerWidth / unscaledViewport.width;
-                    const scale = Math.min(scaleH, scaleW);
-
-                    const viewport = page.getViewport({ scale: scale });
-
-                    const canvas = document.createElement('canvas');
-                    canvas.className = 'pdf-page-canvas';
-                    canvas.width = Math.floor(viewport.width * dpr);
-                    canvas.height = Math.floor(viewport.height * dpr);
-                    canvas.style.width = Math.floor(viewport.width) + 'px';
-                    canvas.style.height = Math.floor(viewport.height) + 'px';
-
-                    const ctx = canvas.getContext('2d');
-                    ctx.scale(dpr, dpr);
-
-                    container.appendChild(canvas);
-
-                    await page.render({
-                        canvasContext: ctx,
-                        viewport: viewport
-                    }).promise;
-                }
-            } catch (err) {
-                console.error('PDF.js Error:', err);
-                container.innerHTML = '<iframe src="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf#toolbar=1&navpanes=0&view=Fit" class="menu-pdf-viewer" title="Cardápio The Wine"></iframe>';
-            } finally {
-                isPdfRendering = false;
-            }
-        }
-
-        function openMenuModal() {
-            const modal = document.getElementById('menuModal');
-            if (!modal) return;
-
-            modal.style.display = 'flex';
-            modal.style.opacity = '1';
-            modal.style.visibility = 'visible';
-            modal.style.pointerEvents = 'auto';
-            modal.classList.add('active');
-            document.documentElement.classList.add('menu-modal-open');
-            document.body.classList.add('menu-modal-open');
-            document.body.style.overflow = 'hidden';
-            document.documentElement.style.overflow = 'hidden';
-
-            initCustomPdfViewer();
-        }
-        window.openMenuModal = openMenuModal;
-
-        function closeMenuModal() {
-            const modal = document.getElementById('menuModal');
-            if (!modal) return;
-            modal.style.display = 'none';
-            modal.style.opacity = '0';
-            modal.style.visibility = 'hidden';
-            modal.style.pointerEvents = 'none';
-            modal.classList.remove('active');
-            document.documentElement.classList.remove('menu-modal-open');
-            document.body.classList.remove('menu-modal-open');
-            document.body.style.overflow = '';
-            document.documentElement.style.overflow = '';
-        }
-        window.closeMenuModal = closeMenuModal;
-
-        // Global Event Delegation for any button/link with .trigger-menu-modal
-        document.addEventListener('click', (e) => {
-            const trigger = e.target.closest('.trigger-menu-modal');
-            if (trigger) {
-                e.preventDefault();
-                openMenuModal();
-            }
-        });
-
-        if (menuModalCloseBtn) {
-            menuModalCloseBtn.addEventListener('click', closeMenuModal);
-        }
-
-        if (menuModal) {
-            menuModal.addEventListener('click', (e) => {
-                if (e.target === menuModal || e.target.classList.contains('menu-modal-body')) {
-                    closeMenuModal();
-                }
-            });
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && menuModal && menuModal.classList.contains('active')) {
-                closeMenuModal();
-            }
-        });
 
         // Intersection Observer for scroll animations
         const revealObserver = new IntersectionObserver((entries) => {

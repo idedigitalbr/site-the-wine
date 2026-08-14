@@ -19,7 +19,7 @@ Substituir o visualizador nativo de PDF usado pelo modal do cardápio por uma ex
 
 O modal existente (`#menuModal`) continuará sendo a camada de abertura, fechamento e bloqueio de rolagem. Seu conteúdo será substituído por um palco de flipbook com uma área de página, navegação lateral e barra de controles.
 
-A lógica do flipbook ficará em `assets/js/menu-flipbook.js`, carregada como módulo ES. O módulo controla o ciclo de vida do PDF.js, estado de página, renderização sob demanda, transições, controles e acessibilidade. As funções puras de paginação serão exportadas para teste em Node.
+A lógica do flipbook ficará em `assets/js/menu-flipbook.mjs`, carregada como módulo ES. O módulo controla o ciclo de vida do PDF.js, estado de página, renderização sob demanda, transições, controles e acessibilidade. As funções puras de paginação ficarão em `assets/js/menu-flipbook-state.mjs` e serão exportadas para teste em Node.
 
 O PDF será carregado de `assets/CardapioMenu/CARDAPIO_THE_WINE.pdf`. Se PDF.js não estiver disponível ou o documento falhar, o modal exibirá uma mensagem de erro com ações para tentar novamente e baixar o PDF; o navegador não será aberto dentro de um iframe.
 
