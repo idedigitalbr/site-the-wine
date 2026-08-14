@@ -51,8 +51,22 @@ test('contains the flipbook modal controls without a native iframe viewer', () =
 
 test('loads the flipbook controller as a classic script for file URLs', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.match(html, /<script src="assets\/js\/menu-flipbook\.js"><\/script>/);
+  assert.match(html, /<script src="assets\/js\/menu-flipbook\.js(?:\?[^\"]*)?"><\/script>/);
   assert.doesNotMatch(html, /<script\s+type="module"[^>]+menu-flipbook/);
+});
+
+test('versiona os assets do flipbook para evitar mistura com cache antigo', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const version = 'v=20260814_v2';
+
+  for (const asset of [
+    `style.css?${version}`,
+    `assets/css/menu-flipbook.css?${version}`,
+    `assets/js/page-flip.browser.js?${version}`,
+    `assets/js/menu-flipbook.js?${version}`,
+  ]) {
+    assert.ok(html.includes(asset), `${asset} should invalidate stale browser caches`);
+  }
 });
 
 test('uses local PDF-derived page images so file URLs avoid PDF CORS requests', () => {
