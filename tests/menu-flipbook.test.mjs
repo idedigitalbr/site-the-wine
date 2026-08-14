@@ -43,3 +43,9 @@ test('contains the flipbook modal controls without a native iframe viewer', () =
   assert.match(html, /CARDAPIO_THE_WINE\.pdf/);
   assert.doesNotMatch(html, /class="menu-pdf-viewer"/);
 });
+
+test('loads the flipbook controller as a classic script for file URLs', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  assert.match(html, /<script src="assets\/js\/menu-flipbook\.js"><\/script>/);
+  assert.doesNotMatch(html, /<script\s+type="module"[^>]+menu-flipbook/);
+});

@@ -4,7 +4,7 @@
 
 **Goal:** Substituir o visualizador nativo de PDF do modal do cardápio por um flipbook responsivo com animação 3D, paginação e controles de leitura.
 
-**Architecture:** Manter `#menuModal` como shell de modal e mover a lógica de PDF, paginação e interação para um módulo ES em `assets/js/menu-flipbook.mjs`. Renderizar páginas com PDF.js em canvases dentro de uma página/spread ativo; trocar o estado com uma animação 3D e manter o PDF apenas como fonte local.
+**Architecture:** Manter `#menuModal` como shell de modal e mover a lógica de PDF, paginação e interação para `assets/js/menu-flipbook.js`, carregado como script clássico para permitir o uso direto por `file://`. Renderizar páginas com PDF.js em canvases dentro de uma página/spread ativo; trocar o estado com uma animação 3D e manter o PDF apenas como fonte local.
 
 **Tech Stack:** HTML estático, CSS existente, JavaScript ES modules, PDF.js 3.11.174 via CDN, Node.js built-in test runner.
 
@@ -215,8 +215,8 @@ Expected: the static contract passes after the markup replacement, and the pagin
 ### Task 5: Implement the PDF.js flipbook controller
 
 **Files:**
-- Create: `assets/js/menu-flipbook.mjs`
-- Modify: `index.html:30-31` to load the module after PDF.js
+- Create: `assets/js/menu-flipbook.js`
+- Modify: `index.html` to load the classic controller after the page markup and PDF.js
 - Modify: `index.html:1248-1373` to remove the old inline PDF viewer implementation and leave reservation code intact
 
 **Interfaces:**
@@ -243,7 +243,7 @@ If PDF.js is unavailable or loading fails, replace the spinner with a retry butt
 
 **Files:**
 - Test: `tests/menu-flipbook.test.mjs`
-- Verify: `index.html`, `style.css`, `assets/js/menu-flipbook.mjs`
+- Verify: `index.html`, `style.css`, `assets/js/menu-flipbook.js`
 
 - [ ] **Step 1: Run the full automated test**
 
