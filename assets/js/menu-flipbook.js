@@ -32,19 +32,34 @@ function previousPage(page, total) {
 }
 
 const PDF_URL = 'assets/CardapioMenu/CARDAPIO_THE_WINE.pdf';
-const PDF_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-const IS_FILE_PROTOCOL = window.location.protocol === 'file:';
 const LOCAL_PAGE_IMAGES = Array.from({ length: 12 }, (_, index) => (
-    `assets/CardapioMenu/pages/page-${String(index + 1).padStart(2, '0')}.jpg`
+    `assets/CardapioMenu/pages/page-${String(index + 1).padStart(2, '0')}.png`
 ));
-const MOBILE_BREAKPOINT = 820;
-const FLIP_DURATION = 500;
+const PAGE_FLIP_OPTIONS = {
+    width: 595,
+    height: 842,
+    size: 'stretch',
+    minWidth: 220,
+    maxWidth: 980,
+    minHeight: 260,
+    maxHeight: 1385,
+    drawShadow: true,
+    maxShadowOpacity: 0.48,
+    flippingTime: 720,
+    usePortrait: true,
+    showCover: true,
+    autoSize: false,
+    mobileScrollSupport: false,
+    swipeDistance: 30,
+    useMouseEvents: true,
+    showPageCorners: true,
+    disableFlipByClick: false,
+};
 
 const $ = (id) => document.getElementById(id);
 
 const elements = {
     modal: $('menuModal'),
-    card: document.querySelector('#menuModal .menu-modal-card'),
     stage: $('menuFlipbookStage'),
     pages: $('menuFlipbookPages'),
     loading: $('menuPdfLoading'),
@@ -61,23 +76,15 @@ const elements = {
     fullscreen: $('menuFullscreenBtn'),
 };
 
-let pdfDocument = null;
-let imageDocument = null;
-let pdfLoadingPromise = null;
+let pageFlip = null;
+let initializationPromise = null;
 let currentPage = 1;
-let totalPages = 0;
+let totalPages = LOCAL_PAGE_IMAGES.length;
 let zoom = 1;
 let isOpen = false;
 let isAnimating = false;
-let renderVersion = 0;
 let resizeTimer = null;
-let animationTimer = null;
-let touchStartX = null;
 let lastFocusedElement = null;
-
-function isMobileViewport() {
-    return window.innerWidth <= MOBILE_BREAKPOINT;
-}
 
 function setLoading(visible) {
     if (!elements.loading) return;
@@ -89,235 +96,41 @@ function setError(visible) {
     elements.error.hidden = !visible;
 }
 
+function getCurrentPageNumber() {
+    if (!pageFlip || typeof pageFlip.getCurrentPageIndex !== 'function') {
+        return normalizePage(currentPage, totalPages);
+    }
+
+    return normalizePage(pageFlip.getCurrentPageIndex() + 1, totalPages);
+}
+
 function updateControls() {
     if (!elements.pageInput || !elements.pageTotal) return;
 
+    currentPage = getCurrentPageNumber();
     elements.pageInput.value = String(currentPage);
     elements.pageInput.max = String(Math.max(totalPages, 1));
     elements.pageTotal.textContent = totalPages ? String(totalPages) : '—';
-    elements.previous.disabled = !totalPages || currentPage <= 1 || isAnimating;
-    elements.next.disabled = !totalPages || currentPage >= totalPages || isAnimating;
+    elements.pages?.classList.toggle('is-cover', currentPage === 1);
+    elements.previous.disabled = !pageFlip || currentPage <= 1 || isAnimating;
+    elements.next.disabled = !pageFlip || currentPage >= totalPages || isAnimating;
     elements.stage?.setAttribute(
         'aria-label',
-        totalPages ? `Leitor do cardápio, página ${currentPage} de ${totalPages}` : 'Leitor do cardápio'
+        `Leitor do cardápio, página ${currentPage} de ${totalPages}`
     );
 }
 
 function updateZoomState() {
-    elements.stage?.classList.toggle('is-zoomed', zoom > 1);
-}
-
-async function loadPdfDocument() {
-    if (IS_FILE_PROTOCOL) return loadLocalPageDocument();
-    if (pdfDocument) return pdfDocument;
-    if (pdfLoadingPromise) return pdfLoadingPromise;
-
-    pdfLoadingPromise = (async () => {
-        if (!window.pdfjsLib) {
-            throw new Error('PDF.js não está disponível.');
-        }
-
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_URL;
-        const documentProxy = await window.pdfjsLib.getDocument(PDF_URL).promise;
-        pdfDocument = documentProxy;
-        totalPages = documentProxy.numPages;
-        currentPage = normalizePage(currentPage, totalPages);
-        updateControls();
-        return documentProxy;
-    })();
-
-    try {
-        return await pdfLoadingPromise;
-    } finally {
-        pdfLoadingPromise = null;
-    }
-}
-
-function loadLocalPageImage(src) {
-    return new Promise((resolve, reject) => {
-        const image = new Image();
-        image.onload = () => resolve(image);
-        image.onerror = () => reject(new Error(`Página local indisponível: ${src}`));
-        image.src = src;
-    });
-}
-
-async function loadLocalPageDocument() {
-    if (imageDocument) return imageDocument;
-    if (pdfLoadingPromise) return pdfLoadingPromise;
-
-    pdfLoadingPromise = (async () => {
-        const pages = await Promise.all(LOCAL_PAGE_IMAGES.map(loadLocalPageImage));
-        imageDocument = { pages, numPages: pages.length };
-        totalPages = imageDocument.numPages;
-        currentPage = normalizePage(currentPage, totalPages);
-        updateControls();
-        return imageDocument;
-    })();
-
-    try {
-        return await pdfLoadingPromise;
-    } finally {
-        pdfLoadingPromise = null;
-    }
-}
-
-function getPageRenderSize(width, height, spreadSize) {
-    const stageRect = elements.pages.getBoundingClientRect();
-    const availableHeight = Math.max(260, stageRect.height - 18);
-    const availableWidth = isMobileViewport()
-        ? Math.max(180, stageRect.width - 8)
-        : spreadSize === 2
-            ? Math.max(180, (stageRect.width - 8) / 2)
-            : Math.max(220, stageRect.width * 0.66);
-    const fitScale = Math.min(availableWidth / width, availableHeight / height);
-
-    return {
-        width: Math.max(1, Math.floor(width * Math.max(0.1, fitScale * zoom))),
-        height: Math.max(1, Math.floor(height * Math.max(0.1, fitScale * zoom))),
-    };
-}
-
-async function renderPageCanvas(pageNumber, spreadSize) {
-    const outputScale = window.devicePixelRatio || 1;
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d', { alpha: false });
-
-    canvas.className = 'pdf-page-canvas';
-
-    if (imageDocument) {
-        const image = imageDocument.pages[pageNumber - 1];
-        if (!image) throw new Error(`Página local não encontrada: ${pageNumber}`);
-
-        const size = getPageRenderSize(image.naturalWidth, image.naturalHeight, spreadSize);
-        canvas.width = Math.floor(size.width * outputScale);
-        canvas.height = Math.floor(size.height * outputScale);
-        canvas.style.width = `${size.width}px`;
-        canvas.style.height = `${size.height}px`;
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        return canvas;
-    }
-
-    const page = await pdfDocument.getPage(pageNumber);
-    const baseViewport = page.getViewport({ scale: 1 });
-    const fitScale = getPageRenderSize(baseViewport.width, baseViewport.height, spreadSize);
-    const viewport = page.getViewport({
-        scale: fitScale.width / baseViewport.width,
-    });
-    canvas.width = Math.floor(viewport.width * outputScale);
-    canvas.height = Math.floor(viewport.height * outputScale);
-    canvas.style.width = `${Math.floor(viewport.width)}px`;
-    canvas.style.height = `${Math.floor(viewport.height)}px`;
-
-    await page.render({
-        canvasContext: context,
-        viewport,
-        ...(outputScale !== 1 ? { transform: [outputScale, 0, 0, outputScale, 0, 0] } : {}),
-    }).promise;
-
-    return canvas;
-}
-
-function visiblePagesForSpread(spread) {
-    if (!isMobileViewport() || spread.pages.length === 1) {
-        return spread.pages;
-    }
-
-    return [spread.pages.includes(currentPage) ? currentPage : spread.pages[0]];
-}
-
-async function renderCurrentSpread({ showLoader = false } = {}) {
-    if ((!pdfDocument && !imageDocument) || !elements.pages) return;
-
-    const version = ++renderVersion;
-    const spread = getSpread(currentPage, totalPages);
-    const visiblePages = visiblePagesForSpread(spread);
-
-    if (showLoader) setLoading(true);
-    setError(false);
-
-    const canvases = await Promise.all(
-        visiblePages.map((pageNumber) => renderPageCanvas(pageNumber, visiblePages.length))
-    );
-
-    if (version !== renderVersion) return;
-
-    const pageElements = canvases.map((canvas, index) => {
-        const pageNumber = visiblePages[index];
-        const pageElement = document.createElement('article');
-        const side = visiblePages.length === 1
-            ? 'is-cover'
-            : index === 0
-                ? 'is-left'
-                : 'is-right';
-
-        pageElement.className = `flipbook-page ${side}`;
-        pageElement.dataset.page = String(pageNumber);
-        pageElement.setAttribute('aria-label', `Página ${pageNumber}`);
-        pageElement.appendChild(canvas);
-        return pageElement;
-    });
-
-    elements.pages.replaceChildren(...pageElements);
-    setLoading(false);
-    updateControls();
-}
-
-function animatePageTurn(direction) {
-    if (!elements.pages || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    const className = direction === 'previous'
-        ? 'is-turning-previous'
-        : 'is-turning-next';
-
-    window.clearTimeout(animationTimer);
-    elements.pages.classList.remove('is-turning-next', 'is-turning-previous');
-    void elements.pages.offsetWidth;
-    elements.pages.classList.add(className);
-    animationTimer = window.setTimeout(() => {
-        elements.pages.classList.remove(className);
-    }, FLIP_DURATION);
-}
-
-async function goToPage(targetPage, direction = 'next') {
-    if (!totalPages || isAnimating) return;
-
-    const target = normalizePage(targetPage, totalPages);
-    if (target === currentPage && elements.pages.children.length > 0) return;
-
-    const previous = currentPage;
-    isAnimating = true;
-    currentPage = target;
-    updateControls();
-
-    try {
-        await renderCurrentSpread();
-        animatePageTurn(direction);
-    } catch (error) {
-        currentPage = previous;
-        console.error('Erro ao renderizar página do cardápio:', error);
-        setError(true);
-        setLoading(false);
-    } finally {
-        isAnimating = false;
-        updateControls();
-    }
-}
-
-async function initializeReader() {
     if (!elements.pages) return;
+    elements.pages.style.setProperty('--flipbook-zoom', String(zoom));
+    elements.pages.classList.toggle('is-zoomed', zoom > 1);
+}
 
-    setError(false);
-    setLoading(true);
+function updateResponsiveBookMode() {
+    if (!pageFlip || typeof pageFlip.getSettings !== 'function') return;
 
-    try {
-        await loadPdfDocument();
-        await renderCurrentSpread();
-    } catch (error) {
-        console.error('Erro ao carregar o cardápio:', error);
-        setLoading(false);
-        setError(true);
-    }
+    const mobile = window.matchMedia('(max-width: 820px)').matches;
+    pageFlip.getSettings().minWidth = mobile ? 10000 : PAGE_FLIP_OPTIONS.minWidth;
 }
 
 function lockPageScroll(locked) {
@@ -325,6 +138,88 @@ function lockPageScroll(locked) {
     document.body.classList.toggle('menu-modal-open', locked);
     document.body.style.overflow = locked ? 'hidden' : '';
     document.documentElement.style.overflow = locked ? 'hidden' : '';
+}
+
+function handlePageFlip({ data }) {
+    currentPage = normalizePage(Number(data) + 1, totalPages);
+    isAnimating = false;
+    setLoading(false);
+    setError(false);
+    updateControls();
+}
+
+async function initializeReader() {
+    if (!elements.pages || pageFlip) {
+        setLoading(false);
+        updateControls();
+        return pageFlip;
+    }
+
+    if (initializationPromise) return initializationPromise;
+
+    setError(false);
+    setLoading(true);
+
+    initializationPromise = (async () => {
+        if (!window.St?.PageFlip) {
+            throw new Error('StPageFlip não está disponível.');
+        }
+
+        pageFlip = new window.St.PageFlip(elements.pages, PAGE_FLIP_OPTIONS);
+        pageFlip.on('init', handlePageFlip);
+        pageFlip.on('flip', handlePageFlip);
+        pageFlip.on('changeOrientation', updateControls);
+        updateResponsiveBookMode();
+        pageFlip.loadFromImages(LOCAL_PAGE_IMAGES);
+
+        updateControls();
+        await new Promise((resolve) => window.setTimeout(resolve, 80));
+        setLoading(false);
+        updateControls();
+        return pageFlip;
+    })();
+
+    try {
+        return await initializationPromise;
+    } catch (error) {
+        console.error(`Erro ao carregar o cardápio local (${PDF_URL}):`, error);
+        pageFlip?.destroy?.();
+        pageFlip = null;
+        setLoading(false);
+        setError(true);
+        return null;
+    } finally {
+        initializationPromise = null;
+    }
+}
+
+function requestPageFlip(action) {
+    if (!pageFlip || isAnimating) return;
+    if (action === 'flipPrev' && currentPage <= 1) return;
+    if (action === 'flipNext' && currentPage >= totalPages) return;
+
+    isAnimating = true;
+    updateControls();
+    pageFlip[action](action === 'flipPrev' ? 'bottom' : 'top');
+}
+
+function goToPage(targetPage) {
+    if (!pageFlip || isAnimating) return;
+
+    const target = normalizePage(targetPage, totalPages);
+    if (target === currentPage) return;
+
+    if (typeof pageFlip.turnToPage === 'function') {
+        pageFlip.turnToPage(target - 1);
+        currentPage = target;
+        isAnimating = false;
+        updateControls();
+        return;
+    }
+
+    isAnimating = true;
+    updateControls();
+    pageFlip.flip(target - 1, 'top');
 }
 
 function openMenuModal() {
@@ -338,12 +233,8 @@ function openMenuModal() {
     lockPageScroll(true);
     elements.stage?.focus({ preventScroll: true });
 
-    if (pdfDocument || imageDocument) {
-        renderCurrentSpread({ showLoader: elements.pages.children.length === 0 }).catch((error) => {
-            console.error('Erro ao renderizar o cardápio:', error);
-            setError(true);
-            setLoading(false);
-        });
+    if (pageFlip) {
+        updateControls();
     } else {
         initializeReader();
     }
@@ -354,7 +245,6 @@ function closeMenuModal() {
 
     isOpen = false;
     isAnimating = false;
-    window.clearTimeout(animationTimer);
     elements.modal.classList.remove('active');
     elements.modal.setAttribute('aria-hidden', 'true');
     elements.modal.style.display = 'none';
@@ -370,14 +260,8 @@ function closeMenuModal() {
 }
 
 function setZoom(nextZoom) {
-    zoom = Math.min(1.45, Math.max(0.8, Number(nextZoom.toFixed(2))));
+    zoom = Math.min(1.35, Math.max(0.85, Number(nextZoom.toFixed(2))));
     updateZoomState();
-    if ((pdfDocument || imageDocument) && isOpen) {
-        renderCurrentSpread().catch((error) => {
-            console.error('Erro ao aplicar zoom no cardápio:', error);
-            setError(true);
-        });
-    }
 }
 
 async function toggleFullscreen() {
@@ -400,9 +284,7 @@ function updateFullscreenLabel() {
 }
 
 function handlePageInput() {
-    const requestedPage = normalizePage(elements.pageInput.value, totalPages);
-    const direction = requestedPage < currentPage ? 'previous' : 'next';
-    goToPage(requestedPage, direction);
+    goToPage(elements.pageInput.value);
 }
 
 function trapFocus(event) {
@@ -436,8 +318,8 @@ function bindEvents() {
     });
 
     elements.close?.addEventListener('click', closeMenuModal);
-    elements.previous?.addEventListener('click', () => goToPage(previousPage(currentPage, totalPages), 'previous'));
-    elements.next?.addEventListener('click', () => goToPage(nextPage(currentPage, totalPages), 'next'));
+    elements.previous?.addEventListener('click', () => requestPageFlip('flipPrev'));
+    elements.next?.addEventListener('click', () => requestPageFlip('flipNext'));
     elements.retry?.addEventListener('click', initializeReader);
     elements.zoomOut?.addEventListener('click', () => setZoom(zoom - 0.1));
     elements.zoomIn?.addEventListener('click', () => setZoom(zoom + 0.1));
@@ -455,22 +337,6 @@ function bindEvents() {
         if (event.target === elements.modal) closeMenuModal();
     });
 
-    elements.stage?.addEventListener('touchstart', (event) => {
-        touchStartX = event.changedTouches[0]?.clientX ?? null;
-    }, { passive: true });
-
-    elements.stage?.addEventListener('touchend', (event) => {
-        if (touchStartX === null) return;
-        const deltaX = event.changedTouches[0].clientX - touchStartX;
-        touchStartX = null;
-        if (Math.abs(deltaX) < 45) return;
-        if (deltaX < 0) {
-            goToPage(nextPage(currentPage, totalPages), 'next');
-        } else {
-            goToPage(previousPage(currentPage, totalPages), 'previous');
-        }
-    }, { passive: true });
-
     document.addEventListener('keydown', (event) => {
         if (!isOpen) return;
         trapFocus(event);
@@ -480,28 +346,27 @@ function bindEvents() {
             closeMenuModal();
         } else if (event.key === 'ArrowRight' && document.activeElement !== elements.pageInput) {
             event.preventDefault();
-            goToPage(nextPage(currentPage, totalPages), 'next');
+            requestPageFlip('flipNext');
         } else if (event.key === 'ArrowLeft' && document.activeElement !== elements.pageInput) {
             event.preventDefault();
-            goToPage(previousPage(currentPage, totalPages), 'previous');
+            requestPageFlip('flipPrev');
         } else if (event.key === 'Home' && document.activeElement !== elements.pageInput) {
             event.preventDefault();
-            goToPage(1, 'previous');
+            goToPage(1);
         } else if (event.key === 'End' && document.activeElement !== elements.pageInput) {
             event.preventDefault();
-            goToPage(totalPages, 'next');
+            goToPage(totalPages);
         }
     });
 
     document.addEventListener('fullscreenchange', updateFullscreenLabel);
     window.addEventListener('resize', () => {
-        if (!isOpen || (!pdfDocument && !imageDocument)) return;
+        if (!isOpen || !pageFlip) return;
         window.clearTimeout(resizeTimer);
         resizeTimer = window.setTimeout(() => {
-            renderCurrentSpread().catch((error) => {
-                console.error('Erro ao redimensionar o cardápio:', error);
-                setError(true);
-            });
+            updateResponsiveBookMode();
+            pageFlip.update();
+            updateZoomState();
         }, 180);
     }, { passive: true });
 }

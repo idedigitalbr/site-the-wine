@@ -4,9 +4,9 @@
 
 **Goal:** Substituir o visualizador nativo de PDF do modal do cardápio por um flipbook responsivo com animação 3D, paginação e controles de leitura.
 
-**Architecture:** Manter `#menuModal` como shell de modal e mover a lógica de PDF, paginação e interação para `assets/js/menu-flipbook.js`, carregado como script clássico para permitir o uso direto por `file://`. Em HTTP/HTTPS, renderizar o PDF local com PDF.js; em `file://`, usar imagens locais derivadas do mesmo PDF porque o Chrome bloqueia o XHR do PDF. Renderizar páginas em canvases dentro de uma página/spread ativo; trocar o estado com uma animação 3D e manter o PDF original como fonte e download.
+**Architecture:** Manter `#menuModal` como shell de modal e mover a lógica de paginação e interação para `assets/js/menu-flipbook.js`, carregado como script clássico para permitir o uso direto por `file://`. Usar o StPageFlip empacotado localmente em `assets/js/page-flip.browser.js`, carregando as imagens locais em alta resolução derivadas de `CARDAPIO_THE_WINE.pdf`; o PDF original permanece disponível para download. O motor mantém cada folha como unidade de virada, centraliza a capa no desktop e força uma página por vez em telas móveis.
 
-**Tech Stack:** HTML estático, CSS existente, JavaScript ES modules, PDF.js 3.11.174 via CDN, Node.js built-in test runner.
+**Tech Stack:** HTML estático, CSS existente, JavaScript clássico para o controlador, StPageFlip 2.0.7 local, Node.js built-in test runner.
 
 ## Global Constraints
 
@@ -204,7 +204,7 @@ Use a dialog-labelled overlay with:
 
 - [ ] **Step 2: Add the responsive flipbook CSS**
 
-Style the modal as a dark, gold-accented reader; set `.flipbook-page-area` to a centered 3D stage, `.flipbook-page` to a canvas-backed paper surface, and add `@keyframes flipbookTurnNext`/`flipbookTurnPrevious` with a 500 ms `rotateY` transition. Use one page on viewports at or below 820 px and hide overflow behind the modal while active.
+Style the modal as a dark, gold-accented reader; set `.flipbook-page-area` to a centered StPageFlip stage and let the engine render the page canvas, sheet shadow and turn perspective. Use one page on viewports at or below 820 px and hide overflow behind the modal while active.
 
 - [ ] **Step 3: Run the contract and state tests**
 
@@ -212,24 +212,25 @@ Run: `node --test tests/menu-flipbook.test.mjs`
 
 Expected: the static contract passes after the markup replacement, and the pagination tests remain green.
 
-### Task 5: Implement the PDF.js flipbook controller
+### Task 5: Implement the StPageFlip controller
 
 **Files:**
 - Create: `assets/js/menu-flipbook.js`
-- Modify: `index.html` to load the classic controller after the page markup and PDF.js
+- Add: `assets/js/page-flip.browser.js`
+- Modify: `index.html` to load o motor local antes do controlador clássico
 - Modify: `index.html:1248-1373` to remove the old inline PDF viewer implementation and leave reservation code intact
 
 **Interfaces:**
-- Consumes: `window.pdfjsLib`, `#menuModal` markup, `assets/CardapioMenu/CARDAPIO_THE_WINE.pdf`, and state functions from `menu-flipbook-state.mjs`.
+- Consumes: `window.St.PageFlip`, `#menuModal` markup, local page images derived from `assets/CardapioMenu/CARDAPIO_THE_WINE.pdf`, and state functions from `menu-flipbook-state.mjs`.
 - Produces: `window.openMenuModal()` and `window.closeMenuModal()` plus all flipbook interactions.
 
-- [ ] **Step 1: Implement PDF loading and page rendering**
+- [ ] **Step 1: Implement local page loading and book rendering**
 
-Load the document once, set the PDF.js worker URL, render requested pages into canvases, cache rendered canvases by page number, and insert only the active cover/spread into `#menuFlipbookPages`. Use `devicePixelRatio` for sharp canvases while keeping CSS dimensions bounded by the reader area.
+Instantiate `St.PageFlip` once and call `loadFromImages` with the 12 local page images. Keep the original PDF URL for the download and error messaging, without issuing um PDF XHR do controlador.
 
-- [ ] **Step 2: Implement navigation and flip animation**
+- [ ] **Step 2: Implement navigation and single-sheet flip animation**
 
-Use `getSpread`, `nextPage`, and `previousPage`; disable buttons at bounds; add `.is-turning-next` or `.is-turning-previous` for 500 ms; update the page slots after the animation; and update `aria-label`, input value, total and visible-page text.
+Use `flipNext`, `flipPrev` e `flip` do StPageFlip; disable buttons at bounds; listen for `flip` events; e atualize `aria-label`, input value e total sem aplicar uma rotação ao spread inteiro.
 
 - [ ] **Step 3: Implement controls and accessibility**
 
@@ -237,7 +238,7 @@ Wire click, Enter, Escape, Home, End, ArrowLeft, ArrowRight, wheel-free touch sw
 
 - [ ] **Step 4: Implement error and retry states**
 
-If PDF.js is unavailable or loading fails, replace the spinner with a retry button and a clear download link; do not create an iframe. Keep the modal closable in the error state.
+If StPageFlip is unavailable or local page loading fails, replace the spinner with a retry button and a clear download link to the original PDF; do not create an iframe. Keep the modal closable in the error state.
 
 ### Task 6: Verify the complete feature locally
 

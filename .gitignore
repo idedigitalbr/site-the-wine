@@ -1,3 +1,46 @@
 bckp/
 node_modules/
+node_modules
 scratch/
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+auth.json
+
+# Dependencies, builds and local runtime data
+vendor/
+vendor
+public/build/
+public/hot/
+public/storage/
+public/uploads/
+public/uploads
+composer.phar
+storage/app
+storage/docs
+storage/framework/testing
+storage/*.key
+storage/app/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/logs/*.log
+
+# Local tooling and generated artifacts
+.phpunit.cache
+.phpunit.result.cache
+npm-debug.log*
+yarn-error.log*
+*.bak
+*.backup
+*.dump
+*.sql
+*.sqlite
+*.sqlite3
+*.zip
+*.tar
+*.tar.gz
+*.7z

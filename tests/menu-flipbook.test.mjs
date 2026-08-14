@@ -42,6 +42,11 @@ test('contains the flipbook modal controls without a native iframe viewer', () =
   assert.match(html, /id="menuPageInput"/);
   assert.match(html, /CARDAPIO_THE_WINE\.pdf/);
   assert.doesNotMatch(html, /class="menu-pdf-viewer"/);
+
+  assert.ok(
+    html.indexOf('class="flipbook-toolbar"') < html.indexOf('id="menuFlipbookStage"'),
+    'toolbar should appear above the reader'
+  );
 });
 
 test('loads the flipbook controller as a classic script for file URLs', () => {
@@ -50,27 +55,58 @@ test('loads the flipbook controller as a classic script for file URLs', () => {
   assert.doesNotMatch(html, /<script\s+type="module"[^>]+menu-flipbook/);
 });
 
-test('keeps a local page-image fallback for the PDF file protocol', () => {
+test('uses local PDF-derived page images so file URLs avoid PDF CORS requests', () => {
   const controller = fs.readFileSync(path.join(root, 'assets/js/menu-flipbook.js'), 'utf8');
-  const fallbackDir = path.join(root, 'assets/CardapioMenu/pages');
 
-  assert.match(controller, /window\.location\.protocol === 'file:'/);
-  assert.match(controller, /if \(IS_FILE_PROTOCOL\) return loadLocalPageDocument\(\);/);
   assert.match(controller, /LOCAL_PAGE_IMAGES/);
+  assert.match(controller, /loadFromImages\(LOCAL_PAGE_IMAGES\)/);
   assert.match(controller, /CARDAPIO_THE_WINE\.pdf/);
 
+  const pagesDir = path.join(root, 'assets/CardapioMenu/pages');
   for (let page = 1; page <= 12; page += 1) {
-    const filename = `page-${String(page).padStart(2, '0')}.jpg`;
-    assert.equal(fs.existsSync(path.join(fallbackDir, filename)), true, filename);
+    const filename = `page-${String(page).padStart(2, '0')}.png`;
+    assert.equal(fs.existsSync(path.join(pagesDir, filename)), true, filename);
   }
 });
 
-test('defines a 3D page-turn animation on the individual pages', () => {
+test('styles the StPageFlip canvas as a centered book', () => {
   const css = fs.readFileSync(path.join(root, 'assets/css/menu-flipbook.css'), 'utf8');
 
-  assert.match(css, /\.flipbook-page-area\s*\{[\s\S]*perspective:\s*1600px/);
-  assert.match(css, /\.flipbook-page\s*\{[\s\S]*backface-visibility:\s*hidden/);
-  assert.match(css, /\.flipbook-page-area\.is-turning-next\s+\.flipbook-page/);
-  assert.match(css, /\.flipbook-page-area\.is-turning-previous\s+\.flipbook-page/);
-  assert.match(css, /rotateY\(-180deg\)/);
+  assert.match(css, /#menuFlipbookPages/);
+  assert.match(css, /\.stf__parent/);
+  assert.match(css, /\.stf__block/);
+});
+
+test('uses a local page-flip engine to turn one sheet at a time', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const controller = fs.readFileSync(path.join(root, 'assets/js/menu-flipbook.js'), 'utf8');
+
+  assert.match(html, /assets\/js\/page-flip\.browser\.js/);
+  assert.equal(fs.existsSync(path.join(root, 'assets/js/page-flip.browser.js')), true);
+  assert.match(controller, /new (?:window\.)?St\.PageFlip/);
+  assert.match(controller, /loadFromImages/);
+  assert.match(controller, /flipNext/);
+  assert.match(controller, /flipPrev/);
+  assert.match(controller, /turnToPage/);
+  assert.match(controller, /disableFlipByClick: false/);
+  assert.match(controller, /max-width: 820px/);
+});
+
+test('keeps the unused canvas area transparent instead of white', () => {
+  const engine = fs.readFileSync(path.join(root, 'assets/js/page-flip.browser.js'), 'utf8');
+
+  assert.match(
+    engine,
+    /clear\(\)\{this\.ctx\.clearRect\(0,0,this\.canvas\.width,this\.canvas\.height\)\}/
+  );
+});
+
+test('ships high-resolution local page assets for readable menu text', () => {
+  const pagesDir = path.join(root, 'assets/CardapioMenu/pages');
+
+  for (let page = 1; page <= 12; page += 1) {
+    const filename = `page-${String(page).padStart(2, '0')}.png`;
+    const stats = fs.statSync(path.join(pagesDir, filename));
+    assert.ok(stats.size >= 400_000, `${filename} should use the high-resolution PNG render`);
+  }
 });
