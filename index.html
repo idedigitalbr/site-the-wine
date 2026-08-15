@@ -550,6 +550,38 @@
       </ul>
     </section>
 
+    <script>
+      // No mobile, a troca de card deve manter o item escolhido centralizado na viewport.
+      document.addEventListener('DOMContentLoaded', () => {
+        const panels = document.querySelectorAll('.tw-acc__panel');
+        const isMobile = () => window.matchMedia('(max-width: 860px)').matches;
+
+        panels.forEach(panel => {
+          const link = panel.querySelector('.tw-acc__link');
+          if (!link) return;
+
+          link.addEventListener('click', event => {
+            if (!isMobile()) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+            panels.forEach(p => p.classList.remove('tw-acc__panel--active'));
+            panel.classList.add('tw-acc__panel--active');
+
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                panel.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'center',
+                  inline: 'nearest'
+                });
+              });
+            });
+          });
+        });
+      });
+    </script>
+
     <!-- ========================================
          1. CTA RESERVATION SECTION
          ======================================== -->
