@@ -76,9 +76,6 @@ const elements = {
     next: $('menuNextBtn'),
     pageInput: $('menuPageInput'),
     pageTotal: $('menuPageTotal'),
-    zoomOut: $('menuZoomOut'),
-    zoomIn: $('menuZoomIn'),
-    fit: $('menuFitBtn'),
     fullscreen: $('menuFullscreenBtn'),
 };
 
@@ -138,7 +135,7 @@ function updateResponsiveBookMode() {
 
     const mobile = window.matchMedia('(max-width: 820px)').matches;
     const settings = pageFlip.getSettings();
-    settings.minWidth = mobile ? 10000 : PAGE_FLIP_OPTIONS.minWidth;
+    settings.minWidth = PAGE_FLIP_OPTIONS.minWidth;
     settings.drawShadow = !mobile;
     settings.maxShadowOpacity = mobile ? 0.18 : PAGE_FLIP_OPTIONS.maxShadowOpacity;
     settings.flippingTime = mobile ? 560 : PAGE_FLIP_OPTIONS.flippingTime;
@@ -157,7 +154,7 @@ function updateCanvasResolution() {
     const cssHeight = Math.max(1, Math.round(bounds.height));
     const mobile = window.matchMedia('(max-width: 820px)').matches;
     const pixelRatio = mobile
-        ? Math.min(window.devicePixelRatio || 1, 1.5)
+        ? Math.min(window.devicePixelRatio || 1, 2)
         : Math.max(2, Math.min(window.devicePixelRatio || 1, 3));
     const pixelWidth = Math.round(cssWidth * pixelRatio);
     const pixelHeight = Math.round(cssHeight * pixelRatio);
@@ -370,7 +367,9 @@ async function toggleFullscreen() {
 
 function updateFullscreenLabel() {
     if (!elements.fullscreen) return;
-    elements.fullscreen.textContent = document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia';
+    const label = document.fullscreenElement ? 'Sair da tela cheia' : 'Abrir tela cheia';
+    elements.fullscreen.setAttribute('aria-label', label);
+    elements.fullscreen.setAttribute('title', label);
 }
 
 function handlePageInput() {
@@ -411,9 +410,6 @@ function bindEvents() {
     elements.previous?.addEventListener('click', () => requestPageFlip('flipPrev'));
     elements.next?.addEventListener('click', () => requestPageFlip('flipNext'));
     elements.retry?.addEventListener('click', initializeReader);
-    elements.zoomOut?.addEventListener('click', () => setZoom(zoom - 0.1));
-    elements.zoomIn?.addEventListener('click', () => setZoom(zoom + 0.1));
-    elements.fit?.addEventListener('click', () => setZoom(1));
     elements.fullscreen?.addEventListener('click', toggleFullscreen);
     elements.pageInput?.addEventListener('change', handlePageInput);
     elements.pageInput?.addEventListener('keydown', (event) => {

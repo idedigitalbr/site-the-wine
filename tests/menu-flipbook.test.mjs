@@ -57,7 +57,7 @@ test('loads the flipbook controller as a classic script for file URLs', () => {
 
 test('versiona os assets do flipbook para evitar mistura com cache antigo', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const version = 'v=20260814_v6';
+  const version = 'v=20260814_v7';
 
   for (const asset of [
     `style.css?${version}`,
@@ -156,7 +156,9 @@ test('usa páginas mais leves e renderização econômica no mobile', () => {
   assert.match(controller, /MOBILE_PAGE_IMAGES/);
   assert.match(controller, /getPageImagesForViewport/);
   assert.match(controller, /loadFromImages\(getPageImagesForViewport\(\)\)/);
-  assert.match(controller, /const pixelRatio = mobile[\s\S]*Math\.min\(window\.devicePixelRatio \|\| 1, 1\.5\)/);
+  assert.match(controller, /const pixelRatio = mobile[\s\S]*Math\.min\(window\.devicePixelRatio \|\| 1, 2\)/);
+  assert.match(controller, /settings\.minWidth = PAGE_FLIP_OPTIONS\.minWidth/);
+  assert.doesNotMatch(controller, /settings\.minWidth = mobile \? 10000/);
   assert.match(controller, /settings\.drawShadow = !mobile/);
 
   for (let page = 1; page <= 12; page += 1) {
