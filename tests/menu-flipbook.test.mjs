@@ -165,6 +165,45 @@ test('usa páginas mais leves e renderização econômica no mobile', () => {
   }
 });
 
+function readWebpDimensions(filename) {
+  const bytes = fs.readFileSync(filename);
+  const chunk = bytes.toString('ascii', 12, 16);
+
+  if (chunk === 'VP8 ') {
+    return {
+      width: bytes.readUInt16LE(26) & 0x3fff,
+      height: bytes.readUInt16LE(28) & 0x3fff,
+    };
+  }
+
+  if (chunk === 'VP8X') {
+    return {
+      width: 1 + bytes.readUIntLE(24, 3),
+      height: 1 + bytes.readUIntLE(27, 3),
+    };
+  }
+
+  throw new Error(`Unsupported WebP chunk: ${chunk}`);
+}
+
+test('usa controles de ação com ícones e preserva resolução maior no mobile', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const controller = fs.readFileSync(path.join(root, 'assets/js/menu-flipbook.js'), 'utf8');
+  const mobilePagesDir = path.join(root, 'assets/CardapioMenu/pages/mobile');
+
+  assert.match(html, /id="menuFullscreenBtn"[^>]*aria-label="Abrir tela cheia"[^>]*title="Abrir tela cheia"[\s\S]*?<svg/);
+  assert.match(html, /id="menuDownloadBtn"[^>]*aria-label="Baixar PDF"[^>]*title="Baixar PDF"[\s\S]*?<svg/);
+  assert.doesNotMatch(html, /menuZoomOut|menuZoomIn|menuFitBtn/);
+  assert.doesNotMatch(controller, /zoomOut:|zoomIn:|fit:|elements\.(zoomOut|zoomIn|fit)/);
+  assert.match(controller, /Math\.min\(window\.devicePixelRatio \|\| 1, 2\)/);
+
+  for (let page = 1; page <= 12; page += 1) {
+    const filename = `page-${String(page).padStart(2, '0')}.webp`;
+    const dimensions = readWebpDimensions(path.join(mobilePagesDir, filename));
+    assert.deepEqual(dimensions, { width: 1862, height: 2632 }, filename);
+  }
+});
+
 test('mantém as setas discretas e sem hover dourado persistente no mobile', () => {
   const css = fs.readFileSync(path.join(root, 'assets/css/menu-flipbook.css'), 'utf8');
 
