@@ -154,7 +154,7 @@ function updateCanvasResolution() {
     const cssHeight = Math.max(1, Math.round(bounds.height));
     const mobile = window.matchMedia('(max-width: 820px)').matches;
     const pixelRatio = mobile
-        ? Math.min(window.devicePixelRatio || 1, 2)
+        ? Math.min(window.devicePixelRatio || 1, 3)
         : Math.max(2, Math.min(window.devicePixelRatio || 1, 3));
     const pixelWidth = Math.round(cssWidth * pixelRatio);
     const pixelHeight = Math.round(cssHeight * pixelRatio);

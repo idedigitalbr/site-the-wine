@@ -202,10 +202,15 @@
 }
 
 @media (max-width: 820px) {
+    .menu-modal-overlay {
+        padding: 0 !important;
+    }
+
     .menu-modal-card {
-        width: calc(100vw - 0.5rem);
-        height: 98vh;
-        max-height: 98vh;
+        width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
     }
 
     .flipbook-header {
@@ -271,8 +276,16 @@
 
     #menuFlipbookPages,
     #menuFlipbookPages.stf__parent {
-        width: calc(100% - 4.2rem);
-        height: calc(100% - 0.3rem);
+        width: calc(100% - 0.6rem);
+        height: 100%;
+    }
+
+    .flipbook-nav-prev {
+        left: 0.25rem;
+    }
+
+    .flipbook-nav-next {
+        right: 0.25rem;
     }
 }
 

@@ -57,7 +57,7 @@ test('loads the flipbook controller as a classic script for file URLs', () => {
 
 test('versiona os assets do flipbook para evitar mistura com cache antigo', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const version = 'v=20260814_v7';
+  const version = 'v=20260814_v8';
 
   for (const asset of [
     `style.css?${version}`,
@@ -149,14 +149,17 @@ test('ships high-resolution local page assets for readable menu text', () => {
   }
 });
 
-test('usa páginas mais leves e renderização econômica no mobile', () => {
+test('usa páginas nítidas e renderização de alta densidade no mobile', () => {
   const controller = fs.readFileSync(path.join(root, 'assets/js/menu-flipbook.js'), 'utf8');
   const mobilePagesDir = path.join(root, 'assets/CardapioMenu/pages/mobile');
 
   assert.match(controller, /MOBILE_PAGE_IMAGES/);
   assert.match(controller, /getPageImagesForViewport/);
   assert.match(controller, /loadFromImages\(getPageImagesForViewport\(\)\)/);
-  assert.match(controller, /const pixelRatio = mobile[\s\S]*Math\.min\(window\.devicePixelRatio \|\| 1, 2\)/);
+  assert.match(
+    controller,
+    /const pixelRatio = mobile\s*\?\s*Math\.min\(window\.devicePixelRatio \|\| 1, 3\)/,
+  );
   assert.match(controller, /settings\.minWidth = PAGE_FLIP_OPTIONS\.minWidth/);
   assert.doesNotMatch(controller, /settings\.minWidth = mobile \? 10000/);
   assert.match(controller, /settings\.drawShadow = !mobile/);
@@ -197,13 +200,27 @@ test('usa controles de ação com ícones e preserva resolução maior no mobile
   assert.match(html, /id="menuDownloadBtn"[^>]*aria-label="Baixar PDF"[^>]*title="Baixar PDF"[\s\S]*?<svg/);
   assert.doesNotMatch(html, /menuZoomOut|menuZoomIn|menuFitBtn/);
   assert.doesNotMatch(controller, /zoomOut:|zoomIn:|fit:|elements\.(zoomOut|zoomIn|fit)/);
-  assert.match(controller, /Math\.min\(window\.devicePixelRatio \|\| 1, 2\)/);
+  assert.match(
+    controller,
+    /const pixelRatio = mobile\s*\?\s*Math\.min\(window\.devicePixelRatio \|\| 1, 3\)/,
+  );
 
   for (let page = 1; page <= 12; page += 1) {
     const filename = `page-${String(page).padStart(2, '0')}.webp`;
     const dimensions = readWebpDimensions(path.join(mobilePagesDir, filename));
     assert.deepEqual(dimensions, { width: 1862, height: 2632 }, filename);
   }
+});
+
+test('preenche a viewport mobile sem reservar colunas para as setas', () => {
+  const css = fs.readFileSync(path.join(root, 'assets/css/menu-flipbook.css'), 'utf8');
+
+  assert.match(css, /\.menu-modal-overlay\s*\{[\s\S]*padding:\s*0 !important/);
+  assert.match(css, /height:\s*100dvh/);
+  assert.match(css, /#menuFlipbookPages,[\s\S]*#menuFlipbookPages\.stf__parent\s*\{[\s\S]*width:\s*calc\(100% - 0\.6rem\)/);
+  assert.match(css, /#menuFlipbookPages,[\s\S]*#menuFlipbookPages\.stf__parent\s*\{[\s\S]*height:\s*100%/);
+  assert.match(css, /\.flipbook-nav-prev\s*\{\s*left:\s*0\.25rem/);
+  assert.match(css, /\.flipbook-nav-next\s*\{\s*right:\s*0\.25rem/);
 });
 
 test('mantém as setas discretas e sem hover dourado persistente no mobile', () => {
