@@ -35,6 +35,12 @@ const PDF_URL = 'assets/CardapioMenu/CARDAPIO_THE_WINE.pdf';
 const LOCAL_PAGE_IMAGES = Array.from({ length: 12 }, (_, index) => (
     `assets/CardapioMenu/pages/page-${String(index + 1).padStart(2, '0')}.png`
 ));
+const MOBILE_PAGE_IMAGES = Array.from({ length: 12 }, (_, index) => (
+    `assets/CardapioMenu/pages/mobile/page-${String(index + 1).padStart(2, '0')}.webp`
+));
+const getPageImagesForViewport = () => (
+    window.matchMedia('(max-width: 820px)').matches ? MOBILE_PAGE_IMAGES : LOCAL_PAGE_IMAGES
+);
 const PAGE_FLIP_OPTIONS = {
     width: 595,
     height: 842,
@@ -85,6 +91,7 @@ let isOpen = false;
 let isAnimating = false;
 let resizeTimer = null;
 let lastFocusedElement = null;
+let pinchGesture = null;
 
 function setLoading(visible) {
     if (!elements.loading) return;
@@ -130,7 +137,11 @@ function updateResponsiveBookMode() {
     if (!pageFlip || typeof pageFlip.getSettings !== 'function') return;
 
     const mobile = window.matchMedia('(max-width: 820px)').matches;
-    pageFlip.getSettings().minWidth = mobile ? 10000 : PAGE_FLIP_OPTIONS.minWidth;
+    const settings = pageFlip.getSettings();
+    settings.minWidth = mobile ? 10000 : PAGE_FLIP_OPTIONS.minWidth;
+    settings.drawShadow = !mobile;
+    settings.maxShadowOpacity = mobile ? 0.18 : PAGE_FLIP_OPTIONS.maxShadowOpacity;
+    settings.flippingTime = mobile ? 560 : PAGE_FLIP_OPTIONS.flippingTime;
 }
 
 function updateCanvasResolution() {
@@ -144,7 +155,10 @@ function updateCanvasResolution() {
     const bounds = canvas.getBoundingClientRect();
     const cssWidth = Math.max(1, Math.round(bounds.width));
     const cssHeight = Math.max(1, Math.round(bounds.height));
-    const pixelRatio = Math.max(2, Math.min(window.devicePixelRatio || 1, 3));
+    const mobile = window.matchMedia('(max-width: 820px)').matches;
+    const pixelRatio = mobile
+        ? Math.min(window.devicePixelRatio || 1, 1.5)
+        : Math.max(2, Math.min(window.devicePixelRatio || 1, 3));
     const pixelWidth = Math.round(cssWidth * pixelRatio);
     const pixelHeight = Math.round(cssHeight * pixelRatio);
 
@@ -194,7 +208,7 @@ async function initializeReader() {
         pageFlip.on('flip', handlePageFlip);
         pageFlip.on('changeOrientation', updateControls);
         updateResponsiveBookMode();
-        pageFlip.loadFromImages(LOCAL_PAGE_IMAGES);
+        pageFlip.loadFromImages(getPageImagesForViewport());
 
         updateControls();
         await new Promise((resolve) => window.setTimeout(resolve, 80));
@@ -270,6 +284,7 @@ function closeMenuModal() {
 
     isOpen = false;
     isAnimating = false;
+    pinchGesture = null;
     elements.modal.classList.remove('active');
     elements.modal.setAttribute('aria-hidden', 'true');
     elements.modal.style.display = 'none';
@@ -287,6 +302,56 @@ function closeMenuModal() {
 function setZoom(nextZoom) {
     zoom = Math.min(1.35, Math.max(0.85, Number(nextZoom.toFixed(2))));
     updateZoomState();
+}
+
+function getTouchDistance(touches) {
+    if (!touches || touches.length < 2) return 0;
+
+    const first = touches[0];
+    const second = touches[1];
+    return Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
+}
+
+function bindTouchZoom() {
+    if (!elements.stage) return;
+
+    const stopFlipGesture = () => {
+        pageFlip?.userStop?.({ x: 0, y: 0 }, true);
+    };
+
+    elements.stage.addEventListener('touchstart', (event) => {
+        if (event.touches.length < 2) return;
+
+        const distance = getTouchDistance(event.touches);
+        if (!distance) return;
+
+        stopFlipGesture();
+        pinchGesture = { distance, zoom };
+        event.preventDefault();
+        event.stopPropagation();
+    }, { passive: false, capture: true });
+
+    elements.stage.addEventListener('touchmove', (event) => {
+        if (!pinchGesture || event.touches.length < 2) return;
+
+        const distance = getTouchDistance(event.touches);
+        if (!distance) return;
+
+        setZoom(pinchGesture.zoom * (distance / pinchGesture.distance));
+        event.preventDefault();
+        event.stopPropagation();
+    }, { passive: false, capture: true });
+
+    const finishPinch = (event) => {
+        if (!pinchGesture) return;
+
+        pinchGesture = null;
+        event.preventDefault();
+        event.stopPropagation();
+    };
+
+    elements.stage.addEventListener('touchend', finishPinch, { passive: false, capture: true });
+    elements.stage.addEventListener('touchcancel', finishPinch, { passive: false, capture: true });
 }
 
 async function toggleFullscreen() {
@@ -357,6 +422,8 @@ function bindEvents() {
             handlePageInput();
         }
     });
+
+    bindTouchZoom();
 
     elements.modal.addEventListener('click', (event) => {
         if (event.target === elements.modal) closeMenuModal();

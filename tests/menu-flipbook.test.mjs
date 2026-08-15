@@ -57,7 +57,7 @@ test('loads the flipbook controller as a classic script for file URLs', () => {
 
 test('versiona os assets do flipbook para evitar mistura com cache antigo', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const version = 'v=20260814_v4';
+  const version = 'v=20260814_v6';
 
   for (const asset of [
     `style.css?${version}`,
@@ -84,7 +84,7 @@ test('uses local PDF-derived page images so file URLs avoid PDF CORS requests', 
   const controller = fs.readFileSync(path.join(root, 'assets/js/menu-flipbook.js'), 'utf8');
 
   assert.match(controller, /LOCAL_PAGE_IMAGES/);
-  assert.match(controller, /loadFromImages\(LOCAL_PAGE_IMAGES\)/);
+  assert.match(controller, /loadFromImages\(getPageImagesForViewport\(\)\)/);
   assert.match(controller, /CARDAPIO_THE_WINE\.pdf/);
 
   const pagesDir = path.join(root, 'assets/CardapioMenu/pages');
@@ -147,4 +147,43 @@ test('ships high-resolution local page assets for readable menu text', () => {
     const stats = fs.statSync(path.join(pagesDir, filename));
     assert.ok(stats.size >= 400_000, `${filename} should use the high-resolution PNG render`);
   }
+});
+
+test('usa páginas mais leves e renderização econômica no mobile', () => {
+  const controller = fs.readFileSync(path.join(root, 'assets/js/menu-flipbook.js'), 'utf8');
+  const mobilePagesDir = path.join(root, 'assets/CardapioMenu/pages/mobile');
+
+  assert.match(controller, /MOBILE_PAGE_IMAGES/);
+  assert.match(controller, /getPageImagesForViewport/);
+  assert.match(controller, /loadFromImages\(getPageImagesForViewport\(\)\)/);
+  assert.match(controller, /const pixelRatio = mobile[\s\S]*Math\.min\(window\.devicePixelRatio \|\| 1, 1\.5\)/);
+  assert.match(controller, /settings\.drawShadow = !mobile/);
+
+  for (let page = 1; page <= 12; page += 1) {
+    const filename = `page-${String(page).padStart(2, '0')}.webp`;
+    assert.equal(fs.existsSync(path.join(mobilePagesDir, filename)), true, filename);
+  }
+});
+
+test('mantém as setas discretas e sem hover dourado persistente no mobile', () => {
+  const css = fs.readFileSync(path.join(root, 'assets/css/menu-flipbook.css'), 'utf8');
+
+  assert.match(css, /@media \(max-width: 820px\)[\s\S]*\.flipbook-nav[\s\S]*background:\s*rgba\(5, 4, 3, 0\.24\)/);
+  assert.match(css, /\.flipbook-nav:hover:not\(:disabled\)[\s\S]*background:\s*rgba\(5, 4, 3, 0\.32\)/);
+  assert.match(css, /\.flipbook-nav:active:not\(:disabled\)/);
+});
+
+test('suporta pinça para zoom e swipe touch para paginação', () => {
+  const controller = fs.readFileSync(path.join(root, 'assets/js/menu-flipbook.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'assets/css/menu-flipbook.css'), 'utf8');
+
+  assert.match(controller, /function getTouchDistance/);
+  assert.match(controller, /function bindTouchZoom/);
+  assert.match(controller, /touchstart/);
+  assert.match(controller, /touchmove/);
+  assert.match(controller, /touchend/);
+  assert.match(controller, /preventDefault\(\)/);
+  assert.match(controller, /mobileScrollSupport: false/);
+  assert.match(controller, /swipeDistance: 30/);
+  assert.match(css, /#menuFlipbookStage[\s\S]*touch-action:\s*none/);
 });
