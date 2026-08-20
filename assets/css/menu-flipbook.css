@@ -134,6 +134,13 @@
     }
 }
 
+/* Compensa a área reservada pela capa no canvas e centraliza a página visível. */
+@media (min-width: 821px) {
+    #menuFlipbookPages.stf__parent.is-cover canvas {
+        left: -19% !important;
+    }
+}
+
 @media (min-width: 821px) {
     .flipbook-header > .flipbook-toolbar {
         flex-wrap: nowrap;

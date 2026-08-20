@@ -59,7 +59,7 @@ test('versiona os assets do flipbook para evitar mistura com cache antigo', () =
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   for (const asset of [
     'style.css?v=20260820_v9',
-    'assets/css/menu-flipbook.css?v=20260820_v12',
+    'assets/css/menu-flipbook.css?v=20260820_v13',
     'assets/js/page-flip.browser.js?v=20260814_v8',
     'assets/js/menu-flipbook.js?v=20260820_v11',
   ]) {
