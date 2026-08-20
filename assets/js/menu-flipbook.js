@@ -90,6 +90,8 @@ let resizeTimer = null;
 let lastFocusedElement = null;
 let menuModalScrollY = 0;
 let pinchGesture = null;
+let pausedBackgroundVideos = [];
+let backgroundVideoPlayHandlers = new Map();
 
 function setLoading(visible) {
     if (!elements.loading) return;
@@ -174,6 +176,33 @@ function lockPageScroll(locked) {
     document.body.classList.toggle('menu-modal-open', locked);
     document.body.style.overflow = locked ? 'hidden' : '';
     document.documentElement.style.overflow = locked ? 'hidden' : '';
+}
+
+function setBackgroundVideosPaused(paused) {
+    const backgroundVideos = Array.from(document.querySelectorAll('video'))
+        .filter((video) => !elements.modal?.contains(video));
+
+    if (paused) {
+        if (backgroundVideoPlayHandlers.size) return;
+
+        pausedBackgroundVideos = backgroundVideos.filter((video) => !video.paused);
+        backgroundVideos.forEach((video) => {
+            const preventBackgroundPlayback = () => video.pause();
+            backgroundVideoPlayHandlers.set(video, preventBackgroundPlayback);
+            video.addEventListener('play', preventBackgroundPlayback);
+            video.pause();
+        });
+        return;
+    }
+
+    backgroundVideoPlayHandlers.forEach((handler, video) => {
+        video.removeEventListener('play', handler);
+    });
+    backgroundVideoPlayHandlers.clear();
+    pausedBackgroundVideos.forEach((video) => {
+        video.play().catch(() => {});
+    });
+    pausedBackgroundVideos = [];
 }
 
 function handlePageFlip({ data }) {
@@ -265,6 +294,7 @@ function openMenuModal() {
     menuModalScrollY = window.scrollY;
     lastFocusedElement = document.activeElement;
     isOpen = true;
+    setBackgroundVideosPaused(true);
     elements.modal.style.display = 'flex';
     elements.modal.classList.add('active');
     elements.modal.setAttribute('aria-hidden', 'false');
@@ -288,6 +318,7 @@ function closeMenuModal() {
     elements.modal.setAttribute('aria-hidden', 'true');
     elements.modal.style.display = 'none';
     lockPageScroll(false);
+    setBackgroundVideosPaused(false);
 
     if (document.fullscreenElement && document.exitFullscreen) {
         document.exitFullscreen().catch(() => {});

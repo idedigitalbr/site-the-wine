@@ -33,5 +33,5 @@ test('remove moldura do modal e reduz os controles sem perder contraste', () => 
 });
 
 test('versiona o CSS do modal para evitar layout antigo em cache', () => {
-  assert.match(index, /href="assets\/css\/menu-flipbook\.css\?v=20260820_v10"/);
+  assert.match(index, /href="assets\/css\/menu-flipbook\.css\?v=20260820_v11"/);
 });
