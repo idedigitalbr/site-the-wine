@@ -80,7 +80,7 @@
     </script>
 
     <link rel="stylesheet" href="style.css?v=20260820_v9">
-    <link rel="stylesheet" href="assets/css/menu-flipbook.css?v=20260820_v11">
+    <link rel="stylesheet" href="assets/css/menu-flipbook.css?v=20260820_v12">
 </head>
 <body>
 
@@ -1097,6 +1097,7 @@
             <div class="flipbook-header">
                 <img class="flipbook-brand-logo" src="assets/Logos/logo_the_wine_branco_dourado_transparente.webp" alt="The Wine Experience">
                 <div class="flipbook-toolbar" aria-label="Controles do cardápio">
+                    <button class="flipbook-icon-button flipbook-nav flipbook-toolbar-nav flipbook-nav-prev" id="menuPrevBtn" type="button" aria-label="Página anterior">‹</button>
                     <label class="flipbook-page-control">
                         <span>Página</span>
                         <input id="menuPageInput" type="number" min="1" value="1" aria-label="Número da página">
@@ -1108,27 +1109,26 @@
                                 <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" />
                             </svg>
                         </button>
-                        <a id="menuDownloadBtn" class="flipbook-icon-button" href="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf" download aria-label="Baixar PDF" title="Baixar PDF">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
-                            </svg>
-                        </a>
+                            <a id="menuDownloadBtn" class="flipbook-icon-button" href="assets/CardapioMenu/CARDAPIO_THE_WINE.pdf" download aria-label="Baixar PDF" title="Baixar PDF">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
+                                </svg>
+                            </a>
+                            <button class="flipbook-icon-button flipbook-nav flipbook-toolbar-nav flipbook-nav-next" id="menuNextBtn" type="button" aria-label="Próxima página">›</button>
+                        </div>
                     </div>
-                </div>
                 <button class="menu-modal-close" id="menuModalCloseBtn" type="button" aria-label="Fechar cardápio">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
-            </div>
+                </div>
 
-            <div class="flipbook-reader" id="menuFlipbookStage" tabindex="0" aria-label="Leitor do cardápio">
-                <button class="flipbook-nav flipbook-nav-prev" id="menuPrevBtn" type="button" aria-label="Página anterior">‹</button>
-                <div class="flipbook-page-area" id="menuFlipbookPages" aria-live="polite"></div>
-                <button class="flipbook-nav flipbook-nav-next" id="menuNextBtn" type="button" aria-label="Próxima página">›</button>
+                <div class="flipbook-reader" id="menuFlipbookStage" tabindex="0" aria-label="Leitor do cardápio">
+                    <div class="flipbook-page-area" id="menuFlipbookPages" aria-live="polite"></div>
 
-                <div class="menu-pdf-loading" id="menuPdfLoading" role="status">
+                    <div class="menu-pdf-loading" id="menuPdfLoading" role="status">
                     <span class="pdf-spinner" aria-hidden="true"></span>
                     <span>Carregando cardápio...</span>
                 </div>

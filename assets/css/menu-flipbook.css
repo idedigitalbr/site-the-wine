@@ -386,6 +386,47 @@ html.menu-modal-open body > *:not(#menuModal) * {
     animation-play-state: paused !important;
 }
 
+/* Setas de paginação no cabeçalho, no mesmo tamanho dos demais ícones. */
+.flipbook-reader > .flipbook-nav {
+    display: none !important;
+}
+
+.flipbook-toolbar .flipbook-toolbar-nav {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    padding: 0 !important;
+    flex: 0 0 28px;
+    transform: none !important;
+    font-family: var(--font-sans);
+    font-size: 1.15rem !important;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.flipbook-toolbar .flipbook-nav-prev,
+.flipbook-toolbar .flipbook-nav-next {
+    position: static !important;
+    transform: none !important;
+}
+
+@media (max-width: 820px) {
+    .flipbook-toolbar .flipbook-toolbar-nav {
+        width: 26px !important;
+        height: 26px !important;
+        min-width: 26px !important;
+        min-height: 26px !important;
+        flex-basis: 26px;
+        font-size: 1.05rem !important;
+    }
+}
+
 @media (max-width: 820px) {
     .menu-modal-card {
         border: none !important;
