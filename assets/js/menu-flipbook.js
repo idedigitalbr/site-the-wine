@@ -171,6 +171,34 @@ function updateCanvasResolution() {
     render.update();
 }
 
+function centerCoverPage() {
+    const canvas = pageFlip?.getUI?.()?.getCanvas?.();
+    if (!canvas || !elements.pages || !elements.stage) return;
+
+    const isDesktop = window.matchMedia('(min-width: 821px)').matches;
+    if (!isDesktop || currentPage !== 1) {
+        canvas.style.removeProperty('left');
+        return;
+    }
+
+    const bounds = pageFlip.getBoundsRect?.();
+    const pageWidth = Number(bounds?.pageWidth);
+    if (!Number.isFinite(pageWidth) || pageWidth <= 0) return;
+
+    const stageRect = elements.stage.getBoundingClientRect();
+    const pagesRect = elements.pages.getBoundingClientRect();
+    const renderLeft = Number(bounds.left) || 0;
+    const coverCenter = renderLeft + (pageWidth * 1.5);
+    const targetLeft = (
+        stageRect.left
+        + stageRect.width / 2
+        - pagesRect.left
+        - coverCenter
+    );
+
+    canvas.style.left = `${Math.round(targetLeft * 100) / 100}px`;
+}
+
 function lockPageScroll(locked) {
     document.documentElement.classList.toggle('menu-modal-open', locked);
     document.body.classList.toggle('menu-modal-open', locked);
@@ -211,6 +239,7 @@ function handlePageFlip({ data }) {
     setLoading(false);
     setError(false);
     updateControls();
+    centerCoverPage();
 }
 
 async function initializeReader() {
@@ -233,7 +262,10 @@ async function initializeReader() {
         pageFlip = new window.St.PageFlip(elements.pages, PAGE_FLIP_OPTIONS);
         pageFlip.on('init', handlePageFlip);
         pageFlip.on('flip', handlePageFlip);
-        pageFlip.on('changeOrientation', updateControls);
+        pageFlip.on('changeOrientation', () => {
+            updateControls();
+            centerCoverPage();
+        });
         updateResponsiveBookMode();
         pageFlip.loadFromImages(getPageImagesForViewport());
 
@@ -242,6 +274,7 @@ async function initializeReader() {
         updateCanvasResolution();
         setLoading(false);
         updateControls();
+        centerCoverPage();
         return pageFlip;
     })();
 
@@ -280,6 +313,7 @@ function goToPage(targetPage) {
         currentPage = target;
         isAnimating = false;
         updateControls();
+        centerCoverPage();
         return;
     }
 
@@ -303,6 +337,7 @@ function openMenuModal() {
 
     if (pageFlip) {
         updateControls();
+        centerCoverPage();
     } else {
         initializeReader();
     }
@@ -492,6 +527,7 @@ function bindEvents() {
             updateResponsiveBookMode();
             pageFlip.update();
             updateCanvasResolution();
+            centerCoverPage();
             updateZoomState();
         }, 180);
     }, { passive: true });

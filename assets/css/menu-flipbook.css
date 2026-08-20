@@ -134,10 +134,10 @@
     }
 }
 
-/* Compensa a área reservada pela capa no canvas e centraliza a página visível. */
+/* O JavaScript calcula o deslocamento real da capa conforme o leitor. */
 @media (min-width: 821px) {
     #menuFlipbookPages.stf__parent.is-cover canvas {
-        left: -19% !important;
+        left: 0;
     }
 }
 
