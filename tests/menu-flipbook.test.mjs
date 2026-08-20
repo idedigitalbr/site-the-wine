@@ -61,7 +61,7 @@ test('versiona os assets do flipbook para evitar mistura com cache antigo', () =
     'style.css?v=20260820_v9',
     'assets/css/menu-flipbook.css?v=20260814_v8',
     'assets/js/page-flip.browser.js?v=20260814_v8',
-    'assets/js/menu-flipbook.js?v=20260814_v8',
+    'assets/js/menu-flipbook.js?v=20260820_v9',
   ]) {
     assert.ok(html.includes(asset), `${asset} should invalidate stale browser caches`);
   }

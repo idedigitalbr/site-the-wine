@@ -88,6 +88,7 @@ let isOpen = false;
 let isAnimating = false;
 let resizeTimer = null;
 let lastFocusedElement = null;
+let menuModalScrollY = 0;
 let pinchGesture = null;
 
 function setLoading(visible) {
@@ -261,6 +262,7 @@ function goToPage(targetPage) {
 function openMenuModal() {
     if (!elements.modal) return;
 
+    menuModalScrollY = window.scrollY;
     lastFocusedElement = document.activeElement;
     isOpen = true;
     elements.modal.style.display = 'flex';
@@ -294,6 +296,10 @@ function closeMenuModal() {
     if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
         lastFocusedElement.focus({ preventScroll: true });
     }
+
+    window.requestAnimationFrame(() => {
+        window.scrollTo({ top: menuModalScrollY, left: 0, behavior: 'instant' });
+    });
 }
 
 function setZoom(nextZoom) {
