@@ -32,6 +32,13 @@ test('remove moldura do modal e reduz os controles sem perder contraste', () => 
   assert.match(styles, /@media \(max-width: 820px\)[\s\S]*?\.flipbook-brand-logo/);
 });
 
+test('oculta o controle de tela cheia somente no mobile', () => {
+  assert.match(
+    styles,
+    /@media \(max-width: 820px\)[\s\S]*?#menuFullscreenBtn\s*\{[\s\S]*?display:\s*none\s*!important;/
+  );
+});
+
 test('versiona o CSS do modal para evitar layout antigo em cache', () => {
-  assert.match(index, /href="assets\/css\/menu-flipbook\.css\?v=20260820_v14"/);
+  assert.match(index, /href="assets\/css\/menu-flipbook\.css\?v=20260820_v15"/);
 });

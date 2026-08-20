@@ -424,6 +424,10 @@ html.menu-modal-open body > *:not(#menuModal) * {
 }
 
 @media (max-width: 820px) {
+    #menuFullscreenBtn {
+        display: none !important;
+    }
+
     .flipbook-toolbar .flipbook-toolbar-nav {
         width: 26px !important;
         height: 26px !important;

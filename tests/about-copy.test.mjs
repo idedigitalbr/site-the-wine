@@ -8,9 +8,9 @@ const index = fs.readFileSync(
   'utf8'
 );
 
-test('quebra o texto destacado da seção Sobre antes de experiências', () => {
+test('quebra o texto destacado da seção Sobre depois da vírgula', () => {
   assert.match(
     index,
-    /<p class="highlighted-text">\s*Um ambiente sofisticado para brindar, compartilhar e viver novas<br>experiências\.\s*<\/p>/
+    /<p class="highlighted-text">\s*Um ambiente sofisticado para brindar,<br>compartilhar e viver novas experiências\.\s*<\/p>/
   );
 });
