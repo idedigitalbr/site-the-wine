@@ -7,6 +7,6 @@ const root = path.resolve(import.meta.dirname, '..');
 const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
 test('usa um cache-buster novo para o stylesheet principal', () => {
-  assert.match(index, /href=["']style\.css\?v=20260820_v9["']/);
-  assert.doesNotMatch(index, /href=["']style\.css\?v=20260814_v8["']/);
+  assert.match(index, /href=["']style\.css\?v=20260824_v1["']/);
+  assert.doesNotMatch(index, /href=["']style\.css\?v=20260820_v9["']/);
 });
