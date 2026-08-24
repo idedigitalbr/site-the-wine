@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-08-24
+
+- **Ajustes de Copy e Seções**:
+  - Removido o bloco 'NOSSA HISTÓRIA' e palavra 'SOBRE' da Seção 2, deixando o título como 'THE WINE EXPERIENCE'.
+  - Tag superior da seção Harmonizações atualizada para 'O que você encontrará no The Wine'.
+  - Removido 'Reserve sua experiência' do topo da Seção 7 e atualizado o botão de reserva para 'RESERVE SUA EXPERIÊNCIA'.
+
+- **Direcionamento Geral para WhatsApp**:
+  - Todos os botões de CTA e reservas (Header, Mobile Menu, Seção 4, Accordion de Eventos e Seção Final) direcionados com links diretos para o WhatsApp de atendimento oficial.
+
+- **Correção Visual do Ícone do YouTube**:
+  - Corrigido o triângulo interno de play com preenchimento em dourado no rodapé.
+
 ## 2026-07-29
 
 - **CentralizaÃ§Ã£o Estrita da Imagem dos Cards de ExperiÃªncias (Com e Sem Zoom)**:
@@ -187,4 +200,5 @@
 
 ## 2026-07-08
 
-- SincronizaÃ§Ã£o inicial automÃ¡tica e mapeamento da estrutura do projeto.
+- SincronizaÃ§Ã£o inicial automÃ¡tica e mapeamento da estrutura do projeto.
+
