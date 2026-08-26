@@ -1,3 +1,5 @@
+import { whatsappLinks } from '@/config/social';
+
 export function PairingsSection() {
   return (
     <section id="gastronomia" className="split-section-v2 parallax-container">
@@ -22,7 +24,7 @@ export function PairingsSection() {
 
         <div style={{ alignSelf: 'flex-start' }}>
           <a
-            href="https://api.whatsapp.com/send?phone=5591984040710&text=Ol%C3%A1%2C%20gostaria%20de%20fazer%20uma%20reserva%20no%20The%20Wine%20Experience."
+            href={whatsappLinks.reservation}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-gold-outline"
