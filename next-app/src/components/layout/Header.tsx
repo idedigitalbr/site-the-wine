@@ -1,5 +1,60 @@
-import { LegacyFragment } from '@/components/legacy/LegacyFragment';
+import { MobileNavigation } from '@/components/layout/MobileNavigation';
 
 export function Header() {
-  return <LegacyFragment name="header" startMarker="HEADER & NAVIGATION" endMarker="HERO SECTION" />;
+  return (
+    <>
+      <header className="header" id="navbar">
+        <div className="header-container">
+          <a href="#home" className="header-logo" aria-label="Voltar ao topo">
+            <img src="/assets/Logos/logo_the_wine_branco_dourado_transparente.webp" alt="The Wine Experience Logo" />
+          </a>
+
+          <ul className="nav-menu">
+            <li><a href="#sobre" className="nav-link">Sobre</a></li>
+            <li><a href="#cardapio" className="nav-link">Cardápio</a></li>
+            <li><a href="#eventos" className="nav-link">Eventos &amp; Experiências</a></li>
+            <li><a href="#localizacao" className="nav-link">Localização</a></li>
+          </ul>
+
+          <div className="header-right-side">
+            <a
+              href="https://api.whatsapp.com/send?phone=5591984040710&text=Ol%C3%A1%2C%20gostaria%20de%20fazer%20uma%20reserva%20no%20The%20Wine%20Experience."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-header-reserve"
+            >
+              FAÇA SUA RESERVA
+            </a>
+            <span className="header-separator">|</span>
+            <a href="https://facebook.com/thewinebelem" target="_blank" className="header-social-link" aria-label="Siga-nos no Facebook">
+              <svg className="header-social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+              </svg>
+            </a>
+            <a href="https://instagram.com/thewinebelem" target="_blank" className="header-social-link" aria-label="Siga-nos no Instagram">
+              <svg className="header-social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+              </svg>
+            </a>
+            <a href="https://api.whatsapp.com/send?phone=5591984040710" target="_blank" className="header-social-link" aria-label="Fale conosco no WhatsApp">
+              <svg className="header-social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9l-5.05 .9" />
+                <path d="M9 10a.5.5 0 0 0 1 0v-1a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
+              </svg>
+            </a>
+          </div>
+
+          <button className="hamburger" id="hamburgerBtn" aria-label="Abrir Menu">
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
+      </header>
+
+      <MobileNavigation />
+    </>
+  );
 }
