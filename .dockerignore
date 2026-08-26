@@ -4,6 +4,15 @@
 .dockerignore
 Dockerfile
 docker-compose.yml
+
+# Internal project material (never shipped by nginx)
+.MD
+.agents
+docs
+tests
+node_modules
+
+# Local/generated material
 backup
 ia
 assets-nao-usados
