@@ -1,149 +1,130 @@
-# The Wine — preparação para migração Next.js
+# The Wine — migração 1:1 para Next.js
 
-Este arquivo é o ponto de entrada para a migração do site estático atual para Next.js.
+Este arquivo é o ponto de entrada da migração do site estático atual para Next.js.
 
 ## Regra principal
 
 A migração deve preservar **1:1 o visual e os recursos existentes** antes de qualquer melhoria visual, alteração de copy, troca de animação ou modernização de UX.
 
-A versão estática atual é a referência visual e comportamental.
+A versão estática da raiz continua sendo a referência visual e comportamental.
 
-## Status de execução
-
-Branch de implementação:
+## Branch de implementação
 
 `chore/hardening-deploy-ci-20260825`
 
-Implementado até aqui:
+## Status atual
 
-- app Next.js criado em `next-app/` sem substituir o legado da raiz;
+Implementado na branch:
+
+- app Next.js isolado em `next-app/`, sem substituir o site estático da raiz;
 - Next.js 16.3.3 + React 19.2.8 + TypeScript;
-- App Router;
+- App Router e Server Components por padrão;
 - metadata, canonical, Open Graph, Twitter Card e JSON-LD migrados;
-- HTML legado congelado em `next-app/legacy/index.html`;
-- CSS legado congelado em `next-app/public/style.css`;
+- HTML de referência congelado em `next-app/legacy/index.html`;
+- CSS de referência preservado em `next-app/public/style.css`;
 - árvore de `assets/` reutilizada integralmente em `next-app/public/assets/`;
-- parser server-side remove scripts inline e preserva o markup visual;
-- shell Next permanece Server Component;
-- flipbook continua usando PageFlip e o módulo legado na primeira etapa de paridade;
-- comportamentos globais estão sendo separados em módulos client-side com cleanup explícito;
-- nenhum deploy desta branch é permitido durante a migração.
+- Header, navegação mobile e todas as seções visíveis da Home convertidas para JSX nativo;
+- Booking Modal, Menu Modal, lightbox e toast convertidos para JSX nativo;
+- parser HTML e adaptadores `LegacyFragment`, `LegacyHome`, `LegacyModals` e `LegacyMenuScripts` retirados do runtime;
+- comportamentos browser separados em módulos TypeScript com cleanup explícito;
+- PageFlip continua como biblioteca visual externa, mas a lógica `menu-flipbook.js` foi portada para `src/behaviors/menuFlipbook.ts`;
+- `page.tsx` permanece Server Component;
+- nenhum deploy desta branch faz parte da migração.
 
-## O que não deve mudar durante a migração
+## O que continua congelado
 
-- Ordem e composição visual das seções.
-- Identidade visual, cores, tipografias, espaçamentos e proporções.
-- Header desktop e drawer mobile.
-- Hero em vídeo.
-- Seção institucional.
-- Cards de Gastronomia, Carta de Vinhos e Ambiente.
-- Harmonizações com parallax horizontal/vertical.
-- Seção de cardápio split com vídeo e mockup flutuante.
-- Modal do cardápio e comportamento de flipbook.
-- Eventos & Experiências em accordion.
-- CTA de reserva.
-- Galeria infinita, drag/touch e lightbox.
-- Footer, mapa, horários e redes sociais.
-- Links e mensagens de WhatsApp.
-- SEO, Open Graph, Twitter Cards e JSON-LD.
-- Comportamento responsivo atual.
-- Preferência `prefers-reduced-motion` já respeitada pelo site.
+- ordem e composição das seções;
+- identidade visual, cores, tipografias, espaçamentos e proporções;
+- Header desktop e drawer mobile;
+- Hero em vídeo;
+- seção institucional;
+- cards de Gastronomia, Carta de Vinhos e Ambiente;
+- Harmonizações e seus movimentos de parallax;
+- seção visual do cardápio;
+- modal/flipbook do cardápio;
+- Eventos & Experiências;
+- CTA de reserva;
+- galeria infinita, drag/touch e lightbox;
+- Footer, mapa, horários e redes sociais;
+- links e mensagens de WhatsApp;
+- SEO, Open Graph, Twitter Cards e JSON-LD;
+- breakpoints e comportamento responsivo;
+- `prefers-reduced-motion`.
 
-## Documentação da migração
+## Documentação
 
-1. [`docs/next-migration/01-static-audit.md`](docs/next-migration/01-static-audit.md) — auditoria do código legado.
-2. [`docs/next-migration/02-component-map.md`](docs/next-migration/02-component-map.md) — decomposição exata em componentes Next/React.
-3. [`docs/next-migration/03-behavior-contract.md`](docs/next-migration/03-behavior-contract.md) — contrato dos recursos interativos.
+1. [`docs/next-migration/01-static-audit.md`](docs/next-migration/01-static-audit.md) — auditoria do legado.
+2. [`docs/next-migration/02-component-map.md`](docs/next-migration/02-component-map.md) — mapa de componentes.
+3. [`docs/next-migration/03-behavior-contract.md`](docs/next-migration/03-behavior-contract.md) — contrato comportamental 1:1.
 4. [`docs/next-migration/04-design-system-and-assets.md`](docs/next-migration/04-design-system-and-assets.md) — tokens, CSS, breakpoints e assets.
-5. [`docs/next-migration/05-migration-plan.md`](docs/next-migration/05-migration-plan.md) — ordem segura de implementação.
-6. [`docs/next-migration/legacy-contract.json`](docs/next-migration/legacy-contract.json) — mapa legível por agentes/automação.
+5. [`docs/next-migration/05-migration-plan.md`](docs/next-migration/05-migration-plan.md) — plano por fases.
+6. [`docs/next-migration/06-execution-status.md`](docs/next-migration/06-execution-status.md) — estado real da execução.
+7. [`docs/next-migration/legacy-contract.json`](docs/next-migration/legacy-contract.json) — contrato estruturado para agentes.
 
-## Estratégia adotada
+## Estratégia atual
 
-A implementação está seguindo uma abordagem **parity-first**:
+A abordagem continua sendo **parity-first**, mas o runtime já ultrapassou a fase de adaptação por HTML:
 
-1. manter o DOM e os assets atuais como baseline;
-2. executar o HTML dentro do shell Next sem os scripts inline;
-3. substituir o JavaScript global por módulos de comportamento isolados;
-4. manter o flipbook legado até a paridade do restante estar estabilizada;
-5. só depois substituir os blocos de markup por JSX puro seção a seção;
-6. só depois da aprovação visual 1:1 fazer limpeza de CSS e modernizações.
+1. preservar o legado estático como baseline;
+2. manter os mesmos assets, classes, IDs, conteúdo e CSS;
+3. renderizar a Home em JSX nativo por componentes;
+4. manter browser-only behavior em controladores client-side pequenos;
+5. manter somente a biblioteca PageFlip externa para o efeito de livro;
+6. comparar a versão Next contra o legado antes de qualquer redesign/refatoração visual;
+7. somente após a aprovação 1:1 modularizar/modernizar o CSS e otimizar assets.
 
-## Estrutura atual
+## Estrutura atual do app
 
 ```text
 next-app/
 ├── legacy/
-│   └── index.html
+│   └── index.html                 # baseline, não runtime
 ├── public/
-│   ├── assets/
-│   └── style.css
+│   ├── assets/                    # mesmos assets do legado
+│   └── style.css                  # CSS legado preservado
 ├── scripts/
+│   └── verify-legacy-parity.mjs
 ├── src/
 │   ├── app/
 │   ├── behaviors/
+│   │   ├── header.ts
+│   │   ├── mobileNavigation.ts
+│   │   ├── reveal.ts
+│   │   ├── scrollSpy.ts
+│   │   ├── parallax.ts
+│   │   ├── eventsAccordion.ts
+│   │   ├── galleryLightbox.ts
+│   │   └── menuFlipbook.ts
 │   ├── components/
+│   │   ├── behaviors/
+│   │   ├── layout/
+│   │   ├── menu/
+│   │   ├── reservation/
+│   │   └── sections/
 │   ├── config/
-│   ├── lib/
 │   └── types/
 └── tests/
 ```
 
-## Estrutura alvo final
+## Pendências antes de considerar a migração 1:1 pronta
 
-```text
-src/
-├── app/
-│   ├── layout.tsx
-│   ├── page.tsx
-│   └── globals.css
-├── components/
-│   ├── layout/
-│   │   ├── Header.tsx
-│   │   ├── MobileNavigation.tsx
-│   │   └── Footer.tsx
-│   ├── sections/
-│   │   ├── HeroSection.tsx
-│   │   ├── AboutSection.tsx
-│   │   ├── ExperiencePillarsSection.tsx
-│   │   ├── PairingsSection.tsx
-│   │   ├── MenuSection.tsx
-│   │   ├── EventsSection.tsx
-│   │   ├── ReservationSection.tsx
-│   │   └── GallerySection.tsx
-│   ├── menu/
-│   │   ├── MenuModal.tsx
-│   │   ├── MenuFlipbook.tsx
-│   │   └── MenuToolbar.tsx
-│   ├── gallery/
-│   │   └── Lightbox.tsx
-│   └── effects/
-│       ├── RevealOnScroll.tsx
-│       ├── ScrollSpy.tsx
-│       └── ParallaxController.tsx
-├── config/
-│   ├── site.ts
-│   ├── navigation.ts
-│   ├── social.ts
-│   └── content.ts
-├── hooks/
-│   ├── useParallax.ts
-│   ├── useScrollSpy.ts
-│   ├── useReducedMotion.ts
-│   └── useBodyScrollLock.ts
-└── styles/
-    ├── tokens.css
-    ├── base.css
-    ├── components.css
-    └── sections.css
-```
+- instalar dependências em ambiente com acesso normal ao npm;
+- executar `npm run typecheck` com dependências reais;
+- executar a suíte completa de testes;
+- executar `npm run build`;
+- rodar o app Next localmente;
+- comparar visualmente todas as viewports previstas no contrato;
+- testar drawer, parallax, eventos, galeria, lightbox e flipbook em browser real;
+- corrigir somente diferenças de paridade encontradas;
+- manter o legado da raiz até a aprovação final.
 
-## Regras de segurança da migração
+## Regras de segurança
 
 - não executar deploy desta branch;
-- não alterar `.github/workflows/deploy-vps.yml` como parte da migração;
+- não alterar `.github/workflows/deploy-vps.yml` como parte desta migração;
+- não fazer merge em `main` antes da validação 1:1;
 - não remover o site estático da raiz;
 - não trocar assets enquanto a paridade não estiver concluída;
 - não redesenhar seções durante a conversão;
 - não transformar `page.tsx` inteiro em Client Component;
-- cada comportamento browser deve possuir cleanup explícito para funcionar corretamente com React Strict Mode.
+- cada comportamento browser deve possuir cleanup explícito para React Strict Mode.
