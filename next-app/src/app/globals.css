@@ -1,17 +1,13 @@
 /*
- * Somente ajustes de compatibilidade necessários para hospedar o DOM legado
- * dentro do shell React sem alterar sua geometria.
+ * Compatibilidade mínima entre o CSS/efeitos do legado e o DOM nativo do Next.
+ * Não contém regras de layout visual da página; o design continua em public/style.css.
  */
-#legacy-root {
-  display: contents;
-}
-
-html.menu-modal-open body > #legacy-root,
-html.menu-modal-open body > #legacy-root * {
-  animation-play-state: running !important;
-}
-
-html.menu-modal-open #legacy-root > *:not(#menuModal),
-html.menu-modal-open #legacy-root > *:not(#menuModal) * {
+html.menu-modal-open body > *:not(#menuModal),
+html.menu-modal-open body > *:not(#menuModal) * {
   animation-play-state: paused !important;
+}
+
+html.menu-modal-open #menuModal,
+html.menu-modal-open #menuModal * {
+  animation-play-state: running !important;
 }
