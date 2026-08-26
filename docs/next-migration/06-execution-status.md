@@ -10,9 +10,7 @@ A migração está sendo executada em modo **parity-first**. O site estático da
 
 Nenhum deploy desta branch faz parte deste trabalho e o workflow de produção não deve ser alterado durante a migração.
 
-## Fases executadas
-
-### Fase 0 — baseline e contrato
+## Fase 0 — baseline e contrato
 
 **Status: concluída para estrutura/código.**
 
@@ -23,9 +21,9 @@ Nenhum deploy desta branch faz parte deste trabalho e o workflow de produção n
 - mapa de componentes documentado.
 - regras para agentes documentadas.
 
-### Fase 1 — scaffold Next.js
+## Fase 1 — scaffold Next.js
 
-**Status: concluída.**
+**Status: implementada.**
 
 Criado `next-app/` com:
 
@@ -34,23 +32,19 @@ Criado `next-app/` com:
 - Server Components por padrão;
 - metadata/canonical/Open Graph/Twitter Card;
 - JSON-LD do restaurante;
-- configuração central do site;
-- configuração de links sociais e WhatsApp;
-- configuração de conteúdo e páginas do cardápio;
-- `.gitignore` próprio;
-- scripts de verificação local.
+- configurações de site, navegação, redes sociais, conteúdo e cardápio;
+- scripts/testes de contrato.
 
-O `main` não foi substituído e a aplicação estática da raiz permanece intacta como baseline.
+O site estático da raiz permanece intacto como baseline.
 
-### Fase 2 — composição visual por componentes
+## Fase 2 — composição visual em JSX
 
-**Status: concluída em modo de paridade.**
+**Status: implementação concluída; validação visual pendente.**
 
-`page.tsx` não contém o HTML completo e não é Client Component.
-
-A página foi dividida nas seguintes fronteiras:
+As fronteiras visuais principais não usam mais `LegacyFragment`:
 
 - `Header`
+- `MobileNavigation`
 - `HeroSection`
 - `AboutSection`
 - `ExperiencePillarsSection`
@@ -60,107 +54,142 @@ A página foi dividida nas seguintes fronteiras:
 - `ReservationSection`
 - `GallerySection`
 - `Footer`
-- `LegacyModals`
+- `BookingModal`
+- `MenuModal`
+- `ReservationToast`
 
-Nesta etapa os componentes extraem fragmentos do HTML congelado usando marcadores do legado. Isso é intencional: cria fronteiras arquiteturais sem reescrever o markup e sem introduzir diferenças visuais prematuramente.
+O `page.tsx` continua sendo Server Component e apenas compõe essas unidades.
 
-A conversão interna desses fragmentos para JSX puro deve ocorrer somente seção por seção, acompanhada de comparação visual.
+Foram retirados do runtime:
 
-### Fase 3 — comportamentos globais
+- `LegacyFragment`;
+- `LegacyHome`;
+- `LegacyModals`;
+- `LegacyMenuScripts`;
+- `legacyMarkup.ts`.
 
-**Status: primeira implementação concluída; validação visual ainda pendente.**
+O arquivo `next-app/legacy/index.html` permanece propositalmente como **baseline de comparação**, não como fonte de renderização.
 
-Foram separados em módulos com cleanup explícito:
+## Fase 3 — comportamentos globais
 
-- loop/animação do hero;
-- estado/autohide do header;
+**Status: implementação TypeScript concluída; validação em browser pendente.**
+
+Os comportamentos são inicializados pelo `SiteBehaviorController` e possuem cleanup explícito:
+
+- loop/animação do Hero;
+- estado/autohide do Header;
 - drawer mobile;
-- modal legado de reserva;
+- Booking Modal;
 - reveal on scroll;
 - smooth scroll;
 - scroll spy;
 - parallax;
-- accordion mobile de eventos;
+- accordion mobile de Eventos;
 - galeria infinita + lightbox;
-- ano automático do footer.
+- ano automático do Footer.
 
-Os valores relevantes do legado foram preservados, incluindo:
+Contratos preservados:
 
-- header scrolled após 60 px;
+- Header scrolled após 60 px;
 - autohide após 120 px;
-- scroll spy com offset de 160 px;
+- scroll spy com offset 160 px;
 - reveal threshold `0.05` e rootMargin `0px 0px -40px 0px`;
 - parallax desativado em `<= 768px` e interpolação `0.08`;
 - eventos mobile em `<= 860px`;
-- galeria com velocidade base `0.5`, hover `0.25` e retomada em 3000 ms;
-- respeito a `prefers-reduced-motion`.
+- galeria com velocidade `0.5`, hover `0.25` e retomada após 3000 ms;
+- `prefers-reduced-motion`.
 
-## Cardápio / Flipbook
+## Fase 4 — Eventos & Experiências
 
-**Status: preservado pelo módulo legado nesta etapa.**
+**Status: markup migrado para JSX; comportamento preservado por módulo TypeScript.**
 
-A primeira versão Next carrega os mesmos arquivos:
+Continuam preservados:
 
-- `/assets/js/page-flip.browser.js`
-- `/assets/js/menu-flipbook.js`
-- `/assets/css/menu-flipbook.css`
+- primeiro painel ativo;
+- três experiências existentes;
+- CTAs e mensagens de WhatsApp;
+- comportamento especial em mobile;
+- centralização do painel selecionado.
 
-Essa decisão reduz o risco de regressão do componente mais complexo do site. A conversão completa do flipbook para um Client Component React próprio deve ser feita em uma etapa isolada, com teste visual e funcional específico.
+## Fase 5 — Galeria e Lightbox
 
-## Validações realizadas
+**Status: markup migrado para JSX; comportamento preservado por módulo TypeScript.**
 
-### Testes locais de contrato
+- 12 itens originais agora vêm de `config/content.ts`;
+- IDs e classes do legado continuam iguais;
+- clonagem para loop infinito, drag/touch, setas, pause/resume e lightbox continuam no behavior isolado.
 
-Os testes de fonte/comportamento executados localmente validaram:
+## Fase 6 — Cardápio / Flipbook
 
-- scaffold e módulos obrigatórios;
-- `page.tsx` como Server Component;
-- decomposição da página em componentes nomeados;
-- parser do HTML legado;
-- composição dos controladores client-side;
-- breakpoint/interpolação do parallax;
-- offset do scroll spy;
-- contrato do IntersectionObserver;
-- comportamento mobile dos eventos;
-- velocidades/reduced-motion da galeria.
+**Status: lógica de integração portada para TypeScript; biblioteca PageFlip mantida.**
 
-Resultado mais recente da suíte estrutural/comportamental: **10/10 testes aprovados**.
+O markup do modal está em `MenuModal.tsx`.
 
-### Identidade dos arquivos congelados no Git
+A aplicação Next não precisa mais carregar `/assets/js/menu-flipbook.js` em runtime. A lógica foi portada para:
 
-A baseline Next reutiliza os próprios objetos Git do legado para:
+`src/behaviors/menuFlipbook.ts`
 
-- `next-app/legacy/index.html`;
-- `next-app/public/style.css`;
-- `next-app/public/assets/`.
+O `MenuFlipbookController` carrega somente:
 
-Dessa forma, HTML, CSS e assets de referência não são cópias reinterpretadas: apontam para o mesmo conteúdo versionado do legado no commit da migração.
+`/assets/js/page-flip.browser.js`
 
-### TypeScript
+A biblioteca PageFlip continua sendo usada para preservar o mesmo motor visual de páginas.
 
-Foi realizada checagem estática local com o compilador TypeScript disponível no ambiente e stubs locais apenas para módulos externos não instalados. Os arquivos fonte da migração passaram sem erros nessa checagem.
+O behavior TypeScript preserva:
 
-## Validações que ainda faltam
+- páginas desktop/mobile;
+- configurações de PageFlip;
+- navegação anterior/próxima;
+- input de página;
+- Home/End/ArrowLeft/ArrowRight/Escape;
+- focus trap;
+- scroll lock/restauração;
+- foco anterior;
+- pausa/restauração dos vídeos da página;
+- fullscreen;
+- pinch zoom;
+- DPI/resolução do canvas;
+- centralização da capa;
+- opções responsivas desktop/mobile;
+- cleanup para React Strict Mode.
 
-### `npm install` / `next build`
+O arquivo legado `menu-flipbook.js` continua presente dentro da árvore congelada de assets para comparação histórica/paridade, mas não é mais o controlador usado pelo app Next.
 
-Não foi possível concluir a instalação das dependências no ambiente de execução atual por limitação de rede/timeout. Portanto, **não considerar `next build` validado ainda**.
+## Fase 7 — configuração
 
-Quando o projeto for aberto em um ambiente local com acesso ao npm, executar dentro de `next-app/`:
+**Status: parcialmente concluída.**
 
-```bash
-npm install
-npm run typecheck
-npm test
-npm run verify:legacy
-npm run build
-```
+Já existem configurações para:
 
-### Paridade visual
+- site/SEO;
+- navegação;
+- sociais/WhatsApp;
+- galeria;
+- páginas do cardápio;
+- eventos.
 
-Ainda é obrigatória comparação visual nos tamanhos definidos em `03-behavior-contract.md` antes de declarar a migração 1:1 concluída.
+Não houve alteração de copy durante a extração.
 
-Validar pelo menos:
+## Fase 8 — testes de regressão
+
+**Status: contratos ampliados; validação final ainda necessária em ambiente completo.**
+
+Foram adicionados testes para:
+
+- composição dos componentes Next;
+- remoção dos adaptadores runtime legados;
+- JSX nativo das seções;
+- preservação de IDs/classes/assets críticos;
+- overlays/modais;
+- contrato do flipbook TypeScript;
+- contratos dos behaviors globais;
+- identidade dos arquivos congelados.
+
+## Fase 9 — validação visual 1:1
+
+**Status: pendente.**
+
+Ainda é obrigatória comparação em browser real nos tamanhos:
 
 - 1440 × 900
 - 1366 × 768
@@ -171,19 +200,51 @@ Validar pelo menos:
 - 390 × 844
 - 360 × 800
 
-## Próxima etapa recomendada
+Além da página parada, devem ser comparados:
 
-1. rodar o app Next localmente;
-2. comparar o resultado com o site estático seção por seção;
-3. corrigir apenas diferenças de paridade;
-4. converter cada `LegacyFragment` para JSX puro começando por Header, Hero e Sobre;
-5. deixar Gallery e Flipbook para o final;
-6. não fazer redesign durante essa etapa.
+- Header antes/depois de scroll;
+- drawer mobile;
+- reveals;
+- parallax;
+- accordion de eventos;
+- cardápio aberto;
+- capa e páginas internas do flipbook;
+- fullscreen e pinch;
+- galeria/drag/touch;
+- lightbox;
+- Footer.
+
+## Fase 10 — refatoração pós-paridade
+
+**Status: não iniciada.**
+
+Não dividir/reinterpretar o CSS legado antes da validação visual.
+
+## Validações ainda obrigatórias
+
+### Ambiente Node completo
+
+A instalação npm não pôde ser concluída no ambiente de execução anterior por limitação de rede. Portanto, ainda não considerar `next build` validado.
+
+Em ambiente com acesso normal ao npm, executar em `next-app/`:
+
+```bash
+npm install
+npm run typecheck
+npm test
+npm run verify:legacy
+npm run build
+```
+
+### Browser real
+
+Depois do build/dev local, executar a comparação visual e funcional definida em `03-behavior-contract.md`.
 
 ## Restrições
 
 - não fazer deploy desta branch;
 - não alterar o workflow de produção;
 - não fazer merge em `main` antes da validação visual;
-- não remover o legado estático enquanto o Next não atingir paridade;
-- não trocar assets, copy, fontes ou animações durante a migração 1:1.
+- não remover o legado estático da raiz;
+- não trocar assets, copy, fontes ou animações durante a migração 1:1;
+- não iniciar redesign/refatoração visual antes da paridade.
