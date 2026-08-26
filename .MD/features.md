@@ -1,19 +1,46 @@
 # Features e Módulos do Projeto
 
-## 📋 PRÉ PROJETO: Documentações, Anotações, Links e Referências [Em andamento]
-- [x] S0 Mapeamento de Escopo & Briefing
-- [/] S1 Arquitetura de Informação & Contexto IA
+atualizado: 2026-08-25
 
-## 💻 PÁGINA: HOME [Não iniciada]
-- [ ] S0 Menu e Rodapé
-- [ ] S1 TOPO HERO (Carrossel)
-- [ ] S2 CONHEÇA A EMPRESA
-- [ ] S3 NOSSAS MARCAS / SERVIÇOS
-- [ ] S4 SOBRE NÓS
-- [ ] S5 NOSSA HISTÓRIA
-- [ ] S6 TIMELINE
-- [ ] S7 TRABALHE CONOSCO / CONTATO
+## 📋 DOCUMENTAÇÃO E CONTEXTO [Ativo]
+- [x] Mapeamento de escopo e briefing
+- [x] Arquitetura técnica documentada
+- [x] Stack documentada
+- [x] Processo de deploy documentado
+- [x] Changelog técnico mantido
 
-## 🛠️ INFRAESTRUTURA & VPS [Em andamento]
-- [x] S0 Setup Docker Compose & VPS Nginx
-- [x] S1 Configuração DNS Cloudflare & SSL
+## 💻 SITE INSTITUCIONAL / HOME [Implementado]
+- [x] Header desktop
+- [x] Menu mobile / drawer responsivo
+- [x] Hero com vídeo
+- [x] Seção institucional THE WINE EXPERIENCE
+- [x] Seções de gastronomia, vinhos e harmonizações
+- [x] Cardápio com experiência interativa/modal
+- [x] Eventos & Experiências em accordion
+- [x] CTAs de reserva direcionados para WhatsApp
+- [x] Galeria de imagens / lightbox
+- [x] Localização, horários e contato
+- [x] Rodapé responsivo
+- [x] SEO, Open Graph, Twitter Cards e Schema.org
+
+## 🧪 QUALIDADE [Implementado]
+- [x] Testes automatizados com `node:test`
+- [x] Testes de menu/cardápio
+- [x] Testes de hero, rodapé, copy e reservas
+- [x] Teste de hardening do deploy
+- [x] Execução dos testes no GitHub Actions
+- [x] Validação do build Docker antes do deploy
+
+## 🛠️ INFRAESTRUTURA & VPS [Implementado]
+- [x] Docker Compose + Nginx
+- [x] Traefik / TLS
+- [x] DNS / Cloudflare
+- [x] Deploy automático via GitHub Actions
+- [x] Deploy restrito à branch `main`
+- [x] Build Docker com allowlist de arquivos públicos
+- [x] Exclusão de materiais internos do contexto de publicação
+
+## 🔐 PENDÊNCIAS DE GOVERNANÇA
+- [ ] Ativar proteção da branch `main` no GitHub
+- [ ] Exigir o workflow de validação antes de permitir merge
+- [ ] Adotar branch + Pull Request como fluxo padrão de alterações
