@@ -1,3 +1,5 @@
+import { menuPages } from '@/config/content';
+
 export function MenuModal() {
   return (
     <div
@@ -48,7 +50,7 @@ export function MenuModal() {
               <a
                 id="menuDownloadBtn"
                 className="flipbook-icon-button"
-                href="/assets/CardapioMenu/CARDAPIO_THE_WINE.pdf"
+                href={menuPages.pdf}
                 download
                 aria-label="Baixar PDF"
                 title="Baixar PDF"
@@ -90,7 +92,7 @@ export function MenuModal() {
             <span>Verifique sua conexão ou baixe o PDF para continuar.</span>
             <div className="flipbook-error-actions">
               <button id="menuRetryBtn" type="button">Tentar novamente</button>
-              <a href="/assets/CardapioMenu/CARDAPIO_THE_WINE.pdf" download>Baixar PDF</a>
+              <a href={menuPages.pdf} download>Baixar PDF</a>
             </div>
           </div>
         </div>
