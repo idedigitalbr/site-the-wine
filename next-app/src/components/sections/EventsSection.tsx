@@ -1,3 +1,5 @@
+import { whatsappLinks } from '@/config/social';
+
 export function EventsSection() {
   return (
     <>
@@ -19,12 +21,7 @@ export function EventsSection() {
                 <span className="tw-acc__cap-sub">Uma vez ao mês</span>
                 <span className="tw-acc__extra">
                   <span className="tw-acc__desc">Menus exclusivos criados pelo chef, onde cada prato encontra seu vinho perfeito em uma experiência enogastronômica completa.</span>
-                  <a
-                    className="tw-acc__btn"
-                    href="https://api.whatsapp.com/send?phone=5591984040710&text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20Jantar%20Harmonizado%20no%20The%20Wine%20Experience."
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a className="tw-acc__btn" href={whatsappLinks.dinner} target="_blank" rel="noopener noreferrer">
                     Saiba mais
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
                   </a>
@@ -49,12 +46,7 @@ export function EventsSection() {
                 <span className="tw-acc__cap-sub">Sob consulta</span>
                 <span className="tw-acc__extra">
                   <span className="tw-acc__desc">Celebrações íntimas, encontros corporativos e ocasiões especiais com ambientação personalizada e serviço impecável.</span>
-                  <a
-                    className="tw-acc__btn"
-                    href="https://api.whatsapp.com/send?phone=5591984040710&text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20Eventos%20Corporativos%20no%20The%20Wine%20Experience."
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a className="tw-acc__btn" href={whatsappLinks.corporate} target="_blank" rel="noopener noreferrer">
                     Saiba mais
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
                   </a>
@@ -77,12 +69,7 @@ export function EventsSection() {
                   <span className="tw-acc__desc">
                     No The Wine Experience, você escolhe o rótulo, a origem e o estilo direto na nossa máquina de vinhos — uma forma prática e elegante de descobrir novos sabores, na medida da sua taça.<br /><br /><em>Qual seria a sua escolha hoje?</em>
                   </span>
-                  <a
-                    className="tw-acc__btn"
-                    href="https://api.whatsapp.com/send?phone=5591984040710&text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20as%20M%C3%A1quinas%20de%20Vinho%20no%20The%20Wine%20Experience."
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a className="tw-acc__btn" href={whatsappLinks.wineMachines} target="_blank" rel="noopener noreferrer">
                     Saiba mais
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
                   </a>
