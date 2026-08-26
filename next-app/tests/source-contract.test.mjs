@@ -10,13 +10,15 @@ const requiredFiles = [
   'package.json',
   'src/app/layout.tsx',
   'src/app/page.tsx',
-  'src/components/legacy/LegacyHome.tsx',
   'src/components/legacy/LegacyBehaviorController.tsx',
-  'src/components/menu/LegacyMenuScripts.tsx',
-  'src/lib/legacyMarkup.ts',
+  'src/components/menu/MenuFlipbookController.tsx',
+  'src/components/menu/MenuModal.tsx',
+  'src/components/reservation/BookingModal.tsx',
+  'src/components/reservation/ReservationToast.tsx',
   'src/behaviors/galleryLightbox.ts',
   'src/behaviors/parallax.ts',
   'src/behaviors/eventsAccordion.ts',
+  'src/behaviors/menuFlipbook.ts',
   'src/config/site.ts',
   'public/style.css',
   'legacy/index.html',
@@ -33,13 +35,15 @@ test('server page remains a Server Component', () => {
   assert.equal(page.includes("'use client'"), false);
   assert.match(page, /<Header/);
   assert.match(page, /<HeroSection/);
+  assert.match(page, /<MenuFlipbookController/);
 });
 
-test('legacy parser removes scripts and roots asset URLs', () => {
-  const source = read('src/lib/legacyMarkup.ts');
-  assert.match(source, /<script\\b/);
-  assert.match(source, /\/assets\//);
-  assert.match(source, /path\.join\(process\.cwd\(\), 'legacy', 'index\.html'\)/);
+test('page no longer depends on legacy markup adapters', () => {
+  const page = read('src/app/page.tsx');
+  assert.equal(page.includes('LegacyFragment'), false);
+  assert.equal(page.includes('LegacyHome'), false);
+  assert.equal(page.includes('LegacyModals'), false);
+  assert.equal(page.includes('LegacyMenuScripts'), false);
 });
 
 test('behavior controller composes isolated browser behaviors', () => {
@@ -54,7 +58,7 @@ test('page is decomposed into named migration components', () => {
   for (const name of [
     'Header', 'HeroSection', 'AboutSection', 'ExperiencePillarsSection',
     'PairingsSection', 'MenuSection', 'EventsSection', 'ReservationSection',
-    'GallerySection', 'Footer', 'LegacyModals'
+    'GallerySection', 'Footer', 'BookingModal', 'MenuModal', 'ReservationToast'
   ]) {
     assert.match(page, new RegExp(`<${name}`), `page missing ${name}`);
   }
