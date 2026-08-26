@@ -10,9 +10,20 @@ O runtime Next atual já usa JSX/React nativo para as seções e modais. O HTML 
 
 ## Desenvolvimento local
 
+No Laragon, mantenha o projeto dentro do diretório `www` e use o terminal do Laragon para executar os comandos abaixo. O Next roda como servidor Node independente; Docker não é necessário nesta etapa.
+
 ```bash
 npm install
-npm run dev
+npm run dev:laragon
+```
+
+Acesse `http://127.0.0.1:3000`. Se quiser usar um domínio local do Laragon, configure um proxy/reverse proxy para encaminhar o domínio ao processo Node em `127.0.0.1:3000`; não aponte o Apache/Nginx diretamente para `next-app` como se fosse um site PHP.
+
+Para executar a versão compilada localmente:
+
+```bash
+npm run build
+npm run start:laragon
 ```
 
 ## Verificações de código
@@ -22,6 +33,12 @@ npm run typecheck
 npm test
 npm run verify:legacy
 npm run build
+```
+
+Ou execute o gate completo local:
+
+```bash
+npm run verify:local
 ```
 
 ## Validação em browser
@@ -76,4 +93,4 @@ Detalhes: [`../docs/next-migration/07-browser-validation.md`](../docs/next-migra
 
 ## Status correto neste momento
 
-O harness de validação está implementado no repositório, mas `next build` e os testes reais em Chromium ainda precisam ser executados em um ambiente com as dependências npm instaladas antes de declarar paridade 1:1.
+O harness de validação está implementado no repositório. A paridade 1:1 só deve ser declarada depois de `npm run verify:local` e dos testes reais em Chromium.

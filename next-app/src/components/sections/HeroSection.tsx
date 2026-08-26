@@ -2,7 +2,7 @@ export function HeroSection() {
   return (
     <section id="home" className="hero parallax-container" data-parallax-speed="0.38">
       <div className="hero-bg">
-        <video autoPlay loop muted playsInline className="parallax-img" data-parallax-speed="0.38">
+        <video autoPlay loop muted playsInline preload="auto" className="parallax-img" data-parallax-speed="0.38">
           <source src="/assets/S1 TOPO HERO/video-web-horizontal.mp4" type="video/mp4" />
         </video>
       </div>

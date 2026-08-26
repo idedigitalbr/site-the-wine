@@ -26,6 +26,10 @@ const PAGE_FLIP_OPTIONS: Record<string, unknown> = {
   disableFlipByClick: false,
 };
 
+function destroyPageFlip(instance: PageFlipInstance | null) {
+  instance?.destroy?.();
+}
+
 function normalizePage(page: string | number, total: number) {
   const max = Math.max(1, Number(total) || 1);
   const value = Number.parseInt(String(page), 10);
@@ -261,7 +265,7 @@ export function setupMenuFlipbook(): Cleanup {
       return await initializationPromise;
     } catch (readerError) {
       console.error(`Erro ao carregar o cardápio local (${PDF_URL}):`, readerError);
-      pageFlip?.destroy?.();
+      destroyPageFlip(pageFlip);
       pageFlip = null;
       setLoading(false);
       setError(true);

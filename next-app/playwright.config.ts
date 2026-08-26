@@ -13,7 +13,9 @@ export default defineConfig({
     browserName: 'chromium',
     headless: true,
     locale: 'pt-BR',
-    reducedMotion: 'reduce',
+    contextOptions: {
+      reducedMotion: 'reduce',
+    },
     deviceScaleFactor: 1,
   },
   webServer: [

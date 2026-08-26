@@ -23,14 +23,28 @@ export function setupHeroLoop(): Cleanup {
 
   const handleEnded = () => {
     resetHeroLogoAnim();
-    void heroVideo.play();
+    void heroVideo.play().catch(() => {});
+  };
+
+  const requestPlayback = () => {
+    if (!heroVideo.paused && !heroVideo.ended) return;
+    void heroVideo.play().catch(() => {});
+  };
+
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') requestPlayback();
   };
 
   heroVideo.addEventListener('timeupdate', handleTimeUpdate);
   heroVideo.addEventListener('ended', handleEnded);
+  heroVideo.addEventListener('canplay', requestPlayback);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  requestPlayback();
 
   return () => {
     heroVideo.removeEventListener('timeupdate', handleTimeUpdate);
     heroVideo.removeEventListener('ended', handleEnded);
+    heroVideo.removeEventListener('canplay', requestPlayback);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
   };
 }

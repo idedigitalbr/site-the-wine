@@ -78,7 +78,7 @@ for (const target of targets) {
     test('gallery opens, navigates and closes the lightbox', async ({ page }) => {
       await openSite(page, target.url);
 
-      await page.locator('.gallery-item').first().click();
+      await page.locator('.gallery-item[data-index="0"]').nth(1).click();
       await expect(page.locator('#lightbox')).toHaveClass(/active/);
       await expect(page.locator('#lightboxCounter')).toHaveText('01 / 12');
 

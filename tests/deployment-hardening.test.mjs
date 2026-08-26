@@ -21,8 +21,11 @@ test('.dockerignore exclui codigo e artefatos que nao pertencem ao site publicad
   }
 });
 
-test('CI executa testes antes do deploy e deploy permanece restrito a main', () => {
-  assert.match(workflow, /node --test tests\/\*\.test\.mjs/);
-  assert.match(workflow, /needs:\s*test/);
-  assert.match(workflow, /github\.ref == 'refs\/heads\/main'/);
+test('deploy permanece restrito a main e a validação desta branch é local', () => {
+  assert.match(workflow, /push:\s*[\s\S]*branches:\s*[\s\S]*- main/);
+  assert.doesNotMatch(workflow, /pull_request:/);
+  assert.doesNotMatch(workflow, /node --test tests\/\*\.test\.mjs/);
+  assert.doesNotMatch(workflow, /needs:\s*test/);
+  assert.match(workflow, /git fetch origin main/);
+  assert.match(workflow, /git reset --hard origin\/main/);
 });

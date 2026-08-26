@@ -11,3 +11,55 @@ html.menu-modal-open #menuModal,
 html.menu-modal-open #menuModal * {
   animation-play-state: running !important;
 }
+
+/* Lucide controls keep the legacy button geometry while replacing hand-drawn glyphs. */
+.hamburger {
+  align-items: center !important;
+  flex-direction: row !important;
+  height: 28px !important;
+  justify-content: center !important;
+}
+
+.hamburger svg {
+  width: 24px !important;
+  height: 24px !important;
+  color: var(--wine-gold) !important;
+}
+
+.hamburger-close-icon {
+  display: none !important;
+}
+
+.hamburger[aria-expanded='true'] .hamburger-menu-icon {
+  display: none !important;
+}
+
+.hamburger[aria-expanded='true'] .hamburger-close-icon {
+  display: block !important;
+}
+
+.mobile-nav-close svg {
+  width: 28px;
+  height: 28px;
+}
+
+.modal-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.modal-close-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.footer-map-iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 0;
+}

@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight, Download, Maximize2, X } from 'lucide-react';
 import { menuPages } from '@/config/content';
 
 export function MenuModal() {
@@ -25,7 +26,7 @@ export function MenuModal() {
               type="button"
               aria-label="Página anterior"
             >
-              ‹
+              <ChevronLeft aria-hidden="true" strokeWidth={1.5} />
             </button>
 
             <label className="flipbook-page-control">
@@ -42,9 +43,7 @@ export function MenuModal() {
                 aria-label="Abrir tela cheia"
                 title="Abrir tela cheia"
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" />
-                </svg>
+                <Maximize2 aria-hidden="true" strokeWidth={1.5} />
               </button>
 
               <a
@@ -55,9 +54,7 @@ export function MenuModal() {
                 aria-label="Baixar PDF"
                 title="Baixar PDF"
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
-                </svg>
+                <Download aria-hidden="true" strokeWidth={1.5} />
               </a>
 
               <button
@@ -66,16 +63,13 @@ export function MenuModal() {
                 type="button"
                 aria-label="Próxima página"
               >
-                ›
+              <ChevronRight aria-hidden="true" strokeWidth={1.5} />
               </button>
             </div>
           </div>
 
           <button className="menu-modal-close" id="menuModalCloseBtn" type="button" aria-label="Fechar cardápio">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <X aria-hidden="true" strokeWidth={2.8} />
           </button>
         </div>
 

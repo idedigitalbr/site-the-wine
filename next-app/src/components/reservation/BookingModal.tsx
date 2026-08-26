@@ -1,23 +1,16 @@
+import { Wine, X } from 'lucide-react';
 import { whatsappLinks } from '@/config/social';
 
 export function BookingModal() {
   return (
     <div className="modal-overlay" id="bookingModal">
       <div className="modal-card" style={{ textAlign: 'center', padding: '3.5rem 2.5rem', maxWidth: '460px', width: '90%' }}>
-        <span className="modal-close-btn" id="modalCloseBtn">&times;</span>
+        <button className="modal-close-btn" id="modalCloseBtn" type="button" aria-label="Fechar reserva">
+          <X aria-hidden="true" strokeWidth={1.5} />
+        </button>
 
         <div className="modal-icon-wrap" style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.2rem' }}>
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ width: '46px', height: '46px', color: 'var(--wine-gold)' }}
-          >
-            <path d="M8 2h8M12 15v7M8 22h8M12 15a5 5 0 0 0 5-5V2H7v8a5 5 0 0 0 5 5z" />
-          </svg>
+          <Wine aria-hidden="true" strokeWidth={1.2} style={{ width: '46px', height: '46px', color: 'var(--wine-gold)' }} />
         </div>
 
         <h3

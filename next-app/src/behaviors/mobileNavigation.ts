@@ -11,17 +11,8 @@ export function setupMobileNavigation(): Cleanup {
 
   const syncHamburger = (isOpen: boolean) => {
     if (!hamburgerBtn) return;
-    const spans = hamburgerBtn.querySelectorAll<HTMLElement>('span');
-
-    if (isOpen) {
-      if (spans[0]) spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-      if (spans[1]) spans[1].style.opacity = '0';
-      if (spans[2]) spans[2].style.transform = 'rotate(-45deg) translate(5px, -5px)';
-    } else {
-      if (spans[0]) spans[0].style.transform = 'none';
-      if (spans[1]) spans[1].style.opacity = '1';
-      if (spans[2]) spans[2].style.transform = 'none';
-    }
+    hamburgerBtn.setAttribute('aria-expanded', String(isOpen));
+    hamburgerBtn.setAttribute('aria-label', isOpen ? 'Fechar Menu' : 'Abrir Menu');
   };
 
   const toggleMenu = () => {
