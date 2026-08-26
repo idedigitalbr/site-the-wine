@@ -28,7 +28,9 @@ Implementado na branch:
 - parser HTML e adaptadores `LegacyFragment`, `LegacyHome`, `LegacyModals` e `LegacyMenuScripts` retirados do runtime;
 - comportamentos browser separados em módulos TypeScript com cleanup explícito;
 - PageFlip continua como biblioteca visual externa, mas a lógica `menu-flipbook.js` foi portada para `src/behaviors/menuFlipbook.ts`;
+- configurações repetidas de navegação, sociais, WhatsApp, galeria e cardápio centralizadas em `src/config/`;
 - `page.tsx` permanece Server Component;
+- harness Playwright local criado para comparar legado e Next funcionalmente e por pixel diff;
 - nenhum deploy desta branch faz parte da migração.
 
 ## O que continua congelado
@@ -59,7 +61,8 @@ Implementado na branch:
 4. [`docs/next-migration/04-design-system-and-assets.md`](docs/next-migration/04-design-system-and-assets.md) — tokens, CSS, breakpoints e assets.
 5. [`docs/next-migration/05-migration-plan.md`](docs/next-migration/05-migration-plan.md) — plano por fases.
 6. [`docs/next-migration/06-execution-status.md`](docs/next-migration/06-execution-status.md) — estado real da execução.
-7. [`docs/next-migration/legacy-contract.json`](docs/next-migration/legacy-contract.json) — contrato estruturado para agentes.
+7. [`docs/next-migration/07-browser-validation.md`](docs/next-migration/07-browser-validation.md) — execução da paridade funcional/visual com Playwright.
+8. [`docs/next-migration/legacy-contract.json`](docs/next-migration/legacy-contract.json) — contrato estruturado para agentes.
 
 ## Estratégia atual
 
@@ -70,8 +73,10 @@ A abordagem continua sendo **parity-first**, mas o runtime já ultrapassou a fas
 3. renderizar a Home em JSX nativo por componentes;
 4. manter browser-only behavior em controladores client-side pequenos;
 5. manter somente a biblioteca PageFlip externa para o efeito de livro;
-6. comparar a versão Next contra o legado antes de qualquer redesign/refatoração visual;
-7. somente após a aprovação 1:1 modularizar/modernizar o CSS e otimizar assets.
+6. centralizar apenas dados repetidos/estáveis sem alterar copy ou destino;
+7. executar contratos estruturais e funcionais;
+8. comparar legado × Next por pixel diff nas viewports oficiais;
+9. somente após a aprovação 1:1 modularizar/modernizar o CSS e otimizar assets.
 
 ## Estrutura atual do app
 
@@ -83,6 +88,7 @@ next-app/
 │   ├── assets/                    # mesmos assets do legado
 │   └── style.css                  # CSS legado preservado
 ├── scripts/
+│   ├── serve-legacy.mjs           # servidor local da raiz estática
 │   └── verify-legacy-parity.mjs
 ├── src/
 │   ├── app/
@@ -103,18 +109,45 @@ next-app/
 │   │   └── sections/
 │   ├── config/
 │   └── types/
-└── tests/
+├── tests/
+│   ├── browser/
+│   │   ├── functional-parity.spec.ts
+│   │   └── visual-parity.spec.ts
+│   └── *.test.mjs
+└── playwright.config.ts
 ```
+
+## Harness de paridade
+
+O Playwright inicia automaticamente:
+
+- legado da raiz em `http://127.0.0.1:4173`;
+- Next.js em `http://127.0.0.1:4174`.
+
+Comandos:
+
+```bash
+npm run browser:install
+npm run test:functional
+npm run test:visual
+```
+
+O visual é comparado nas 8 viewports do contrato, com screenshots anexados quando o diff ultrapassa a tolerância automática.
+
+O harness estar presente no repositório **não significa que a paridade já foi aprovada**. Os testes precisam ser efetivamente executados em ambiente com npm e Chromium disponíveis.
 
 ## Pendências antes de considerar a migração 1:1 pronta
 
 - instalar dependências em ambiente com acesso normal ao npm;
 - executar `npm run typecheck` com dependências reais;
-- executar a suíte completa de testes;
+- executar `npm test`;
+- executar `npm run verify:legacy`;
 - executar `npm run build`;
-- rodar o app Next localmente;
-- comparar visualmente todas as viewports previstas no contrato;
-- testar drawer, parallax, eventos, galeria, lightbox e flipbook em browser real;
+- instalar Chromium com `npm run browser:install`;
+- executar `npm run test:functional`;
+- executar `npm run test:visual`;
+- inspecionar os diffs nas 8 viewports;
+- validar manualmente hover/focus, transições, fullscreen, pinch e drag/touch quando aplicável;
 - corrigir somente diferenças de paridade encontradas;
 - manter o legado da raiz até a aprovação final.
 
