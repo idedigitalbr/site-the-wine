@@ -1,5 +1,94 @@
-import { LegacyFragment } from '@/components/legacy/LegacyFragment';
-
 export function ExperiencePillarsSection() {
-  return <LegacyFragment name="experience-pillars" startMarker="SEÇÃO 3: GASTRONOMIA, VINHOS E AMBIENTE (3 CARDS)" endMarker="SEÇÃO 4: HARMONIZAÇÕES EXCLUSIVAS (SPLIT LAYOUT)" />;
+  return (
+    <section id="experiencia" className="mvv-section">
+      <div className="mvv-outer-container">
+        <div className="mvv-grid">
+          <div className="mvv-column parallax-container">
+            <img
+              src="/assets/Gastronomia/prato-carne-grelhada-gnocchi.webp"
+              className="mvv-bg-img parallax-img"
+              data-parallax-speed="0.25"
+              alt="Gastronomia The Wine Experience"
+            />
+            <div className="mvv-column-overlay" />
+            <div className="mvv-card parallax-element" data-parallax-speed="-0.10">
+              <div className="mvv-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" />
+                  <path d="M3 16c0-4.97 4.03-9 9-9s9 4.03 9 9" />
+                  <path d="M2 16h20" />
+                  <path d="M4 16v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1" />
+                </svg>
+              </div>
+              <div className="mvv-divider">
+                <span className="line" />
+                <span className="diamond" />
+                <span className="line" />
+              </div>
+              <h3>Gastronomia</h3>
+              <p>Menu autoral pensado para realçar sabores e transformar cada encontro em uma experiência memorável.</p>
+            </div>
+          </div>
+
+          <div className="mvv-column parallax-container">
+            <img
+              src="/assets/Vinhos/garrafas-vinho-cartuxa-tapada.webp"
+              className="mvv-bg-img parallax-img"
+              data-parallax-speed="-0.25"
+              alt="Carta de Vinhos The Wine Experience"
+            />
+            <div className="mvv-column-overlay" />
+            <div className="mvv-card parallax-element" data-parallax-speed="0.14">
+              <div className="mvv-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M7 21h4.5V9.5c0-.8-.4-1.5-1-2V3.5h-2.5V7.5c-.6.5-1 1.2-1 2V21z" />
+                  <path d="M8 3.5h2.5" />
+                  <path d="M12.5 21h3.5v-8.5c0-.6-.3-1.1-.8-1.5V5h-1.9v6c-.5.4-.8.9-.8 1.5V21z" />
+                  <path d="M13.2 5h1.9" />
+                  <path d="M15.5 15a2.5 2.5 0 0 0 5 0v-5h-5v5z" />
+                  <path d="M18 15v6" />
+                  <path d="M16 21h4" />
+                </svg>
+              </div>
+              <div className="mvv-divider">
+                <span className="line" />
+                <span className="diamond" />
+                <span className="line" />
+              </div>
+              <h3>Carta de Vinhos</h3>
+              <p>Curadoria especial de rótulos nacionais e internacionais para harmonizações sofisticadas e momentos especiais.</p>
+            </div>
+          </div>
+
+          <div className="mvv-column parallax-container">
+            <img
+              src="/assets/Ambiente/mesa-reservada-adega.webp"
+              className="mvv-bg-img parallax-img"
+              data-parallax-speed="0.30"
+              alt="Ambiente Reservado Adega The Wine Experience"
+            />
+            <div className="mvv-column-overlay" />
+            <div className="mvv-card parallax-element" data-parallax-speed="-0.08">
+              <div className="mvv-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2c-.6 1.8-2 3-2 4.5s1 2.5 2 2.5 2-1 2-2.5S12.6 3.8 12 2z" />
+                  <line x1="12" y1="7" x2="12" y2="9.5" />
+                  <path d="M10 9.5h4v7h-4z" />
+                  <path d="M6 16.5h12c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5H6c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5z" />
+                  <path d="M18 18c1.5 0 2.5-.7 2.5-1.5S19.5 15 18 15h-.5" />
+                </svg>
+              </div>
+              <div className="mvv-divider">
+                <span className="line" />
+                <span className="diamond" />
+                <span className="line" />
+              </div>
+              <h3>Ambiente</h3>
+              <p>Atmosfera intimista e acolhedora, perfeita para brindar, desacelerar e celebrar bons encontros.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
