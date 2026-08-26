@@ -12,9 +12,14 @@ const migratedSections = [
   ['src/components/sections/AboutSection.tsx', ['id="sobre"', 'historia-section', 'bg-sobernoszinho-internet.webp']],
   ['src/components/sections/ExperiencePillarsSection.tsx', ['id="experiencia"', 'mvv-section', 'garrafas-vinho-cartuxa-tapada.webp']],
   ['src/components/sections/PairingsSection.tsx', ['id="gastronomia"', 'split-section-v2', 'S3-TACA-VINHO.webp']],
+  ['src/components/sections/MenuSection.tsx', ['id="cardapio"', 'cardapio-split-section', 'trigger-menu-modal']],
+  ['src/components/sections/EventsSection.tsx', ['id="eventos"', 'tw-acc__panel--active', 'Máquinas de Vinho']],
+  ['src/components/sections/ReservationSection.tsx', ['id="reserva"', 'cta-reservation', 'btn-reservar-agora']],
+  ['src/components/sections/GallerySection.tsx', ['id="galeria"', 'id="galleryTrack"', 'id="lightbox"']],
+  ['src/components/layout/Footer.tsx', ['id="localizacao"', 'footer-premium', 'id="currentYear"']],
 ];
 
-test('priority sections are native JSX and preserve critical legacy selectors/assets', () => {
+test('migrated page sections are native JSX and preserve critical legacy selectors/assets', () => {
   for (const [file, needles] of migratedSections) {
     const source = read(file);
     assert.equal(source.includes('LegacyFragment'), false, `${file} still depends on LegacyFragment`);
@@ -32,4 +37,14 @@ test('mobile navigation is isolated as its own JSX component', () => {
   assert.match(source, /id="mobileNav"/);
   assert.match(source, /id="mobileNavClose"/);
   assert.match(source, /mobile-nav-link/);
+});
+
+test('gallery JSX is data-driven but retains the legacy DOM contract', () => {
+  const source = read('src/components/sections/GallerySection.tsx');
+  assert.match(source, /galleryItems/);
+  assert.match(source, /data-index/);
+  assert.match(source, /gallery-arrow-left/);
+  assert.match(source, /gallery-arrow-right/);
+  assert.match(source, /lightboxImage/);
+  assert.match(source, /lightboxCounter/);
 });
