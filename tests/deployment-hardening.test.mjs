@@ -40,6 +40,7 @@ test('Compose publica o Next no Traefik e mantém MySQL sem porta pública', () 
   assert.match(compose, /container_name: thewine-web/);
   assert.match(compose, /traefik\.http\.services\.thewine-service\.loadbalancer\.server\.port=3000/);
   assert.match(compose, /image: mysql:8\.0/);
+  assert.match(compose, /DATABASE_HOST: thewine-db/);
   assert.match(compose, /thewine_mysql_data:\/var\/lib\/mysql/);
   assert.match(compose, /MYSQL_PASSWORD:\s*\$\{MYSQL_PASSWORD:\?MYSQL_PASSWORD must be set\}/);
   assert.match(compose, /healthcheck:/);

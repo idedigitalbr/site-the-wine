@@ -10,7 +10,8 @@ Crie um `.env` somente no servidor e defina senhas fortes para
 `MYSQL_PASSWORD` e `MYSQL_ROOT_PASSWORD`. O arquivo `.env` é ignorado pelo Git
 e não deve ser versionado.
 
-O Next acessa o banco somente pela rede interna do Compose usando host `db`,
+O Next acessa o banco somente pela rede interna do Compose usando o host
+exclusivo `thewine-db`,
 porta `3306`, database `MYSQL_DATABASE` e usuário `MYSQL_USER`.
 
 ## Agendamentos
