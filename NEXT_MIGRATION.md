@@ -1,12 +1,33 @@
 # The Wine — preparação para migração Next.js
 
-Este arquivo é o ponto de entrada para uma futura migração do site estático atual para Next.js.
+Este arquivo é o ponto de entrada para a migração do site estático atual para Next.js.
 
 ## Regra principal
 
 A migração deve preservar **1:1 o visual e os recursos existentes** antes de qualquer melhoria visual, alteração de copy, troca de animação ou modernização de UX.
 
 A versão estática atual é a referência visual e comportamental.
+
+## Status de execução
+
+Branch de implementação:
+
+`chore/hardening-deploy-ci-20260825`
+
+Implementado até aqui:
+
+- app Next.js criado em `next-app/` sem substituir o legado da raiz;
+- Next.js 16.3.3 + React 19.2.8 + TypeScript;
+- App Router;
+- metadata, canonical, Open Graph, Twitter Card e JSON-LD migrados;
+- HTML legado congelado em `next-app/legacy/index.html`;
+- CSS legado congelado em `next-app/public/style.css`;
+- árvore de `assets/` reutilizada integralmente em `next-app/public/assets/`;
+- parser server-side remove scripts inline e preserva o markup visual;
+- shell Next permanece Server Component;
+- flipbook continua usando PageFlip e o módulo legado na primeira etapa de paridade;
+- comportamentos globais estão sendo separados em módulos client-side com cleanup explícito;
+- nenhum deploy desta branch é permitido durante a migração.
 
 ## O que não deve mudar durante a migração
 
@@ -37,25 +58,38 @@ A versão estática atual é a referência visual e comportamental.
 5. [`docs/next-migration/05-migration-plan.md`](docs/next-migration/05-migration-plan.md) — ordem segura de implementação.
 6. [`docs/next-migration/legacy-contract.json`](docs/next-migration/legacy-contract.json) — mapa legível por agentes/automação.
 
-## Estratégia recomendada
+## Estratégia adotada
 
-Não migrar tudo de uma vez.
+A implementação está seguindo uma abordagem **parity-first**:
 
-A futura aplicação Next deve nascer ao lado do legado e substituir as seções progressivamente. Cada seção só é considerada migrada depois de validar:
+1. manter o DOM e os assets atuais como baseline;
+2. executar o HTML dentro do shell Next sem os scripts inline;
+3. substituir o JavaScript global por módulos de comportamento isolados;
+4. manter o flipbook legado até a paridade do restante estar estabilizada;
+5. só depois substituir os blocos de markup por JSX puro seção a seção;
+6. só depois da aprovação visual 1:1 fazer limpeza de CSS e modernizações.
 
-- desktop;
-- tablet;
-- mobile;
-- visual;
-- conteúdo;
-- interação;
-- acessibilidade já existente;
-- assets;
-- links externos;
-- performance funcional;
-- ausência de regressão nas seções vizinhas.
+## Estrutura atual
 
-## Estrutura alvo sugerida
+```text
+next-app/
+├── legacy/
+│   └── index.html
+├── public/
+│   ├── assets/
+│   └── style.css
+├── scripts/
+├── src/
+│   ├── app/
+│   ├── behaviors/
+│   ├── components/
+│   ├── config/
+│   ├── lib/
+│   └── types/
+└── tests/
+```
+
+## Estrutura alvo final
 
 ```text
 src/
@@ -104,12 +138,12 @@ src/
     └── sections.css
 ```
 
-Essa estrutura é um **destino de migração**, não uma autorização para alterar o legado imediatamente.
+## Regras de segurança da migração
 
-## Branch desta preparação
-
-Todo o trabalho descrito aqui pertence à branch:
-
-`chore/hardening-deploy-ci-20260825`
-
-Não realizar deploy desta branch durante a preparação da migração.
+- não executar deploy desta branch;
+- não alterar `.github/workflows/deploy-vps.yml` como parte da migração;
+- não remover o site estático da raiz;
+- não trocar assets enquanto a paridade não estiver concluída;
+- não redesenhar seções durante a conversão;
+- não transformar `page.tsx` inteiro em Client Component;
+- cada comportamento browser deve possuir cleanup explícito para funcionar corretamente com React Strict Mode.
