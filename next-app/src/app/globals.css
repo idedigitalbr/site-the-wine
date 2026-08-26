@@ -1,0 +1,17 @@
+/*
+ * Somente ajustes de compatibilidade necessários para hospedar o DOM legado
+ * dentro do shell React sem alterar sua geometria.
+ */
+#legacy-root {
+  display: contents;
+}
+
+html.menu-modal-open body > #legacy-root,
+html.menu-modal-open body > #legacy-root * {
+  animation-play-state: running !important;
+}
+
+html.menu-modal-open #legacy-root > *:not(#menuModal),
+html.menu-modal-open #legacy-root > *:not(#menuModal) * {
+  animation-play-state: paused !important;
+}

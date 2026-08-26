@@ -1,0 +1,492 @@
+/* =============================================================
+   CARDÁPIO FLIPBOOK - STPAGEFLIP LAYOUT
+   ============================================================= */
+#menuFlipbookPages {
+    position: relative;
+    z-index: 1;
+    width: min(86%, 1020px);
+    height: calc(100% - 2.2rem);
+    display: block;
+    flex: 0 1 auto;
+    transform-origin: center center;
+    transition: transform 180ms ease;
+}
+
+#menuFlipbookPages.is-zoomed {
+    overflow: visible;
+}
+
+#menuFlipbookPages.stf__parent {
+    width: min(94%, 1260px);
+    height: calc(100% - 1rem);
+    margin: 0 auto;
+    overflow: visible;
+    filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.5));
+}
+
+#menuFlipbookPages.stf__parent .stf__wrapper,
+#menuFlipbookPages.stf__parent .stf__block {
+    overflow: visible;
+}
+
+#menuFlipbookPages.stf__parent .stf__block {
+    border-radius: 4px;
+}
+
+#menuFlipbookPages.stf__parent .stf__item {
+    overflow: hidden;
+    background: #f7f0e7;
+    border: 1px solid rgba(210, 154, 60, 0.38);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.62);
+}
+
+#menuFlipbookPages.stf__parent canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: block;
+    border-radius: 3px;
+    transition: left 720ms ease;
+}
+
+@media (min-width: 821px) {
+    #menuFlipbookPages.stf__parent.is-cover canvas {
+        left: -25%;
+    }
+}
+
+#menuFlipbookPages.is-zoomed {
+    transform: scale(var(--flipbook-zoom, 1));
+}
+
+.flipbook-icon-button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--wine-gold);
+    background: rgba(13, 10, 7, 0.42);
+    border: 1px solid rgba(210, 154, 60, 0.42);
+    border-radius: 4px;
+    transition: color 180ms ease, background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.flipbook-icon-button svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.flipbook-icon-button:hover,
+.flipbook-icon-button:focus-visible {
+    color: #0d0a07;
+    background: var(--wine-gold);
+    border-color: var(--wine-gold);
+}
+
+.flipbook-icon-button:focus-visible {
+    outline: 2px solid rgba(238, 207, 132, 0.82);
+    outline-offset: 2px;
+}
+
+@media (max-width: 820px) {
+    .menu-modal-card {
+        width: calc(100vw - 0.7rem);
+        height: 96vh;
+        max-height: 96vh;
+    }
+
+    .flipbook-header {
+        flex-wrap: wrap;
+        row-gap: 0.45rem;
+    }
+
+    .flipbook-header > .flipbook-toolbar {
+        order: 3;
+        flex-basis: 100%;
+        width: 100%;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0 0;
+        border-top: 1px solid rgba(210, 154, 60, 0.18);
+    }
+
+    .flipbook-header > .flipbook-toolbar .flipbook-tool-group-end {
+        width: auto;
+    }
+
+    #menuFlipbookPages {
+        width: calc(100% - 4.2rem);
+        height: calc(100% - 0.3rem);
+    }
+
+    #menuFlipbookPages.stf__parent {
+        width: calc(100% - 4.2rem);
+        height: calc(100% - 0.3rem);
+    }
+}
+
+/* O JavaScript calcula o deslocamento real da capa conforme o leitor. */
+@media (min-width: 821px) {
+    #menuFlipbookPages.stf__parent.is-cover canvas {
+        left: 0;
+    }
+}
+
+@media (min-width: 821px) {
+    .flipbook-header > .flipbook-toolbar {
+        flex-wrap: nowrap;
+    }
+}
+
+/* =============================================================
+   MODAL COMPACTO - MAIS ÁREA PARA O CATÁLOGO
+   ============================================================= */
+@media (min-width: 821px) {
+    .menu-modal-card {
+        width: min(1440px, calc(100vw - 1rem));
+        max-width: 1440px;
+        height: min(96vh, 960px);
+        max-height: 96vh;
+    }
+
+    .flipbook-header {
+        min-height: 60px;
+        padding: 0.55rem 1rem;
+        gap: 0.75rem;
+        display: grid;
+        grid-template-columns: minmax(180px, 1fr) auto auto;
+    }
+
+    .flipbook-header > :first-child {
+        min-width: 0;
+    }
+
+    .flipbook-header > .flipbook-toolbar {
+        min-height: 44px;
+        padding: 0.3rem 0.55rem;
+        gap: 0.6rem;
+        flex-wrap: nowrap;
+    }
+
+    .flipbook-toolbar button,
+    .flipbook-toolbar a {
+        min-height: 30px;
+        padding: 0.32rem 0.55rem;
+    }
+
+    .flipbook-page-control input {
+        width: 44px;
+        min-height: 30px;
+    }
+
+    .flipbook-tool-group-end {
+        gap: 0.55rem;
+    }
+
+    .menu-modal-close {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+    }
+
+    .flipbook-reader {
+        min-height: 0;
+    }
+
+    #menuFlipbookPages.stf__parent {
+        width: min(98%, 1400px);
+        height: calc(100% - 0.35rem);
+    }
+}
+
+@media (max-width: 820px) {
+    .menu-modal-overlay {
+        padding: 0 !important;
+    }
+
+    .menu-modal-card {
+        width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+    }
+
+    .flipbook-header {
+        min-height: 54px;
+        padding: 0.5rem 0.7rem;
+        gap: 0.35rem;
+    }
+
+    .flipbook-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .flipbook-header > .flipbook-toolbar {
+        min-height: 0;
+        padding: 0.25rem 0 0;
+    }
+
+    .flipbook-toolbar {
+        gap: 0.3rem;
+        padding: 0.25rem;
+    }
+
+    .flipbook-icon-button {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+    }
+
+    .flipbook-icon-button svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    #menuFlipbookStage {
+        touch-action: none;
+        overscroll-behavior: contain;
+    }
+
+    .flipbook-nav {
+        width: 32px;
+        height: 52px;
+        font-size: 2.15rem;
+        color: rgba(210, 154, 60, 0.82);
+        background: rgba(5, 4, 3, 0.24);
+        border-color: rgba(210, 154, 60, 0.25);
+        opacity: 0.68;
+    }
+
+    .flipbook-nav:hover:not(:disabled) {
+        color: rgba(210, 154, 60, 0.9);
+        background: rgba(5, 4, 3, 0.32);
+        border-color: rgba(210, 154, 60, 0.38);
+    }
+
+    .flipbook-nav:active:not(:disabled),
+    .flipbook-nav:focus-visible:not(:disabled) {
+        color: #0d0a07;
+        background: rgba(210, 154, 60, 0.62);
+        border-color: var(--wine-gold);
+        opacity: 0.96;
+    }
+
+    #menuFlipbookPages,
+    #menuFlipbookPages.stf__parent {
+        width: calc(100% - 0.6rem);
+        height: 100%;
+    }
+
+    .flipbook-nav-prev {
+        left: 0.25rem;
+    }
+
+    .flipbook-nav-next {
+        right: 0.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #menuFlipbookPages {
+        transition: none;
+    }
+}
+
+/* =============================================================
+   CABEÇALHO MINIMALISTA DO MODAL
+   ============================================================= */
+.menu-modal-card {
+    border: none !important;
+}
+
+.flipbook-header {
+    min-height: 108px;
+    padding: 0.55rem 4.5rem 0.45rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border-bottom: none !important;
+}
+
+.flipbook-brand-logo {
+    display: block;
+    width: auto;
+    max-width: 150px;
+    height: 34px;
+    object-fit: contain;
+    margin: 0 auto;
+}
+
+.flipbook-toolbar {
+    min-height: 0;
+    padding: 0.15rem 0.4rem;
+    justify-content: center;
+    gap: 0.45rem;
+    flex-wrap: nowrap;
+    background: transparent;
+    border: none;
+    font-size: 0.62rem;
+}
+
+.flipbook-toolbar button,
+.flipbook-toolbar a {
+    min-height: 28px;
+    padding: 0.25rem 0.45rem;
+    border-radius: 6px;
+    font-size: 0.58rem;
+    letter-spacing: 0.06em;
+}
+
+.flipbook-icon-button {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+}
+
+.flipbook-icon-button svg {
+    width: 14px;
+    height: 14px;
+}
+
+.flipbook-page-control {
+    gap: 0.3rem;
+}
+
+.flipbook-page-control input {
+    width: 36px;
+    min-height: 28px;
+    padding: 0.2rem;
+    border-radius: 5px;
+    font-size: 0.65rem;
+}
+
+.menu-modal-close {
+    position: absolute !important;
+    top: 0.8rem !important;
+    right: 1rem !important;
+    width: 36px !important;
+    height: 36px !important;
+    flex-basis: 36px;
+    transform: none !important;
+}
+
+.menu-modal-close:hover {
+    transform: rotate(90deg) !important;
+}
+
+/* Congela efeitos e animações da página enquanto o leitor está aberto. */
+html.menu-modal-open body > *:not(#menuModal),
+html.menu-modal-open body > *:not(#menuModal) * {
+    animation-play-state: paused !important;
+}
+
+/* Setas de paginação no cabeçalho, no mesmo tamanho dos demais ícones. */
+.flipbook-reader > .flipbook-nav {
+    display: none !important;
+}
+
+.flipbook-toolbar .flipbook-toolbar-nav {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    padding: 0 !important;
+    flex: 0 0 28px;
+    transform: none !important;
+    font-family: var(--font-sans);
+    font-size: 1.15rem !important;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.flipbook-toolbar .flipbook-nav-prev,
+.flipbook-toolbar .flipbook-nav-next {
+    position: static !important;
+    transform: none !important;
+}
+
+@media (max-width: 820px) {
+    #menuFullscreenBtn {
+        display: none !important;
+    }
+
+    .flipbook-toolbar .flipbook-toolbar-nav {
+        width: 26px !important;
+        height: 26px !important;
+        min-width: 26px !important;
+        min-height: 26px !important;
+        flex-basis: 26px;
+        font-size: 1.05rem !important;
+    }
+}
+
+@media (max-width: 820px) {
+    .menu-modal-card {
+        border: none !important;
+    }
+
+    .flipbook-header {
+        min-height: 84px;
+        padding: 0.45rem 3.2rem 0.4rem;
+        gap: 0.25rem;
+        flex-wrap: nowrap;
+    }
+
+    .flipbook-brand-logo {
+        max-width: 125px;
+        height: 28px;
+    }
+
+    .flipbook-toolbar {
+        gap: 0.25rem;
+        padding: 0.1rem 0;
+    }
+
+    .flipbook-toolbar button,
+    .flipbook-toolbar a,
+    .flipbook-icon-button {
+        min-height: 26px;
+    }
+
+    .flipbook-icon-button {
+        width: 26px;
+        height: 26px;
+        min-width: 26px;
+    }
+
+    .flipbook-icon-button svg {
+        width: 13px;
+        height: 13px;
+    }
+
+    .flipbook-page-control input {
+        width: 34px;
+        min-height: 26px;
+    }
+
+    .menu-modal-close {
+        top: 0.55rem !important;
+        right: 0.55rem !important;
+        width: 32px !important;
+        height: 32px !important;
+        flex-basis: 32px;
+    }
+}
