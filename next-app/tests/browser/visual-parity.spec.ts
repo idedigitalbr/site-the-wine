@@ -1,4 +1,4 @@
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { expect, test, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 
@@ -75,7 +75,13 @@ async function settlePage(page: Page, url: string, width: number, height: number
     await Promise.all(images.map(async (image) => {
       if (!image.complete) {
         await new Promise<void>((resolve) => {
-          const finish = () => resolve();
+          let settled = false;
+          const finish = () => {
+            if (settled) return;
+            settled = true;
+            resolve();
+          };
+
           image.addEventListener('load', finish, { once: true });
           image.addEventListener('error', finish, { once: true });
           window.setTimeout(finish, 5_000);
@@ -160,15 +166,15 @@ async function compareScreenshots(
   ).toBeLessThanOrEqual(MAX_DIFF_RATIO);
 }
 
-async function createPair(browser: Parameters<typeof test>[0] extends never ? never : any) {
-  const legacyPage = await browser.newPage();
-  const nextPage = await browser.newPage();
+async function createPair(context: BrowserContext) {
+  const legacyPage = await context.newPage();
+  const nextPage = await context.newPage();
   return { legacyPage, nextPage } as const;
 }
 
 for (const viewport of viewports) {
-  test(`full-page parity ${viewport.name}`, async ({ browser }, testInfo) => {
-    const { legacyPage, nextPage } = await createPair(browser);
+  test(`full-page parity ${viewport.name}`, async ({ context }, testInfo) => {
+    const { legacyPage, nextPage } = await createPair(context);
 
     try {
       await settlePage(legacyPage, LEGACY_URL, viewport.width, viewport.height);
@@ -181,8 +187,8 @@ for (const viewport of viewports) {
   });
 }
 
-test('mobile drawer visual parity', async ({ browser }, testInfo) => {
-  const { legacyPage, nextPage } = await createPair(browser);
+test('mobile drawer visual parity', async ({ context }, testInfo) => {
+  const { legacyPage, nextPage } = await createPair(context);
 
   try {
     await settlePage(legacyPage, LEGACY_URL, 390, 844);
@@ -200,8 +206,8 @@ test('mobile drawer visual parity', async ({ browser }, testInfo) => {
   }
 });
 
-test('mobile events selected panel visual parity', async ({ browser }, testInfo) => {
-  const { legacyPage, nextPage } = await createPair(browser);
+test('mobile events selected panel visual parity', async ({ context }, testInfo) => {
+  const { legacyPage, nextPage } = await createPair(context);
 
   try {
     await settlePage(legacyPage, LEGACY_URL, 390, 844);
@@ -221,8 +227,8 @@ test('mobile events selected panel visual parity', async ({ browser }, testInfo)
   }
 });
 
-test('lightbox visual parity', async ({ browser }, testInfo) => {
-  const { legacyPage, nextPage } = await createPair(browser);
+test('lightbox visual parity', async ({ context }, testInfo) => {
+  const { legacyPage, nextPage } = await createPair(context);
 
   try {
     await settlePage(legacyPage, LEGACY_URL, 1366, 768);
@@ -240,8 +246,8 @@ test('lightbox visual parity', async ({ browser }, testInfo) => {
   }
 });
 
-test('menu modal visual parity', async ({ browser }, testInfo) => {
-  const { legacyPage, nextPage } = await createPair(browser);
+test('menu modal visual parity', async ({ context }, testInfo) => {
+  const { legacyPage, nextPage } = await createPair(context);
 
   try {
     await settlePage(legacyPage, LEGACY_URL, 1366, 768);
