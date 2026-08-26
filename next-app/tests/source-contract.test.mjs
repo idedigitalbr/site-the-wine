@@ -31,7 +31,8 @@ test('Next migration scaffold contains the parity-critical modules', () => {
 test('server page remains a Server Component', () => {
   const page = read('src/app/page.tsx');
   assert.equal(page.includes("'use client'"), false);
-  assert.match(page, /<LegacyHome/);
+  assert.match(page, /<Header/);
+  assert.match(page, /<HeroSection/);
 });
 
 test('legacy parser removes scripts and roots asset URLs', () => {
@@ -45,5 +46,16 @@ test('behavior controller composes isolated browser behaviors', () => {
   const source = read('src/components/legacy/LegacyBehaviorController.tsx');
   for (const name of ['setupHeader', 'setupMobileNavigation', 'setupReveal', 'setupScrollSpy', 'setupParallax', 'setupEventsAccordion', 'setupGalleryLightbox']) {
     assert.match(source, new RegExp(name));
+  }
+});
+
+test('page is decomposed into named migration components', () => {
+  const page = read('src/app/page.tsx');
+  for (const name of [
+    'Header', 'HeroSection', 'AboutSection', 'ExperiencePillarsSection',
+    'PairingsSection', 'MenuSection', 'EventsSection', 'ReservationSection',
+    'GallerySection', 'Footer', 'LegacyModals'
+  ]) {
+    assert.match(page, new RegExp(`<${name}`), `page missing ${name}`);
   }
 });

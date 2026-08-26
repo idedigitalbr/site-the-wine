@@ -1,5 +1,33 @@
-import { LegacyHome } from '@/components/legacy/LegacyHome';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+import { LegacyBehaviorController } from '@/components/legacy/LegacyBehaviorController';
+import { LegacyModals } from '@/components/legacy/LegacyModals';
+import { LegacyMenuScripts } from '@/components/menu/LegacyMenuScripts';
+import { AboutSection } from '@/components/sections/AboutSection';
+import { EventsSection } from '@/components/sections/EventsSection';
+import { ExperiencePillarsSection } from '@/components/sections/ExperiencePillarsSection';
+import { GallerySection } from '@/components/sections/GallerySection';
+import { HeroSection } from '@/components/sections/HeroSection';
+import { MenuSection } from '@/components/sections/MenuSection';
+import { PairingsSection } from '@/components/sections/PairingsSection';
+import { ReservationSection } from '@/components/sections/ReservationSection';
 
 export default function HomePage() {
-  return <LegacyHome />;
+  return (
+    <>
+      <Header />
+      <HeroSection />
+      <AboutSection />
+      <ExperiencePillarsSection />
+      <PairingsSection />
+      <MenuSection />
+      <EventsSection />
+      <ReservationSection />
+      <GallerySection />
+      <Footer />
+      <LegacyModals />
+      <LegacyBehaviorController />
+      <LegacyMenuScripts />
+    </>
+  );
 }
