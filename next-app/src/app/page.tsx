@@ -1,7 +1,7 @@
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { LegacyBehaviorController } from '@/components/legacy/LegacyBehaviorController';
-import { LegacyMenuScripts } from '@/components/menu/LegacyMenuScripts';
+import { MenuFlipbookController } from '@/components/menu/MenuFlipbookController';
 import { MenuModal } from '@/components/menu/MenuModal';
 import { BookingModal } from '@/components/reservation/BookingModal';
 import { ReservationToast } from '@/components/reservation/ReservationToast';
@@ -31,7 +31,7 @@ export default function HomePage() {
       <MenuModal />
       <ReservationToast />
       <LegacyBehaviorController />
-      <LegacyMenuScripts />
+      <MenuFlipbookController />
     </>
   );
 }
