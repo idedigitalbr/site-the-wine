@@ -1,6 +1,6 @@
 # Status de execução da migração Next.js
 
-Atualizado em: 2026-08-25
+Atualizado em: 2026-08-26
 
 Branch: `chore/hardening-deploy-ci-20260825`
 
@@ -178,7 +178,7 @@ Não houve alteração de copy durante a centralização.
 
 ## Fase 8 — testes de regressão
 
-**Status: contratos ampliados; validação final ainda necessária em ambiente completo.**
+**Status: contratos e harness implementados; execução completa ainda pendente.**
 
 Foram adicionados testes para:
 
@@ -191,13 +191,39 @@ Foram adicionados testes para:
 - contratos dos behaviors globais;
 - identidade dos arquivos congelados;
 - compatibilidade do modal com o DOM nativo Next;
-- uso das configurações centralizadas por Header, navegação mobile, Footer, CTAs, eventos, Booking Modal e Menu Modal.
+- uso das configurações centralizadas por Header, navegação mobile, Footer, CTAs, eventos, Booking Modal e Menu Modal;
+- contrato estrutural do harness Playwright;
+- preservação das 8 viewports obrigatórias no teste visual.
 
 ## Fase 9 — validação visual 1:1
 
-**Status: pendente.**
+**Status: harness implementado; execução e aprovação em browser real pendentes.**
 
-Ainda é obrigatória comparação em browser real nos tamanhos:
+Foi criado um ambiente Playwright que sobe automaticamente:
+
+- legado estático em `http://127.0.0.1:4173`;
+- Next.js em `http://127.0.0.1:4174`.
+
+### Contrato funcional automatizado
+
+`tests/browser/functional-parity.spec.ts`
+
+Executa o mesmo conjunto de expectativas nos dois runtimes e cobre:
+
+- vídeos do Hero e Cardápio: autoplay, muted, loop, playsInline e fontes MP4;
+- Header após scroll;
+- drawer mobile;
+- accordion mobile de Eventos;
+- Galeria/Lightbox;
+- modal e total de páginas do Cardápio;
+- Escape;
+- parallax desktop.
+
+### Pixel diff automatizado
+
+`tests/browser/visual-parity.spec.ts`
+
+Compara legado × Next com `pixelmatch` nas viewports:
 
 - 1440 × 900
 - 1366 × 768
@@ -208,19 +234,29 @@ Ainda é obrigatória comparação em browser real nos tamanhos:
 - 390 × 844
 - 360 × 800
 
-Além da página parada, devem ser comparados:
+Também compara estados visuais específicos:
+
+- drawer mobile aberto;
+- segundo painel de Eventos ativo em mobile;
+- Lightbox aberto;
+- modal do Cardápio aberto.
+
+O harness estabiliza animações, transições, vídeos, lazy images, fontes, reveal e movimento automático da Galeria antes do screenshot para evitar falsos positivos de timing.
+
+A tolerância automática atual é de no máximo **1% dos pixels**, com `pixelmatch threshold 0.12` e anti-aliasing excluído da contagem. Esse limite não substitui inspeção humana.
+
+Guia completo: `docs/next-migration/07-browser-validation.md`.
+
+Ainda precisam ser verificados manualmente/funcionalmente conforme necessário:
 
 - Header antes/depois de scroll;
-- drawer mobile;
-- reveals;
-- parallax;
-- accordion de eventos;
-- cardápio aberto;
+- hover/focus;
+- reveals em movimento;
+- parallax durante scroll;
 - capa e páginas internas do flipbook;
 - fullscreen e pinch;
 - galeria/drag/touch;
-- lightbox;
-- Footer.
+- Footer e cortes responsivos.
 
 ## Fase 10 — refatoração pós-paridade
 
@@ -238,15 +274,16 @@ Em ambiente com acesso normal ao npm, executar em `next-app/`:
 
 ```bash
 npm install
+npm run browser:install
 npm run typecheck
 npm test
 npm run verify:legacy
 npm run build
+npm run test:functional
+npm run test:visual
 ```
 
-### Browser real
-
-Depois do build/dev local, executar a comparação visual e funcional definida em `03-behavior-contract.md`.
+Só declarar a paridade após saída bem-sucedida desses comandos e inspeção visual dos resultados.
 
 ## Restrições
 
