@@ -1,3 +1,5 @@
+import { whatsappLinks } from '@/config/social';
+
 export function ReservationSection() {
   return (
     <section className="cta-reservation" id="reserva">
@@ -12,7 +14,7 @@ export function ReservationSection() {
           em um ambiente exclusivo.
         </p>
         <a
-          href="https://api.whatsapp.com/send?phone=5591984040710&text=Ol%C3%A1%2C%20gostaria%20de%20reservar%20uma%20experi%C3%AAncia%20no%20The%20Wine%20Experience."
+          href={whatsappLinks.experience}
           target="_blank"
           rel="noopener noreferrer"
           className="cta-reservation__btn"
