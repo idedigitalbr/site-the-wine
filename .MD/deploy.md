@@ -1,25 +1,56 @@
 # Deploy
 
-atualizado: 2026-07-14
+atualizado: 2026-08-25
 
 ## Ambiente
 
-- **Local**: Desenvolvimento
-- **GitHub**: Repositório `idedigitalbr/site-the-wine`
-- **Produção (VPS)**:
-  - **URL**: `https://thewine.suporteide.digital`
-  - **IP Servidor**: `161.97.108.92`
-  - **Diretório na VPS**: `/opt/thewine-site/app`
-  - **Container Docker**: `thewine-web` (Nginx Alpine)
-  - **Proxy Reverso**: Traefik com SSL automático da Let's Encrypt
+- **Produção**: `https://thewine.suporteide.digital`
+- **Diretório na VPS**: `/opt/thewine-site/app`
+- **Container Docker**: `thewine-web` (Nginx Alpine)
+- **Proxy reverso**: Traefik com TLS/SSL
+- **Branch de produção**: `main`
 
-## Processo de Deploy Contínuo (CI/CD)
+## Processo de CI/CD
 
-- Qualquer commit e push para a branch `main` no GitHub ativa o workflow `.github/workflows/deploy-vps.yml`.
-- O GitHub Actions conecta-se à VPS via SSH usando segredos criptografados, atualiza os arquivos locais (`git fetch && git reset --hard`) e reinicia o container Docker Compose.
+O workflow `.github/workflows/deploy-vps.yml` possui duas etapas separadas:
+
+1. **Validate site**
+   - Checkout do repositório.
+   - Node.js 22.
+   - Execução de `node --test tests/*.test.mjs`.
+   - Build de validação da imagem Docker.
+
+2. **Deploy production**
+   - Executado somente quando o ref é `refs/heads/main` e o evento não é Pull Request.
+   - Depende obrigatoriamente da etapa de validação.
+   - Conecta à VPS via SSH usando GitHub Secrets.
+   - Sincroniza `/opt/thewine-site/app` com `origin/main`.
+   - Recria o serviço com `docker compose up -d --build --remove-orphans`.
+
+Pushes em outras branches executam a validação, mas não fazem deploy na VPS.
+
+## Arquivos publicados no container
+
+O Dockerfile usa uma allowlist explícita. Somente estes recursos são copiados para a raiz pública do Nginx:
+
+- `index.html`
+- `style.css`
+- `eventos-accordion-standalone.html`
+- `assets/`
+
+Diretórios como `.MD/`, `.agents/`, `docs/`, `tests/`, `.github/` e `node_modules/` não fazem parte da imagem publicada.
+
+## Segredos usados pelo GitHub Actions
+
+- `VPS_SSH_KEY`
+- `VPS_HOST`
+- `VPS_USER`
+- `VPS_SSH_PORT`
+
+Não registrar chaves privadas, senhas, tokens ou caminhos pessoais de credenciais na documentação do repositório.
 
 ## Cuidados
 
-- A chave SSH privada gerada para o deploy deste projeto está salva localmente em `C:\Users\ide-probook-i5\.ssh\id_ed25519_thewine` e na VPS em `/root/.ssh/id_ed25519_thewine`.
-- Certificar-se de que arquivos de backup, dados sensíveis ou arquivos `.env` não sejam enviados ao repositório (verificar `.gitignore`).
-
+- Usar branch + Pull Request para alterações antes do merge em `main`.
+- Exigir a validação automatizada antes do merge assim que a proteção da branch `main` estiver habilitada.
+- Manter `.gitignore` e `.dockerignore` atualizados quando novos artefatos locais forem introduzidos.
