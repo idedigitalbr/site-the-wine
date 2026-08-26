@@ -10,7 +10,7 @@ const requiredFiles = [
   'package.json',
   'src/app/layout.tsx',
   'src/app/page.tsx',
-  'src/components/legacy/LegacyBehaviorController.tsx',
+  'src/components/behaviors/SiteBehaviorController.tsx',
   'src/components/menu/MenuFlipbookController.tsx',
   'src/components/menu/MenuModal.tsx',
   'src/components/reservation/BookingModal.tsx',
@@ -24,9 +24,24 @@ const requiredFiles = [
   'legacy/index.html',
 ];
 
+const retiredRuntimeFiles = [
+  'src/components/legacy/LegacyBehaviorController.tsx',
+  'src/components/legacy/LegacyFragment.tsx',
+  'src/components/legacy/LegacyHome.tsx',
+  'src/components/legacy/LegacyModals.tsx',
+  'src/components/menu/LegacyMenuScripts.tsx',
+  'src/lib/legacyMarkup.ts',
+];
+
 test('Next migration scaffold contains the parity-critical modules', () => {
   for (const file of requiredFiles) {
     assert.equal(fs.existsSync(path.join(root, file)), true, `missing ${file}`);
+  }
+});
+
+test('legacy runtime adapters are retired after native JSX migration', () => {
+  for (const file of retiredRuntimeFiles) {
+    assert.equal(fs.existsSync(path.join(root, file)), false, `obsolete runtime adapter still exists: ${file}`);
   }
 });
 
@@ -35,19 +50,19 @@ test('server page remains a Server Component', () => {
   assert.equal(page.includes("'use client'"), false);
   assert.match(page, /<Header/);
   assert.match(page, /<HeroSection/);
+  assert.match(page, /<SiteBehaviorController/);
   assert.match(page, /<MenuFlipbookController/);
 });
 
 test('page no longer depends on legacy markup adapters', () => {
   const page = read('src/app/page.tsx');
-  assert.equal(page.includes('LegacyFragment'), false);
-  assert.equal(page.includes('LegacyHome'), false);
-  assert.equal(page.includes('LegacyModals'), false);
-  assert.equal(page.includes('LegacyMenuScripts'), false);
+  for (const legacyName of ['LegacyFragment', 'LegacyHome', 'LegacyModals', 'LegacyMenuScripts', 'LegacyBehaviorController']) {
+    assert.equal(page.includes(legacyName), false, `page still references ${legacyName}`);
+  }
 });
 
-test('behavior controller composes isolated browser behaviors', () => {
-  const source = read('src/components/legacy/LegacyBehaviorController.tsx');
+test('site behavior controller composes isolated browser behaviors', () => {
+  const source = read('src/components/behaviors/SiteBehaviorController.tsx');
   for (const name of ['setupHeader', 'setupMobileNavigation', 'setupReveal', 'setupScrollSpy', 'setupParallax', 'setupEventsAccordion', 'setupGalleryLightbox']) {
     assert.match(source, new RegExp(name));
   }
