@@ -1,8 +1,10 @@
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { LegacyBehaviorController } from '@/components/legacy/LegacyBehaviorController';
-import { LegacyModals } from '@/components/legacy/LegacyModals';
 import { LegacyMenuScripts } from '@/components/menu/LegacyMenuScripts';
+import { MenuModal } from '@/components/menu/MenuModal';
+import { BookingModal } from '@/components/reservation/BookingModal';
+import { ReservationToast } from '@/components/reservation/ReservationToast';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { EventsSection } from '@/components/sections/EventsSection';
 import { ExperiencePillarsSection } from '@/components/sections/ExperiencePillarsSection';
@@ -25,7 +27,9 @@ export default function HomePage() {
       <ReservationSection />
       <GallerySection />
       <Footer />
-      <LegacyModals />
+      <BookingModal />
+      <MenuModal />
+      <ReservationToast />
       <LegacyBehaviorController />
       <LegacyMenuScripts />
     </>
