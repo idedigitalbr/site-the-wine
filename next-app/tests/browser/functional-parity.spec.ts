@@ -15,6 +15,35 @@ async function openSite(page: Page, url: string, width = 1366, height = 768) {
 
 for (const target of targets) {
   test.describe(`${target.name} behavior contract`, () => {
+    test('hero and menu videos preserve autoplay contract and sources', async ({ page }) => {
+      await openSite(page, target.url);
+
+      const hero = page.locator('#home video');
+      const menu = page.locator('#cardapio video');
+
+      for (const video of [hero, menu]) {
+        const contract = await video.evaluate((element) => {
+          const media = element as HTMLVideoElement;
+          return {
+            autoplay: media.autoplay,
+            muted: media.muted,
+            loop: media.loop,
+            playsInline: media.playsInline,
+          };
+        });
+
+        expect(contract).toEqual({
+          autoplay: true,
+          muted: true,
+          loop: true,
+          playsInline: true,
+        });
+      }
+
+      await expect(hero.locator('source')).toHaveAttribute('src', /S1 TOPO HERO\/video-web-horizontal\.mp4$/);
+      await expect(menu.locator('source')).toHaveAttribute('src', /CardapioMenu\/video-cardapio\.mp4$/);
+    });
+
     test('header gains scrolled state', async ({ page }) => {
       await openSite(page, target.url);
       await page.evaluate(() => window.scrollTo(0, 240));
