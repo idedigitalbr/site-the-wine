@@ -157,18 +157,24 @@ O arquivo legado `menu-flipbook.js` continua presente dentro da árvore congelad
 
 ## Fase 7 — configuração
 
-**Status: parcialmente concluída.**
+**Status: concluída para os valores repetidos e estáveis da migração 1:1.**
 
-Já existem configurações para:
+Centralizados em `src/config/`:
 
 - site/SEO;
-- navegação;
-- sociais/WhatsApp;
+- navegação desktop/mobile;
+- URLs sociais;
+- URLs e mensagens de WhatsApp;
 - galeria;
-- páginas do cardápio;
-- eventos.
+- páginas desktop/mobile do cardápio;
+- caminho do PDF do cardápio;
+- metadados básicos dos eventos.
 
-Não houve alteração de copy durante a extração.
+Os componentes principais passaram a consumir essas configurações em vez de repetir URLs críticas. Foram preservados inclusive os destinos literais diferentes que já existiam entre Header e Footer.
+
+Conteúdo visual singular, SVGs e descrições que não são repetidos continuam colocados nos próprios componentes nesta etapa para evitar abstração desnecessária antes da validação visual.
+
+Não houve alteração de copy durante a centralização.
 
 ## Fase 8 — testes de regressão
 
@@ -183,7 +189,9 @@ Foram adicionados testes para:
 - overlays/modais;
 - contrato do flipbook TypeScript;
 - contratos dos behaviors globais;
-- identidade dos arquivos congelados.
+- identidade dos arquivos congelados;
+- compatibilidade do modal com o DOM nativo Next;
+- uso das configurações centralizadas por Header, navegação mobile, Footer, CTAs, eventos, Booking Modal e Menu Modal.
 
 ## Fase 9 — validação visual 1:1
 
