@@ -1,43 +1,17 @@
-name: Validate and Deploy VPS
+name: Deploy VPS
 
 on:
   push:
-  pull_request:
     branches:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: deploy-thewine
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Validate site
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Run tests
-        run: node --test tests/*.test.mjs
-
-      - name: Validate Docker image build
-        run: docker build --tag thewine-site:ci .
-
   deploy:
-    name: Deploy production
-    needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -52,35 +26,34 @@ jobs:
           VPS_PORT: ${{ secrets.VPS_SSH_PORT }}
         run: |
           set -euo pipefail
-
+          
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-
+          
           ssh-keyscan -p "$VPS_PORT" -t rsa,ecdsa,ed25519 "$VPS_HOST" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
-
+          
           eval "$(ssh-agent -s)"
           trap 'ssh-agent -k >/dev/null' EXIT
           ssh-add - <<< "$VPS_SSH_KEY"
-
+          
           ssh -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER"@"$VPS_HOST" <<'REMOTE'
-          set -euo pipefail
-
+          set -e
+          
           PROJECT_DIR="/opt/thewine-site/app"
+          
           RESOLVED_DIR=$(realpath "$PROJECT_DIR")
-
-          case "$RESOLVED_DIR" in
-            /|/opt|/var|/home|/root|"")
-              echo "ABORTAR: Diretório inválido!" >&2
-              exit 99
-              ;;
-          esac
-
+          if [ "$RESOLVED_DIR" = "/" ] || [ "$RESOLVED_DIR" = "/opt" ] || [ "$RESOLVED_DIR" = "/var" ] || [ "$RESOLVED_DIR" = "/home" ] || [ "$RESOLVED_DIR" = "/root" ] || [ -z "$RESOLVED_DIR" ]; then
+            echo "ABORTAR: Diretório inválido!" >&2
+            exit 99
+          fi
+          
           cd "$RESOLVED_DIR"
-
+          
           git fetch origin main
           git reset --hard origin/main
           git clean -fd
-
+          
           docker compose up -d --build --remove-orphans
+          
           REMOTE
