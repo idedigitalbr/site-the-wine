@@ -3,9 +3,12 @@ export const socialLinks = {
   facebook: 'https://www.facebook.com/thewinebelem/?locale=pt_BR',
   tiktok: 'https://www.tiktok.com/@the.wine.xperience',
   youtube: 'https://youtube.com/@thewinebelem',
+  headerInstagram: 'https://instagram.com/thewinebelem',
+  headerFacebook: 'https://facebook.com/thewinebelem',
 } as const;
 
 export const whatsappLinks = {
+  contact: 'https://api.whatsapp.com/send?phone=5591984040710',
   reservation:
     'https://api.whatsapp.com/send?phone=5591984040710&text=Ol%C3%A1%2C%20gostaria%20de%20fazer%20uma%20reserva%20no%20The%20Wine%20Experience.',
   experience:
