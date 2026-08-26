@@ -3,6 +3,7 @@
 .gitignore
 .dockerignore
 Dockerfile
+Dockerfile.legacy
 docker-compose.yml
 
 # Internal project material (never shipped by nginx)
@@ -11,6 +12,11 @@ docker-compose.yml
 docs
 tests
 node_modules
+next-app/node_modules
+next-app/.next
+next-app/test-results
+next-app/tests
+next-app/scripts
 
 # Local/generated material
 backup

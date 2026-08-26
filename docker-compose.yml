@@ -7,6 +7,20 @@ services:
       dockerfile: Dockerfile
     container_name: thewine-web
     restart: always
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      DATABASE_HOST: db
+      DATABASE_PORT: 3306
+      DATABASE_NAME: ${MYSQL_DATABASE:-thewine}
+      DATABASE_USER: ${MYSQL_USER:-thewine}
+      DATABASE_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set}
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - default
       - proxy
@@ -16,8 +30,46 @@ services:
       - "traefik.http.routers.thewine-router.entrypoints=websecure"
       - "traefik.http.routers.thewine-router.tls=true"
       - "traefik.http.routers.thewine-router.tls.certresolver=letsencrypt"
-      - "traefik.http.services.thewine-service.loadbalancer.server.port=80"
+      - "traefik.http.services.thewine-service.loadbalancer.server.port=3000"
+
+  db:
+    image: mysql:8.0
+    container_name: thewine-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-thewine}
+      MYSQL_USER: ${MYSQL_USER:-thewine}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD must be set}
+    command: ["mysqld", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - thewine_mysql_data:/var/lib/mysql
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - default
+
+  legacy-backup:
+    build:
+      context: .
+      dockerfile: Dockerfile.legacy
+    container_name: thewine-legacy-backup
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      - legacy
 
 networks:
   proxy:
     external: true
+  legacy:
+    internal: true
+
+volumes:
+  thewine_mysql_data:
