@@ -55,14 +55,15 @@ Implementado na branch:
 
 ## Documentação
 
-1. [`docs/next-migration/01-static-audit.md`](docs/next-migration/01-static-audit.md) — auditoria do legado.
-2. [`docs/next-migration/02-component-map.md`](docs/next-migration/02-component-map.md) — mapa de componentes.
-3. [`docs/next-migration/03-behavior-contract.md`](docs/next-migration/03-behavior-contract.md) — contrato comportamental 1:1.
-4. [`docs/next-migration/04-design-system-and-assets.md`](docs/next-migration/04-design-system-and-assets.md) — tokens, CSS, breakpoints e assets.
-5. [`docs/next-migration/05-migration-plan.md`](docs/next-migration/05-migration-plan.md) — plano por fases.
-6. [`docs/next-migration/06-execution-status.md`](docs/next-migration/06-execution-status.md) — estado real da execução.
-7. [`docs/next-migration/07-browser-validation.md`](docs/next-migration/07-browser-validation.md) — execução da paridade funcional/visual com Playwright.
-8. [`docs/next-migration/legacy-contract.json`](docs/next-migration/legacy-contract.json) — contrato estruturado para agentes.
+1. [`docs/next-migration/MIGRATION_GUIDE_PROGRESS.md`](docs/next-migration/MIGRATION_GUIDE_PROGRESS.md) — **guia mestre**, processo completo, status e timeline/checklist da migração.
+2. [`docs/next-migration/01-static-audit.md`](docs/next-migration/01-static-audit.md) — auditoria do legado.
+3. [`docs/next-migration/02-component-map.md`](docs/next-migration/02-component-map.md) — mapa de componentes.
+4. [`docs/next-migration/03-behavior-contract.md`](docs/next-migration/03-behavior-contract.md) — contrato comportamental 1:1.
+5. [`docs/next-migration/04-design-system-and-assets.md`](docs/next-migration/04-design-system-and-assets.md) — tokens, CSS, breakpoints e assets.
+6. [`docs/next-migration/05-migration-plan.md`](docs/next-migration/05-migration-plan.md) — plano por fases.
+7. [`docs/next-migration/06-execution-status.md`](docs/next-migration/06-execution-status.md) — estado real da execução.
+8. [`docs/next-migration/07-browser-validation.md`](docs/next-migration/07-browser-validation.md) — execução da paridade funcional/visual com Playwright.
+9. [`docs/next-migration/legacy-contract.json`](docs/next-migration/legacy-contract.json) — contrato estruturado para agentes.
 
 ## Estratégia atual
 
