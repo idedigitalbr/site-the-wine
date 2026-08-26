@@ -1,0 +1,190 @@
+{
+  "project": "The Wine Experience",
+  "source": {
+    "type": "static",
+    "entry": "index.html",
+    "styles": [
+      "style.css",
+      "assets/css/menu-flipbook.css"
+    ],
+    "scripts": [
+      "inline:index.html",
+      "assets/js/page-flip.browser.js",
+      "assets/js/menu-flipbook.js"
+    ]
+  },
+  "migration": {
+    "target": "Next.js App Router + TypeScript",
+    "parityMode": "visual-and-functional-1-to-1",
+    "allowRedesignDuringParity": false,
+    "preserveAssetHierarchy": true,
+    "preserveLegacyCssInitially": true,
+    "deployFromPreparationBranch": false
+  },
+  "anchors": [
+    "home",
+    "sobre",
+    "gastronomia",
+    "cardapio",
+    "eventos",
+    "reserva",
+    "galeria",
+    "localizacao"
+  ],
+  "sections": [
+    {
+      "legacy": "header.header",
+      "target": "components/layout/Header.tsx",
+      "client": false,
+      "interactiveChildren": ["MobileNavigation", "ScrollSpy"]
+    },
+    {
+      "legacy": "#home.hero",
+      "target": "components/sections/HeroSection.tsx",
+      "client": false,
+      "effects": ["parallax", "video-autoplay"]
+    },
+    {
+      "legacy": "#sobre.historia-section",
+      "target": "components/sections/AboutSection.tsx",
+      "client": false,
+      "effects": ["reveal-on-scroll"]
+    },
+    {
+      "legacy": ".mvv-column",
+      "target": "components/sections/ExperiencePillarsSection.tsx",
+      "client": false,
+      "effects": ["parallax"]
+    },
+    {
+      "legacy": "#gastronomia.split-section-v2",
+      "target": "components/sections/PairingsSection.tsx",
+      "client": false,
+      "effects": ["horizontal-parallax", "vertical-parallax"]
+    },
+    {
+      "legacy": "#cardapio.cardapio-split-section",
+      "target": "components/sections/MenuSection.tsx",
+      "client": false,
+      "interactiveChildren": ["MenuModal"]
+    },
+    {
+      "legacy": "#eventos + .tw-acc",
+      "target": "components/sections/EventsSection.tsx",
+      "client": true,
+      "breakpoint": 860
+    },
+    {
+      "legacy": "#reserva.cta-reservation",
+      "target": "components/sections/ReservationSection.tsx",
+      "client": false
+    },
+    {
+      "legacy": "#galeria.gallery",
+      "target": "components/sections/GallerySection.tsx",
+      "client": true,
+      "interactiveChildren": ["GalleryLightbox"]
+    },
+    {
+      "legacy": "#localizacao.footer-premium",
+      "target": "components/layout/Footer.tsx",
+      "client": false
+    }
+  ],
+  "interactiveModules": {
+    "mobileNavigation": {
+      "client": true,
+      "features": ["drawer", "overlay-close", "link-close"]
+    },
+    "scrollSpy": {
+      "client": true,
+      "offset": 160
+    },
+    "reveal": {
+      "client": true,
+      "threshold": 0.05,
+      "rootMargin": "0px 0px -40px 0px",
+      "once": true
+    },
+    "parallax": {
+      "client": true,
+      "disabledAtOrBelow": 768,
+      "lerpFactor": 0.08,
+      "targets": [".parallax-img", ".parallax-img-h", ".parallax-element"]
+    },
+    "eventsAccordion": {
+      "client": true,
+      "mobileAtOrBelow": 860,
+      "activeClass": "tw-acc__panel--active"
+    },
+    "gallery": {
+      "client": true,
+      "originalItems": 12,
+      "copiesAdded": 2,
+      "autoSpeed": 0.5,
+      "hoverSpeed": 0.25,
+      "respectsReducedMotion": true
+    },
+    "menuFlipbook": {
+      "client": true,
+      "mobileAtOrBelow": 820,
+      "pageFlipGlobal": "window.St.PageFlip",
+      "desktopPages": 12,
+      "mobilePages": 12,
+      "features": [
+        "modal",
+        "scroll-lock",
+        "focus-restore",
+        "focus-trap",
+        "keyboard-navigation",
+        "fullscreen",
+        "pinch-zoom",
+        "canvas-resolution",
+        "cover-centering",
+        "background-video-pause-restore"
+      ]
+    }
+  },
+  "designTokens": {
+    "colors": [
+      "--wine-black",
+      "--wine-ink",
+      "--wine-panel",
+      "--wine-panel-2",
+      "--wine-gold",
+      "--wine-gold-dark",
+      "--wine-gold-soft",
+      "--wine-white",
+      "--wine-cream",
+      "--wine-muted",
+      "--wine-border",
+      "--wine-glow"
+    ],
+    "fonts": [
+      "--font-display",
+      "--font-body",
+      "--font-script"
+    ],
+    "layout": [
+      "--container",
+      "--transition-premium"
+    ]
+  },
+  "criticalBreakpoints": [768, 820, 860, 992],
+  "external": {
+    "whatsappPhone": "5591984040710",
+    "social": ["instagram", "facebook", "tiktok", "youtube"],
+    "maps": "Google Maps",
+    "fonts": "Google Fonts"
+  },
+  "validationViewports": [
+    "1440x900",
+    "1366x768",
+    "1024x768",
+    "820x1180",
+    "768x1024",
+    "430x932",
+    "390x844",
+    "360x800"
+  ]
+}
