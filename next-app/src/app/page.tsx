@@ -1,6 +1,6 @@
+import { SiteBehaviorController } from '@/components/behaviors/SiteBehaviorController';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { LegacyBehaviorController } from '@/components/legacy/LegacyBehaviorController';
 import { MenuFlipbookController } from '@/components/menu/MenuFlipbookController';
 import { MenuModal } from '@/components/menu/MenuModal';
 import { BookingModal } from '@/components/reservation/BookingModal';
@@ -30,7 +30,7 @@ export default function HomePage() {
       <BookingModal />
       <MenuModal />
       <ReservationToast />
-      <LegacyBehaviorController />
+      <SiteBehaviorController />
       <MenuFlipbookController />
     </>
   );
