@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -e
 
 mysql --protocol=socket -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DATABASE}" <<'SQL'
 CREATE TABLE IF NOT EXISTS appointments (
