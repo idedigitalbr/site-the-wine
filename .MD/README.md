@@ -13,19 +13,18 @@ Site institucional e landing page da THE WINE Experience, publicado em produçã
 - Vanilla JavaScript
 - Docker + Nginx Alpine
 - Traefik na VPS
-- GitHub Actions para validação e deploy
 
 ## Estado atual
 
 - Site publicado em `https://thewine.suporteide.digital`.
 - Branch de produção: `main`.
-- Testes automatizados em `tests/*.test.mjs` usando o test runner nativo do Node.js.
-- Pipeline valida os testes e o build da imagem Docker antes de permitir deploy.
-- Deploy de produção é permitido somente a partir da branch `main`.
+- Testes automatizados disponíveis em `tests/*.test.mjs` usando o test runner nativo do Node.js.
+- Nesta branch de hardening, testes e build devem ser executados localmente, sem GitHub Actions e sem deploy.
 - A imagem Nginx publica apenas `index.html`, `style.css`, `eventos-accordion-standalone.html` e `assets/`.
 - Materiais internos, documentação, testes e dependências locais não são enviados para a raiz pública do Nginx.
+- `node_modules/` não deve permanecer versionado no repositório.
 
-## Desenvolvimento
+## Verificação local
 
 Para executar a suíte de testes:
 
@@ -41,6 +40,6 @@ docker build -t thewine-site:local .
 
 ## Próximos cuidados
 
-- Manter alterações de produção passando por branch e Pull Request antes do merge em `main`.
-- Ativar proteção da branch `main` nas configurações do GitHub, exigindo o workflow de validação antes do merge.
+- Não executar deploy desta branch de hardening.
+- Manter alterações isoladas em branch antes de qualquer merge em `main`.
 - Continuar evitando arquivos gerados, dependências e dados sensíveis no repositório.
