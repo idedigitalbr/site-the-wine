@@ -1,8 +1,10 @@
 # The Wine — banco de dados
 
 O banco de produção usa MySQL 8 em um volume Docker nomeado (`thewine_mysql_data`).
-As migrations desta pasta são executadas automaticamente apenas na primeira
-inicialização de um volume vazio pelo serviço `db` do Compose.
+O serviço `migrate` do Compose aplica as migrations de forma idempotente em todo
+deploy, registrando cada arquivo na tabela `schema_migrations`. Isso também
+atualiza volumes existentes; o serviço `db` não monta migrations no diretório de
+inicialização automática do MySQL.
 
 ## Desenvolvimento local com Laragon
 
@@ -38,8 +40,11 @@ outros databases do Laragon.
 ## Configuração
 
 Crie um `.env` somente no servidor e defina senhas fortes para
-`MYSQL_PASSWORD` e `MYSQL_ROOT_PASSWORD`. O arquivo `.env` é ignorado pelo Git
-e não deve ser versionado.
+`MYSQL_PASSWORD` e `MYSQL_ROOT_PASSWORD`, além de `ADMIN_EMAIL`,
+`ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` e `NOTIFICATION_JOB_SECRET`. O arquivo
+`.env` é ignorado pelo Git e não deve ser versionado. O Compose injeta as
+variáveis do admin e do job somente no container web e falha cedo se alguma
+obrigatória não estiver configurada.
 
 O Next acessa o banco somente pela rede interna do Compose usando o host
 exclusivo `thewine-db`,
@@ -52,6 +57,11 @@ agendamento para jantar, degustação e eventos: data, horário, quantidade de
 pessoas, contato, status, observações e timestamps. A camada de domínio em
 `next-app/src/server/appointments/` já contém os tipos e o repositório para a
 próxima etapa da API, mas nenhum formulário público é ativado nesta publicação.
+
+`migrations/001_create_appointments.sql` é a versão usada pelo executor
+idempotente do Compose e do Laragon. O arquivo `.sh` histórico permanece para
+instalações antigas que ainda inicializem um volume por
+`/docker-entrypoint-initdb.d`.
 
 `migrations/002_create_reservations_v2_foundation.sql` cria a fundação V2
 isolada para clientes, salão, mesas, turnos, experiências, reservas, holds e

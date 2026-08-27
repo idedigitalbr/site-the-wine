@@ -18,9 +18,17 @@ services:
       DATABASE_NAME: ${MYSQL_DATABASE:-thewine}
       DATABASE_USER: ${MYSQL_USER:-thewine}
       DATABASE_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?ADMIN_EMAIL must be set}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?ADMIN_SESSION_SECRET must be set}
+      NOTIFICATION_JOB_SECRET: ${NOTIFICATION_JOB_SECRET:?NOTIFICATION_JOB_SECRET must be set}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://thewine.suporteide.digital}
+      PAYMENT_MODE: ${PAYMENT_MODE:-mock}
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - default
       - proxy
@@ -44,13 +52,35 @@ services:
     command: ["mysqld", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
     volumes:
       - thewine_mysql_data:/var/lib/mysql
-      - ./database/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
       interval: 10s
       timeout: 5s
       retries: 12
       start_period: 30s
+    networks:
+      - default
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: thewine-migrate
+    restart: "no"
+    environment:
+      NODE_ENV: production
+      DATABASE_HOST: thewine-db
+      DATABASE_PORT: 3306
+      DATABASE_NAME: ${MYSQL_DATABASE:-thewine}
+      DATABASE_USER: ${MYSQL_USER:-thewine}
+      DATABASE_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set}
+      DATABASE_ADMIN_USER: root
+      DATABASE_ADMIN_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD must be set}
+    command: ["node", "/app/next-app/scripts/migrate-local.mjs"]
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - default
 
