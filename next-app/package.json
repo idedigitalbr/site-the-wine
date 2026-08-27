@@ -29,7 +29,8 @@
     "test:browser": "playwright test",
     "test:functional": "playwright test tests/browser/functional-parity.spec.ts",
     "test:visual": "playwright test tests/browser/visual-parity.spec.ts",
-    "browser:install": "playwright install chromium"
+    "browser:install": "playwright install chromium",
+    "db:migrate:local": "node scripts/migrate-local.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
