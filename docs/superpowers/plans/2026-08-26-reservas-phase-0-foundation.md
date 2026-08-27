@@ -23,6 +23,21 @@
 - Preservar o CSS/visual legado durante a fundação.
 - React Router não será adicionado ao app Next.js.
 
+## Status do checkpoint
+
+Implementado sem dependências novas:
+
+- guardrail AST de complexidade e profundidade;
+- guardrail de fronteiras arquiteturais;
+- verificação de sincronização `package.json` x `package-lock.json`;
+- tokens semânticos isolados em `src/styles/reservation-tokens.css`;
+- `components.json` do shadcn preparado para Tailwind v4/App Router;
+- configuração ESLint preparada e escopada ao código novo;
+- instalador controlado `setup:reservation-foundation` e modo `--dry-run`;
+- `verify:foundation:preflight` para os checks que não dependem das bibliotecas novas.
+
+Bloqueio atual: o ambiente disponível para esta execução não alcança o registry npm. Por isso as dependências e o lockfile não serão editados manualmente; a instalação deve ocorrer somente quando `npm install` puder gerar `package.json` e `package-lock.json` de forma atômica e reproduzível.
+
 ---
 
 ### Task 1: Guardrail local de complexidade
@@ -33,15 +48,15 @@
 - Modify: `next-app/package.json`
 
 **Interfaces:**
-- Produces: `npm run verify:complexity`, que analisa `src/**/*.ts` e `src/**/*.tsx` e falha quando uma função ultrapassa complexidade 8 ou profundidade 3.
+- Produces: `npm run verify:complexity`, que analisa o código novo de Reservas/Admin e falha quando uma função ultrapassa complexidade 8 ou profundidade 3. `verify:complexity:all` permanece disponível como diagnóstico do `src` inteiro.
 
-- [ ] Escrever teste que exige o script e os thresholds 8/3.
-- [ ] Executar o teste e confirmar falha porque o script ainda não existe.
-- [ ] Implementar scanner AST com TypeScript, mantendo helpers pequenos.
-- [ ] Adicionar script `verify:complexity` ao `package.json`.
-- [ ] Executar o teste e confirmar sucesso.
-- [ ] Executar o checker no `src` existente e registrar baseline.
-- [ ] Commitar isoladamente.
+- [x] Escrever teste que exige o script e os thresholds 8/3.
+- [x] Executar ciclo inicial de falha antes da implementação.
+- [x] Implementar scanner AST com TypeScript, mantendo helpers pequenos.
+- [x] Adicionar script `verify:complexity` ao `package.json`.
+- [x] Validar o contrato do checker.
+- [x] Separar gate de código novo e diagnóstico global para não acoplar a feature à refatoração do legado.
+- [x] Commitar isoladamente.
 
 ### Task 2: ESLint para manutenção
 
@@ -53,11 +68,12 @@
 **Interfaces:**
 - Produces: `npm run lint`.
 
-- [ ] Adicionar ESLint compatível com Next/TypeScript.
-- [ ] Configurar `complexity: ["error", 8]` e `max-depth: ["error", 3]` para código novo.
-- [ ] Configurar complexidade cognitiva <= 10 quando o plugin SonarJS estiver instalado.
-- [ ] Validar lint sem tentar corrigir automaticamente o legado fora do escopo.
-- [ ] Commitar isoladamente.
+- [ ] Instalar ESLint compatível com Next/TypeScript e atualizar lockfile via npm.
+- [x] Configurar `complexity: ["error", 8]` e `max-depth: ["error", 3]` para código novo.
+- [x] Configurar complexidade cognitiva <= 10 com SonarJS.
+- [x] Escopar `lint` ao módulo novo durante a fase de paridade para não transformar a feature em refatoração do legado.
+- [ ] Executar o ESLint real após instalação das dependências.
+- [ ] Commitar package/lock/config juntos após instalação.
 
 ### Task 3: Tailwind CSS v4 e tokens semânticos
 
@@ -66,6 +82,7 @@
 - Modify: `next-app/src/app/globals.css`
 - Create: `next-app/components.json`
 - Create: `next-app/src/lib/utils.ts`
+- Create: `next-app/src/styles/reservation-tokens.css`
 - Modify: `next-app/package.json`
 - Modify: `next-app/package-lock.json`
 
@@ -73,12 +90,13 @@
 - Produces: tokens `background`, `foreground`, `surface`, `primary`, `border` e estados de reserva/mesa para componentes novos.
 
 - [ ] Instalar Tailwind v4 e PostCSS sem substituir o CSS legado.
-- [ ] Importar Tailwind em `globals.css`.
-- [ ] Mapear a paleta existente do The Wine para tokens semânticos.
-- [ ] Configurar shadcn/ui para `src/components/ui` e alias `@/*` existente.
-- [ ] Criar utilitário `cn`.
-- [ ] Confirmar que a homepage atual não muda visualmente.
-- [ ] Commitar isoladamente.
+- [ ] Importar Tailwind em `globals.css` somente após a dependência existir.
+- [x] Mapear a paleta existente do The Wine para tokens semânticos.
+- [x] Isolar tokens em stylesheet próprio sem alterar o escopo da Home.
+- [x] Configurar shadcn/ui para `src/components/ui` e alias `@/*` existente.
+- [ ] Criar utilitário `cn` após `clsx` e `tailwind-merge` existirem no lockfile.
+- [ ] Confirmar por build/Playwright que a homepage atual não muda visualmente.
+- [ ] Commitar integração Tailwind/package-lock de forma atômica.
 
 ### Task 4: Bibliotecas de aplicação e providers
 
@@ -92,7 +110,8 @@
 **Interfaces:**
 - Produces: contexto React Query único para futuras telas de reserva e admin.
 
-- [ ] Adicionar React Query v5, RHF, Zod, Zustand, TanStack Table, Recharts e Motion.
+- [x] Definir manifest controlado para React Query v5, RHF, resolvers, Zod, Zustand, TanStack Table, Recharts e Motion.
+- [ ] Instalar bibliotecas e gerar lockfile com npm.
 - [ ] Criar `QueryProvider` com `QueryClient` estável por montagem.
 - [ ] Criar `AppProviders` como composição pequena.
 - [ ] Integrar ao root layout sem adicionar regra de domínio.
@@ -108,8 +127,9 @@
 **Interfaces:**
 - Produces: `npm run verify:foundation`.
 
-- [ ] Compor `typecheck`, `lint`, `test`, `verify:complexity`, `verify:legacy` e `build` no gate local.
-- [ ] Rodar todos os checks disponíveis sem GitHub Actions.
+- [x] Criar `verify:foundation:preflight` com os checks disponíveis antes das dependências novas.
+- [ ] Compor `typecheck`, `lint`, `test`, `verify:complexity`, `verify:architecture`, `verify:legacy` e `build` no gate final.
+- [ ] Rodar todos os checks finais sem GitHub Actions.
 - [ ] Rodar Playwright visual/funcional quando o ambiente tiver browser instalado.
 - [ ] Corrigir qualquer regressão causada pela Fase 0.
 - [ ] Registrar Fase 0 como concluída somente após os gates verdes.
