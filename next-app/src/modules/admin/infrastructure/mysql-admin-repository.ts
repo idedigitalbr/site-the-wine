@@ -3,19 +3,27 @@ import { getDatabasePool } from '@/server/db';
 import type { ReservationStatus } from '@/modules/reservations/domain/reservation-status';
 import type {
   AdminArea,
+  AdminBlockedPeriod,
   AdminBusinessHour,
+  AdminCombination,
   AdminConfiguration,
   AdminDashboard,
+  AdminFloorMap,
   AdminRepository,
   AdminReservation,
   AdminShift,
   AdminTable,
   AdminTableType,
   CreateAreaInput,
+  CreateBlockedPeriodInput,
   CreateBusinessHourInput,
+  CreateCombinationInput,
   CreateShiftInput,
   CreateTableInput,
   CreateTableTypeInput,
+  FloorTable,
+  FloorTableState,
+  UpdateTablePositionInput,
 } from '../application/ports';
 
 type ReservationRow = RowDataPacket & {
@@ -61,9 +69,12 @@ type TableRow = RowDataPacket & {
   capacityMin: number;
   capacityMax: number;
   shape: string;
+  positionX: number;
+  positionY: number;
   joinable: number;
   active: number;
 };
+type FloorTableRow = TableRow & { state: FloorTableState };
 type ShiftRow = RowDataPacket & {
   id: number;
   code: string;
@@ -81,6 +92,26 @@ type BusinessHourRow = RowDataPacket & {
   closesAt: string;
   active: number;
 };
+type CombinationRow = RowDataPacket & {
+  id: number;
+  code: string;
+  name: string;
+  tableIds: string | null;
+  tableLabel: string | null;
+  active: number;
+};
+type BlockedPeriodRow = RowDataPacket & {
+  id: number;
+  areaId: number | null;
+  areaName: string | null;
+  tableId: number | null;
+  tableName: string | null;
+  startsAt: string;
+  endsAt: string;
+  reason: string;
+  active: number;
+};
+type CountRow = RowDataPacket & { count: number };
 
 function mapReservation(row: ReservationRow): AdminReservation {
   return {
@@ -126,9 +157,15 @@ function mapTable(row: TableRow): AdminTable {
     capacityMin: Number(row.capacityMin),
     capacityMax: Number(row.capacityMax),
     shape: row.shape,
+    positionX: Number(row.positionX),
+    positionY: Number(row.positionY),
     joinable: Boolean(row.joinable),
     active: Boolean(row.active),
   };
+}
+
+function mapFloorTable(row: FloorTableRow): FloorTable {
+  return { ...mapTable(row), state: row.state };
 }
 
 function mapShift(row: ShiftRow): AdminShift {
@@ -150,6 +187,31 @@ function mapBusinessHour(row: BusinessHourRow): AdminBusinessHour {
     shiftName: row.shiftName,
     opensAt: row.opensAt,
     closesAt: row.closesAt,
+    active: Boolean(row.active),
+  };
+}
+
+function mapCombination(row: CombinationRow): AdminCombination {
+  return {
+    id: Number(row.id),
+    code: row.code,
+    name: row.name,
+    tableIds: row.tableIds ? row.tableIds.split(',').map(Number) : [],
+    tableLabel: row.tableLabel ?? '',
+    active: Boolean(row.active),
+  };
+}
+
+function mapBlockedPeriod(row: BlockedPeriodRow): AdminBlockedPeriod {
+  return {
+    id: Number(row.id),
+    areaId: row.areaId === null ? null : Number(row.areaId),
+    areaName: row.areaName,
+    tableId: row.tableId === null ? null : Number(row.tableId),
+    tableName: row.tableName,
+    startsAt: row.startsAt,
+    endsAt: row.endsAt,
+    reason: row.reason,
     active: Boolean(row.active),
   };
 }
@@ -246,7 +308,8 @@ export class MysqlAdminRepository implements AdminRepository {
           t.id, t.code, t.name, t.area_id AS areaId, a.name AS areaName,
           t.table_type_id AS tableTypeId, tt.name AS tableTypeName,
           t.capacity_min AS capacityMin, t.capacity_max AS capacityMax,
-          t.shape, t.joinable, t.active
+          t.shape, t.position_x AS positionX, t.position_y AS positionY,
+          t.joinable, t.active
         FROM restaurant_tables t
         INNER JOIN dining_areas a ON a.id = t.area_id
         INNER JOIN table_types tt ON tt.id = t.table_type_id
@@ -324,5 +387,152 @@ export class MysqlAdminRepository implements AdminRepository {
       [input.dayOfWeek, input.shiftId, input.opensAt, input.closesAt],
     );
     return result.insertId;
+  }
+
+  async getFloorMap(date: string, time: string): Promise<AdminFloorMap> {
+    const pool = getDatabasePool();
+    const [tableResult, combinationResult, blockedResult] = await Promise.all([
+      pool.execute<FloorTableRow[]>(`
+        SELECT
+          t.id, t.code, t.name, t.area_id AS areaId, a.name AS areaName,
+          t.table_type_id AS tableTypeId, tt.name AS tableTypeName,
+          t.capacity_min AS capacityMin, t.capacity_max AS capacityMax,
+          t.shape, t.position_x AS positionX, t.position_y AS positionY,
+          t.joinable, t.active,
+          CASE
+            WHEN EXISTS (
+              SELECT 1 FROM blocked_periods bp
+              WHERE bp.active = 1
+                AND (bp.restaurant_table_id = t.id OR bp.dining_area_id = t.area_id
+                  OR (bp.restaurant_table_id IS NULL AND bp.dining_area_id IS NULL))
+                AND bp.starts_at <= CONCAT(?, ' ', ?)
+                AND bp.ends_at > CONCAT(?, ' ', ?)
+            ) THEN 'blocked'
+            WHEN EXISTS (
+              SELECT 1
+              FROM reservations r
+              INNER JOIN reservation_tables rt ON rt.reservation_id = r.id
+              WHERE rt.restaurant_table_id = t.id
+                AND r.reservation_date = ?
+                AND r.status IN ('hold', 'payment_pending', 'pending', 'confirmed', 'seated')
+                AND r.start_time <= ? AND r.end_time > ?
+            ) THEN 'reserved'
+            ELSE 'available'
+          END AS state
+        FROM restaurant_tables t
+        INNER JOIN dining_areas a ON a.id = t.area_id
+        INNER JOIN table_types tt ON tt.id = t.table_type_id
+        WHERE t.active = 1 AND a.active = 1
+        ORDER BY a.name, t.id
+      `, [date, time, date, time, date, time, time]),
+      pool.execute<CombinationRow[]>(`
+        SELECT
+          tc.id, tc.code, tc.name, tc.active,
+          GROUP_CONCAT(t.id ORDER BY t.id SEPARATOR ',') AS tableIds,
+          GROUP_CONCAT(CONCAT(t.code, ' · ', t.name) ORDER BY t.id SEPARATOR ', ') AS tableLabel
+        FROM table_combinations tc
+        INNER JOIN table_combination_items tci ON tci.combination_id = tc.id
+        INNER JOIN restaurant_tables t ON t.id = tci.table_id
+        INNER JOIN dining_areas a ON a.id = t.area_id
+        WHERE tc.active = 1
+        GROUP BY tc.id
+        HAVING SUM(t.active = 0 OR t.joinable = 0 OR a.active = 0) = 0
+        ORDER BY tc.name
+      `),
+      pool.execute<BlockedPeriodRow[]>(`
+        SELECT
+          bp.id, bp.dining_area_id AS areaId, a.name AS areaName,
+          bp.restaurant_table_id AS tableId, t.name AS tableName,
+          DATE_FORMAT(bp.starts_at, '%Y-%m-%d %H:%i') AS startsAt,
+          DATE_FORMAT(bp.ends_at, '%Y-%m-%d %H:%i') AS endsAt,
+          bp.reason, bp.active
+        FROM blocked_periods bp
+        LEFT JOIN dining_areas a ON a.id = bp.dining_area_id
+        LEFT JOIN restaurant_tables t ON t.id = bp.restaurant_table_id
+        WHERE bp.active = 1
+          AND bp.starts_at < DATE_ADD(CONCAT(?, ' 00:00:00'), INTERVAL 1 DAY)
+          AND bp.ends_at > CONCAT(?, ' 00:00:00')
+        ORDER BY bp.starts_at
+      `, [date, date]),
+    ]);
+    return {
+      date,
+      time,
+      tables: tableResult[0].map(mapFloorTable),
+      combinations: combinationResult[0].map(mapCombination),
+      blockedPeriods: blockedResult[0].map(mapBlockedPeriod),
+    };
+  }
+
+  async createCombination(input: CreateCombinationInput): Promise<number> {
+    const connection = await getDatabasePool().getConnection();
+    try {
+      await connection.beginTransaction();
+      const placeholders = input.tableIds.map(() => '?').join(', ');
+      const [tableRows] = await connection.execute<CountRow[]>(
+        `SELECT COUNT(*) AS count
+         FROM restaurant_tables
+         WHERE id IN (${placeholders}) AND active = 1 AND joinable = 1`,
+        input.tableIds,
+      );
+      if (Number(tableRows[0]?.count ?? 0) !== input.tableIds.length) {
+        throw new Error('Invalid combination tables');
+      }
+      const [result] = await connection.execute<ResultSetHeader>(
+        'INSERT INTO table_combinations (code, name) VALUES (?, ?)',
+        [input.code, input.name],
+      );
+      for (const tableId of input.tableIds) {
+        await connection.execute(
+          `INSERT INTO table_combination_items (combination_id, table_id)
+           VALUES (?, ?)`,
+          [result.insertId, tableId],
+        );
+      }
+      await connection.commit();
+      return result.insertId;
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  }
+
+  async createBlockedPeriod(input: CreateBlockedPeriodInput): Promise<number> {
+    if (input.areaId !== null) {
+      const [areas] = await getDatabasePool().execute<RowDataPacket[]>(
+        'SELECT id FROM dining_areas WHERE id = ? AND active = 1 LIMIT 1',
+        [input.areaId],
+      );
+      if (areas.length === 0) throw new Error('Invalid blocked period area');
+    }
+    if (input.tableId !== null) {
+      const [tables] = await getDatabasePool().execute<RowDataPacket[]>(
+        'SELECT id FROM restaurant_tables WHERE id = ? AND active = 1 LIMIT 1',
+        [input.tableId],
+      );
+      if (tables.length === 0) throw new Error('Invalid blocked period table');
+    }
+    const [result] = await getDatabasePool().execute<ResultSetHeader>(
+      `INSERT INTO blocked_periods
+        (dining_area_id, restaurant_table_id, starts_at, ends_at, reason)
+       VALUES (?, ?, ?, ?, ?)`,
+      [input.areaId, input.tableId, input.startsAt.replace('T', ' '), input.endsAt.replace('T', ' '), input.reason],
+    );
+    return result.insertId;
+  }
+
+  async updateTablePosition(input: UpdateTablePositionInput): Promise<void> {
+    const pool = getDatabasePool();
+    const [tables] = await pool.execute<RowDataPacket[]>(
+      'SELECT id FROM restaurant_tables WHERE id = ? AND active = 1 LIMIT 1',
+      [input.tableId],
+    );
+    if (tables.length === 0) throw new Error('Table not found');
+    await pool.execute(
+      `UPDATE restaurant_tables SET position_x = ?, position_y = ? WHERE id = ?`,
+      [input.positionX, input.positionY, input.tableId],
+    );
   }
 }

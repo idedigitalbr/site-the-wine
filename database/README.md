@@ -50,3 +50,15 @@ intervalo; sem `time`, retorna os slots de 30 minutos derivados de
 `business_hours` e `service_shifts`. O cálculo considera capacidade, duração,
 reservas ativas, bloqueios e combinações cadastradas. A confirmação futura
 deverá revalidar o inventário em transação.
+
+## Operação local do painel
+
+O painel protegido fica em `/admin`. Para habilitá-lo no ambiente local, defina
+em `next-app/.env.local` `ADMIN_EMAIL`, `ADMIN_PASSWORD` e
+`ADMIN_SESSION_SECRET` com valores próprios. As páginas administrativas não
+usam fallback de credenciais.
+
+Em `/admin/salao`, o floor manager permite posicionar mesas, acompanhar os
+estados livre/reservada/bloqueada, criar combinações e registrar bloqueios por
+salão, área ou mesa. Essas alterações alimentam o endpoint público de
+disponibilidade.

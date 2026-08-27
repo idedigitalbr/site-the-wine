@@ -2,6 +2,7 @@ import {
   CalendarDays,
   ClipboardList,
   LayoutDashboard,
+  Map,
   Settings2,
   Wine,
 } from 'lucide-react';
@@ -12,6 +13,7 @@ import { AdminLogoutButton } from './AdminLogoutButton';
 const navigation = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/reservas', label: 'Reservas', icon: ClipboardList },
+  { href: '/admin/salao', label: 'Mapa do salão', icon: Map },
   { href: '/admin/configuracao', label: 'Configuração', icon: Settings2 },
 ];
 

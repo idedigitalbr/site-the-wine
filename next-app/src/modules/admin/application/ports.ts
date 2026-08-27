@@ -46,6 +46,8 @@ export type AdminTable = {
   capacityMin: number;
   capacityMax: number;
   shape: string;
+  positionX: number;
+  positionY: number;
   joinable: boolean;
   active: boolean;
 };
@@ -75,6 +77,35 @@ export type AdminConfiguration = {
   businessHours: AdminBusinessHour[];
 };
 
+export type FloorTableState = 'available' | 'reserved' | 'blocked';
+export type FloorTable = AdminTable & { state: FloorTableState };
+export type AdminCombination = {
+  id: number;
+  code: string;
+  name: string;
+  tableIds: number[];
+  tableLabel: string;
+  active: boolean;
+};
+export type AdminBlockedPeriod = {
+  id: number;
+  areaId: number | null;
+  areaName: string | null;
+  tableId: number | null;
+  tableName: string | null;
+  startsAt: string;
+  endsAt: string;
+  reason: string;
+  active: boolean;
+};
+export type AdminFloorMap = {
+  date: string;
+  time: string;
+  tables: FloorTable[];
+  combinations: AdminCombination[];
+  blockedPeriods: AdminBlockedPeriod[];
+};
+
 export type CreateAreaInput = { code: string; name: string };
 export type CreateTableTypeInput = CreateAreaInput & { capacityMin: number; capacityMax: number };
 export type CreateTableInput = CreateAreaInput & {
@@ -92,6 +123,15 @@ export type CreateBusinessHourInput = {
   opensAt: string;
   closesAt: string;
 };
+export type CreateCombinationInput = { code: string; name: string; tableIds: number[] };
+export type CreateBlockedPeriodInput = {
+  areaId: number | null;
+  tableId: number | null;
+  startsAt: string;
+  endsAt: string;
+  reason: string;
+};
+export type UpdateTablePositionInput = { tableId: number; positionX: number; positionY: number };
 
 export interface AdminRepository {
   getDashboard(date: string): Promise<AdminDashboard>;
@@ -104,4 +144,8 @@ export interface AdminRepository {
   createTable(input: CreateTableInput): Promise<number>;
   createShift(input: CreateShiftInput): Promise<number>;
   createBusinessHour(input: CreateBusinessHourInput): Promise<number>;
+  getFloorMap(date: string, time: string): Promise<AdminFloorMap>;
+  createCombination(input: CreateCombinationInput): Promise<number>;
+  createBlockedPeriod(input: CreateBlockedPeriodInput): Promise<number>;
+  updateTablePosition(input: UpdateTablePositionInput): Promise<void>;
 }

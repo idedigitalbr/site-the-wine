@@ -60,6 +60,30 @@ test('availability respects duration, capacity and blocking reservations', async
   assert.deepEqual(result.options.map((option) => option.tableIds), [[2]]);
 });
 
+test('availability applies a global blocked period to every table', async () => {
+  const { calculateAvailability } = await loadTypeScriptModule(
+    '../src/modules/reservations/domain/availability.ts',
+  );
+  const result = calculateAvailability({
+    reservationDate: '2026-09-01',
+    startTime: '19:00',
+    guestCount: 2,
+    durationMinutes: 120,
+  }, {
+    tables: [table(1, 1, 4)],
+    reservations: [],
+    blockedPeriods: [{
+      areaId: null,
+      tableId: null,
+      startsAt: '2026-09-01T18:00:00Z',
+      endsAt: '2026-09-01T23:00:00Z',
+    }],
+    combinations: [],
+  });
+
+  assert.deepEqual(result.options, []);
+});
+
 test('availability excludes area blocks and supports simple table combinations', async () => {
   const { calculateAvailability } = await loadTypeScriptModule(
     '../src/modules/reservations/domain/availability.ts',

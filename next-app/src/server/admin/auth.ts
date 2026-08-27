@@ -101,7 +101,7 @@ export function attachAdminSession(response: NextResponse, email: string): NextR
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    path: '/admin',
+    path: '/',
     maxAge: sessionDurationMs / 1000,
   });
   return response;
@@ -112,7 +112,7 @@ export function clearAdminSession(response: NextResponse): NextResponse {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    path: '/admin',
+    path: '/',
     maxAge: 0,
   });
   return response;
