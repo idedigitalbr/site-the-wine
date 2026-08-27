@@ -1,5 +1,10 @@
 import { createRequire } from 'node:module';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+} from 'node:fs';
 import { extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -14,13 +19,14 @@ function isSourceFile(path) {
   return (extension === '.ts' || extension === '.tsx') && !path.endsWith('.d.ts');
 }
 
-function collectSourceFiles(directory) {
-  if (!statSync(directory).isDirectory()) return [];
+function collectSourceFiles(path) {
+  if (!existsSync(path)) return [];
+  if (!statSync(path).isDirectory()) return isSourceFile(path) ? [path] : [];
 
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(directory, entry.name);
-    if (entry.isDirectory()) return collectSourceFiles(path);
-    return isSourceFile(path) ? [path] : [];
+  return readdirSync(path, { withFileTypes: true }).flatMap((entry) => {
+    const child = join(path, entry.name);
+    if (entry.isDirectory()) return collectSourceFiles(child);
+    return isSourceFile(child) ? [child] : [];
   });
 }
 
@@ -153,6 +159,10 @@ export function analyzeDirectory(directory) {
   });
 }
 
+export function analyzeTargets(targets) {
+  return targets.flatMap(analyzeDirectory);
+}
+
 function printViolations(violations) {
   for (const violation of violations) {
     console.error(
@@ -164,8 +174,9 @@ function printViolations(violations) {
 }
 
 function runCli() {
-  const target = resolve(process.cwd(), process.argv[2] ?? 'src');
-  const violations = analyzeDirectory(target);
+  const targets = process.argv.slice(2);
+  const selectedTargets = targets.length > 0 ? targets : ['src'];
+  const violations = analyzeTargets(selectedTargets);
 
   if (violations.length === 0) {
     console.log(
