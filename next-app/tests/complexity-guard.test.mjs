@@ -1,16 +1,37 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 
 const packageJson = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 );
 
-test('package exposes the local complexity quality gate', () => {
-  assert.equal(
-    packageJson.scripts['verify:complexity'],
-    'node scripts/check-complexity.mjs',
-  );
+const managedTargets = [
+  'src/modules',
+  'src/providers',
+  'src/lib',
+  'src/app/reservas',
+  'src/app/admin',
+  'src/app/api/reservations',
+  'src/app/api/admin',
+  'src/app/api/payments',
+  'src/app/api/webhooks',
+  'src/components/ui',
+  'src/components/admin',
+  'src/components/reservation/v2',
+];
+
+const expectedGate = `node scripts/check-complexity.mjs ${managedTargets.join(' ')}`;
+
+test('package exposes complexity gate scoped to the new architecture', () => {
+  assert.equal(packageJson.scripts['verify:complexity'], expectedGate);
 });
 
 test('complexity analyzer enforces cyclomatic threshold 8 and depth 3', async () => {
@@ -57,4 +78,30 @@ test('complexity analyzer enforces cyclomatic threshold 8 and depth 3', async ()
     'nested.ts',
   );
   assert.equal(tooDeep.some((item) => item.kind === 'depth'), true);
+});
+
+test('analyzer accepts multiple targets and ignores paths that do not exist', async () => {
+  const { analyzeTargets } = await import('../scripts/check-complexity.mjs');
+  const root = mkdtempSync(join(tmpdir(), 'wine-complexity-'));
+  const modules = join(root, 'modules');
+  const providers = join(root, 'providers');
+
+  mkdirSync(modules);
+  mkdirSync(providers);
+  writeFileSync(
+    join(modules, 'safe.ts'),
+    'export function safe(value) { if (!value) return 0; return 1; }',
+  );
+  writeFileSync(
+    join(providers, 'deep.ts'),
+    'export function deep(a,b,c,d) { if(a){if(b){if(c){if(d)return true;}}} return false; }',
+  );
+
+  const violations = analyzeTargets([
+    modules,
+    join(root, 'not-created'),
+    providers,
+  ]);
+
+  assert.equal(violations.some((item) => item.kind === 'depth'), true);
 });
