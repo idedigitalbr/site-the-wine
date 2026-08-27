@@ -1,6 +1,6 @@
 import type { ResultSetHeader } from 'mysql2';
 import { getDatabasePool } from '@/server/db';
-import type { ReservationRepository } from '../application/ports';
+import type { ReservationId, ReservationRepository } from '../application/ports';
 import type { ReservationDraft } from '../domain/reservation';
 
 export class MysqlReservationRepository implements ReservationRepository {
@@ -29,5 +29,26 @@ export class MysqlReservationRepository implements ReservationRepository {
     );
 
     return result.insertId;
+  }
+
+  async assignTables(reservationId: ReservationId, tableIds: number[]): Promise<void> {
+    await Promise.all(tableIds.map((tableId) => getDatabasePool().execute(
+      `INSERT INTO reservation_tables (reservation_id, restaurant_table_id)
+       VALUES (?, ?)`,
+      [reservationId, tableId],
+    )));
+  }
+
+  async addSpecialNeeds(
+    reservationId: ReservationId,
+    needs: string[],
+    details: string,
+  ): Promise<void> {
+    if (needs.length === 0) return;
+    await Promise.all(needs.map((needCode) => getDatabasePool().execute(
+      `INSERT INTO reservation_special_needs (reservation_id, need_code, details)
+       VALUES (?, ?, ?)`,
+      [reservationId, needCode, needCode === 'other' ? details : null],
+    )));
   }
 }

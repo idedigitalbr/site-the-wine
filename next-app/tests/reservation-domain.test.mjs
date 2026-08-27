@@ -48,3 +48,9 @@ test('reservation policy enforces date, time window and guest limits', async () 
     guestCount: 21,
   }), ['reservationDate', 'timeWindow', 'guestCount']);
 });
+
+test('reservation domain exposes the payment-free confirmation transition', () => {
+  const source = readFileSync(new URL('../src/modules/reservations/domain/reservation.ts', import.meta.url), 'utf8');
+  assert.match(source, /confirmDraftReservation/);
+  assert.match(source, /assertTransition\(draft\.status, 'confirmed'\)/);
+});

@@ -95,3 +95,95 @@ html.menu-modal-open #menuModal * {
   display: block;
   border: 0;
 }
+
+.reservation-theme .reservation-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--foreground);
+  padding: 0.75rem 0.875rem;
+  font-size: 0.9375rem;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.reservation-theme .reservation-input::placeholder {
+  color: var(--muted);
+  opacity: 0.75;
+}
+
+.reservation-theme .reservation-input:focus {
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 18%, transparent);
+}
+
+.reservation-theme .reservation-input[aria-invalid='true'] {
+  border-color: var(--status-danger);
+}
+
+.reservation-theme .reservation-primary-button,
+.reservation-theme .reservation-secondary-button,
+.reservation-theme .reservation-choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.reservation-theme .reservation-primary-button {
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.75rem 1rem;
+}
+
+.reservation-theme .reservation-primary-button:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.reservation-theme .reservation-primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.reservation-theme .reservation-secondary-button {
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 0.75rem 1rem;
+}
+
+.reservation-theme .reservation-secondary-button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.reservation-theme .reservation-choice {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--muted);
+  padding: 0.75rem 0.875rem;
+  text-align: left;
+}
+
+.reservation-theme .reservation-choice:hover,
+.reservation-theme .reservation-choice-selected {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.reservation-theme .reservation-choice-selected {
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface-muted));
+}
+
+.reservation-theme .reservation-checkbox {
+  height: 1rem;
+  width: 1rem;
+  accent-color: var(--primary);
+}

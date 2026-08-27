@@ -241,6 +241,10 @@ function buildCandidates(
   return [...singles, ...grouped];
 }
 
+export function calculateEndTime(startTime: string, durationMinutes: number): string {
+  return formatTime(timeInMinutes(startTime) + durationMinutes);
+}
+
 export function assertValidAvailabilityQuery(query: AvailabilityQuery): void {
   const errors = validateQuery(query);
   if (errors.length > 0) {
@@ -262,7 +266,7 @@ export function calculateAvailability(
 
   return {
     ...query,
-    endTime: formatTime(timeInMinutes(query.startTime) + query.durationMinutes),
+    endTime: calculateEndTime(query.startTime, query.durationMinutes),
     options,
   };
 }

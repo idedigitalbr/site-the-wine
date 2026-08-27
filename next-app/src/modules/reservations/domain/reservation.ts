@@ -1,5 +1,5 @@
 import { assertValidReservationWindow, type ReservationWindow } from './reservation-policy';
-import type { ReservationStatus } from './reservation-status';
+import { assertTransition, type ReservationStatus } from './reservation-status';
 
 export const reservationSources = [
   'website',
@@ -25,7 +25,11 @@ export type CreateReservationInput = ReservationWindow & {
 };
 
 export type ReservationDraft = CreateReservationInput & {
-  status: 'draft';
+  status: ReservationStatus;
+};
+
+export type ConfirmedReservationDraft = Omit<ReservationDraft, 'status'> & {
+  status: 'confirmed';
 };
 
 export type Reservation = ReservationDraft & {
@@ -48,4 +52,9 @@ export function createDraftReservation(input: CreateReservationInput): Reservati
     source: input.source ?? 'website',
     status: 'draft',
   };
+}
+
+export function confirmDraftReservation(draft: ReservationDraft): ConfirmedReservationDraft {
+  assertTransition(draft.status, 'confirmed');
+  return { ...draft, status: 'confirmed' };
 }
