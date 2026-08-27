@@ -1,0 +1,14 @@
+import type { Metadata } from 'next';
+import { AdminReservationsView } from '@/components/admin/AdminReservationsView';
+import { loadAdminReservations } from '@/server/admin/composition';
+
+export const metadata: Metadata = { title: 'Reservas | The Wine Operations' };
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export default async function AdminReservationsPage() {
+  const date = todayIso();
+  return <AdminReservationsView initialDate={date} initialReservations={await loadAdminReservations(date)} />;
+}
