@@ -21,6 +21,7 @@
     "verify:architecture": "node scripts/check-architecture.mjs",
     "verify:lockfile": "node scripts/check-lockfile-sync.mjs",
     "verify:guardrails": "npm run test && npm run verify:lockfile && npm run verify:complexity && npm run verify:architecture",
+    "verify:foundation:preflight": "npm run test && npm run verify:lockfile && npm run verify:complexity && npm run verify:architecture && npm run setup:reservation-foundation:dry-run",
     "verify:legacy": "node scripts/verify-legacy-parity.mjs",
     "verify": "npm run typecheck && npm run test && npm run verify:legacy",
     "verify:local": "npm run typecheck && npm test && npm run verify:legacy && npm run build",
