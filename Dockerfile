@@ -24,7 +24,7 @@ RUN addgroup --system --gid 1001 nodejs \
 COPY --from=builder --chown=nextjs:nodejs /app/next-app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/next-app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/next-app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/next-app/scripts/migrate-local.mjs ./next-app/scripts/migrate-local.mjs
+COPY --chown=nextjs:nodejs next-app/scripts/migrate-local.mjs ./next-app/scripts/migrate-local.mjs
 COPY --chown=nextjs:nodejs database/migrations ./database/migrations
 
 USER nextjs

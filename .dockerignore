@@ -16,7 +16,8 @@ next-app/node_modules
 next-app/.next
 next-app/test-results
 next-app/tests
-next-app/scripts
+next-app/scripts/*
+!next-app/scripts/migrate-local.mjs
 
 # Local/generated material
 backup
