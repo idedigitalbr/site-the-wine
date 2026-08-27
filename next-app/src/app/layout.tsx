@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
 import { restaurantJsonLd, siteConfig } from '@/config/site';
+import { AppProviders } from '@/providers/AppProviders';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.canonical),
@@ -49,7 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantJsonLd) }}
         />
       </head>
-      <body>{children}</body>
+      <body><AppProviders>{children}</AppProviders></body>
     </html>
   );
 }

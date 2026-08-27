@@ -6,6 +6,14 @@ Evoluir o sistema atual de `appointments` para um módulo profissional de reserv
 
 O desenvolvimento será incremental e isolado na branch `feature/reservas-the-wine`.
 
+## Status de implementação
+
+A Fase 0 — Fundação e quality gates — foi concluída em 2026-08-26 na branch
+`feature/reservas-the-wine`. Dependências, Tailwind v4, utilitários, providers,
+lint, guardrails, typecheck, testes, paridade legacy e build foram validados
+localmente. Deploy, GitHub Actions, `main` e `.github/workflows/` permanecem
+intocados.
+
 ## Restrições operacionais obrigatórias
 
 - Não alterar a branch `main` durante o desenvolvimento.

@@ -12,13 +12,20 @@ function printPlan(steps) {
 }
 
 function runStep(step) {
-  const result = spawnSync(step.command, step.args, {
+  const command = process.platform === 'win32' && step.command === 'npm'
+    ? 'npm.cmd'
+    : step.command;
+  const result = spawnSync(command, step.args, {
     cwd: process.cwd(),
     stdio: 'inherit',
-    shell: false,
+    shell: process.platform === 'win32',
   });
 
   if (result.status === 0) return;
+
+  if (result.error) {
+    console.error(`Failed to run ${renderCommand(step)}: ${result.error.message}`);
+  }
 
   process.exit(result.status ?? 1);
 }

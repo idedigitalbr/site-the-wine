@@ -1,4 +1,34 @@
+/* Tailwind v4 utilities for the new reservation/admin surfaces. */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
 @import '../styles/reservation-tokens.css';
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-focus-ring: var(--focus-ring);
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+  --color-status-danger: var(--status-danger);
+  --color-table-available: var(--table-available);
+  --color-table-selected: var(--table-selected);
+  --color-table-unavailable: var(--table-unavailable);
+  --color-table-reserved: var(--table-reserved);
+  --color-table-occupied: var(--table-occupied);
+  --color-table-blocked: var(--table-blocked);
+  --font-display: var(--font-display-ui);
+  --font-sans: var(--font-body-ui);
+}
 
 /*
  * Compatibilidade mínima entre o CSS/efeitos do legado e o DOM nativo do Next.

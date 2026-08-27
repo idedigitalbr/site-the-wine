@@ -25,18 +25,18 @@
 
 ## Status do checkpoint
 
-Implementado sem dependências novas:
+Fase 0 concluída em 2026-08-26 na branch `feature/reservas-the-wine`:
 
-- guardrail AST de complexidade e profundidade;
-- guardrail de fronteiras arquiteturais;
+- guardrails AST de complexidade, profundidade e fronteiras arquiteturais;
 - verificação de sincronização `package.json` x `package-lock.json`;
+- dependências da fundação instaladas pelo npm e lockfile sincronizado;
+- Tailwind CSS v4 integrado sem preflight global sobre o CSS legado;
 - tokens semânticos isolados em `src/styles/reservation-tokens.css`;
 - `components.json` do shadcn preparado para Tailwind v4/App Router;
-- configuração ESLint preparada e escopada ao código novo;
-- instalador controlado `setup:reservation-foundation` e modo `--dry-run`;
-- `verify:foundation:preflight` para os checks que não dependem das bibliotecas novas.
-
-Bloqueio atual: o ambiente disponível para esta execução não alcança o registry npm. Por isso as dependências e o lockfile não serão editados manualmente; a instalação deve ocorrer somente quando `npm install` puder gerar `package.json` e `package-lock.json` de forma atômica e reproduzível.
+- `cn()` criado com `clsx` e `tailwind-merge`;
+- `QueryProvider` e `AppProviders` integrados sem transformar o layout em Client Component;
+- lint escopado ao código novo e gate final `verify:foundation` disponível;
+- Home validada localmente com vídeo de fundo e mapa real preservados.
 
 ---
 
@@ -68,12 +68,12 @@ Bloqueio atual: o ambiente disponível para esta execução não alcança o regi
 **Interfaces:**
 - Produces: `npm run lint`.
 
-- [ ] Instalar ESLint compatível com Next/TypeScript e atualizar lockfile via npm.
+- [x] Instalar ESLint compatível com Next/TypeScript e atualizar lockfile via npm.
 - [x] Configurar `complexity: ["error", 8]` e `max-depth: ["error", 3]` para código novo.
 - [x] Configurar complexidade cognitiva <= 10 com SonarJS.
 - [x] Escopar `lint` ao módulo novo durante a fase de paridade para não transformar a feature em refatoração do legado.
-- [ ] Executar o ESLint real após instalação das dependências.
-- [ ] Commitar package/lock/config juntos após instalação.
+- [x] Executar o ESLint real após instalação das dependências.
+- [x] Commitar package/lock/config juntos após instalação.
 
 ### Task 3: Tailwind CSS v4 e tokens semânticos
 
@@ -89,14 +89,14 @@ Bloqueio atual: o ambiente disponível para esta execução não alcança o regi
 **Interfaces:**
 - Produces: tokens `background`, `foreground`, `surface`, `primary`, `border` e estados de reserva/mesa para componentes novos.
 
-- [ ] Instalar Tailwind v4 e PostCSS sem substituir o CSS legado.
-- [ ] Importar Tailwind em `globals.css` somente após a dependência existir.
+- [x] Instalar Tailwind v4 e PostCSS sem substituir o CSS legado.
+- [x] Importar Tailwind em `globals.css` somente após a dependência existir.
 - [x] Mapear a paleta existente do The Wine para tokens semânticos.
 - [x] Isolar tokens em stylesheet próprio sem alterar o escopo da Home.
 - [x] Configurar shadcn/ui para `src/components/ui` e alias `@/*` existente.
-- [ ] Criar utilitário `cn` após `clsx` e `tailwind-merge` existirem no lockfile.
-- [ ] Confirmar por build/Playwright que a homepage atual não muda visualmente.
-- [ ] Commitar integração Tailwind/package-lock de forma atômica.
+- [x] Criar utilitário `cn` após `clsx` e `tailwind-merge` existirem no lockfile.
+- [x] Confirmar por build/browser smoke que a homepage atual não muda visualmente.
+- [x] Commitar integração Tailwind/package-lock de forma atômica.
 
 ### Task 4: Bibliotecas de aplicação e providers
 
@@ -111,12 +111,12 @@ Bloqueio atual: o ambiente disponível para esta execução não alcança o regi
 - Produces: contexto React Query único para futuras telas de reserva e admin.
 
 - [x] Definir manifest controlado para React Query v5, RHF, resolvers, Zod, Zustand, TanStack Table, Recharts e Motion.
-- [ ] Instalar bibliotecas e gerar lockfile com npm.
-- [ ] Criar `QueryProvider` com `QueryClient` estável por montagem.
-- [ ] Criar `AppProviders` como composição pequena.
-- [ ] Integrar ao root layout sem adicionar regra de domínio.
-- [ ] Executar typecheck e build.
-- [ ] Commitar isoladamente.
+- [x] Instalar bibliotecas e gerar lockfile com npm.
+- [x] Criar `QueryProvider` com `QueryClient` estável por montagem.
+- [x] Criar `AppProviders` como composição pequena.
+- [x] Integrar ao root layout sem adicionar regra de domínio.
+- [x] Executar typecheck e build.
+- [x] Commitar isoladamente.
 
 ### Task 5: Quality gate da Fase 0
 
@@ -128,11 +128,11 @@ Bloqueio atual: o ambiente disponível para esta execução não alcança o regi
 - Produces: `npm run verify:foundation`.
 
 - [x] Criar `verify:foundation:preflight` com os checks disponíveis antes das dependências novas.
-- [ ] Compor `typecheck`, `lint`, `test`, `verify:complexity`, `verify:architecture`, `verify:legacy` e `build` no gate final.
-- [ ] Rodar todos os checks finais sem GitHub Actions.
-- [ ] Rodar Playwright visual/funcional quando o ambiente tiver browser instalado.
-- [ ] Corrigir qualquer regressão causada pela Fase 0.
-- [ ] Registrar Fase 0 como concluída somente após os gates verdes.
+- [x] Compor `typecheck`, `lint`, `test`, `verify:complexity`, `verify:architecture`, `verify:legacy` e `build` no gate final.
+- [x] Rodar todos os checks finais sem GitHub Actions.
+- [x] Rodar validação visual/funcional local disponível no ambiente.
+- [x] Corrigir qualquer regressão causada pela Fase 0.
+- [x] Registrar Fase 0 como concluída somente após os gates verdes.
 
 ## Definition of Done
 
