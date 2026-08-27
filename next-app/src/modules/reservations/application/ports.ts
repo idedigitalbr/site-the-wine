@@ -1,4 +1,8 @@
 import type { ReservationDraft } from '../domain/reservation';
+import type {
+  AvailabilityInventory,
+  AvailabilitySearchQuery,
+} from '../domain/availability';
 
 export type ReservationId = number;
 
@@ -8,4 +12,8 @@ export interface ReservationRepository {
 
 export interface CustomerRepository {
   findByNormalizedPhone(normalizedPhone: string): Promise<number | null>;
+}
+
+export interface AvailabilityRepository {
+  findInventory(query: AvailabilitySearchQuery): Promise<AvailabilityInventory>;
 }

@@ -40,3 +40,13 @@ próxima etapa da API, mas nenhum formulário público é ativado nesta publica�
 isolada para clientes, salão, mesas, turnos, experiências, reservas, holds e
 lista de espera. A tabela `appointments` permanece legada e não é removida nem
 convertida nesta fase.
+
+## Endpoint de disponibilidade
+
+O Next expõe `GET /api/reservations/availability` para consultas informativas.
+Use `date`, `guests` e, opcionalmente, `duration` em minutos (padrão 120). Com
+`time`, a resposta informa as combinações de mesas disponíveis para aquele
+intervalo; sem `time`, retorna os slots de 30 minutos derivados de
+`business_hours` e `service_shifts`. O cálculo considera capacidade, duração,
+reservas ativas, bloqueios e combinações cadastradas. A confirmação futura
+deverá revalidar o inventário em transação.
