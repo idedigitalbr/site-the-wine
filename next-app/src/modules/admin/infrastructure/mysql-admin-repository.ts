@@ -417,6 +417,14 @@ export class MysqlAdminRepository implements AdminRepository {
                 AND r.status IN ('hold', 'payment_pending', 'pending', 'confirmed', 'seated')
                 AND r.start_time <= ? AND r.end_time > ?
             ) THEN 'reserved'
+            WHEN EXISTS (
+              SELECT 1
+              FROM reservation_holds h
+              WHERE h.restaurant_table_id = t.id
+                AND h.expires_at > CURRENT_TIMESTAMP
+                AND h.reservation_starts_at <= CONCAT(?, ' ', ?)
+                AND h.reservation_ends_at > CONCAT(?, ' ', ?)
+            ) THEN 'reserved'
             ELSE 'available'
           END AS state
         FROM restaurant_tables t
@@ -424,7 +432,7 @@ export class MysqlAdminRepository implements AdminRepository {
         INNER JOIN table_types tt ON tt.id = t.table_type_id
         WHERE t.active = 1 AND a.active = 1
         ORDER BY a.name, t.id
-      `, [date, time, date, time, date, time, time]),
+      `, [date, time, date, time, date, time, time, date, time, date, time]),
       pool.execute<CombinationRow[]>(`
         SELECT
           tc.id, tc.code, tc.name, tc.active,

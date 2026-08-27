@@ -8,6 +8,7 @@ import { confirmDraftReservation, createDraftReservation } from '../domain/reser
 import { normalizePhone } from '../../customers/domain/customer';
 import type {
   AvailabilityRepository,
+  ConfirmReservationWithHoldInput,
   CustomerRepository,
   ReservationRepository,
 } from './ports';
@@ -15,6 +16,7 @@ import type {
 export type CreatePublicReservationInput = AvailabilityQuery & {
   publicCode: string;
   confirmationTokenHash: string;
+  sessionTokenHash: string;
   name: string;
   phone: string;
   email: string;
@@ -54,7 +56,7 @@ export async function createPublicReservation(
   };
   assertValidAvailabilityQuery(query);
 
-  const inventory = await dependencies.availability.findInventory(query);
+  const inventory = await dependencies.availability.findInventory(query, input.sessionTokenHash);
   const availability = calculateAvailability(query, inventory);
   const selectedTableIds = input.tableIds.length > 0
     ? input.tableIds
@@ -85,14 +87,14 @@ export async function createPublicReservation(
     notes: input.notes,
   });
   const reservation = confirmDraftReservation(draft);
-  const reservationId = await dependencies.reservations.create(reservation);
-
-  await dependencies.reservations.assignTables(reservationId, selectedOption.tableIds);
-  await dependencies.reservations.addSpecialNeeds(
-    reservationId,
-    input.specialNeeds,
-    input.specialNeedsOther,
-  );
+  const confirmation: ConfirmReservationWithHoldInput = {
+    reservation,
+    tableIds: selectedOption.tableIds,
+    sessionTokenHash: input.sessionTokenHash,
+    specialNeeds: input.specialNeeds,
+    specialNeedsOther: input.specialNeedsOther,
+  };
+  const reservationId = await dependencies.reservations.confirmWithHold(confirmation);
 
   return {
     reservationId,

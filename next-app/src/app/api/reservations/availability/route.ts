@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadAvailability, loadAvailabilitySlots } from '@/server/reservations/availability';
 import { availabilityQuerySchema } from '@/modules/reservations/schemas/availability-schema';
+import { getReservationSessionTokenHash } from '@/server/reservations/session';
 
 export async function GET(request: NextRequest) {
   const rawQuery = Object.fromEntries(request.nextUrl.searchParams.entries());
@@ -14,12 +15,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const sessionTokenHash = await getReservationSessionTokenHash();
     if (!parsed.data.time) {
       const result = await loadAvailabilitySlots({
         reservationDate: parsed.data.date,
         guestCount: parsed.data.guests,
         durationMinutes: parsed.data.duration,
-      });
+      }, sessionTokenHash);
       return NextResponse.json(result);
     }
 
@@ -28,7 +30,7 @@ export async function GET(request: NextRequest) {
       startTime: parsed.data.time,
       guestCount: parsed.data.guests,
       durationMinutes: parsed.data.duration,
-    });
+    }, sessionTokenHash);
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof Error && error.message.startsWith('Invalid availability query')) {

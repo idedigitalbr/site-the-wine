@@ -12,6 +12,7 @@ import type { AvailabilityRepository } from './ports';
 
 export type GetAvailabilityDependencies = {
   availability: AvailabilityRepository;
+  sessionTokenHash?: string | null;
 };
 
 export async function getAvailability(
@@ -21,7 +22,7 @@ export async function getAvailability(
   assertValidAvailabilityQuery(query);
   return calculateAvailability(
     query,
-    await dependencies.availability.findInventory(query),
+    await dependencies.availability.findInventory(query, dependencies.sessionTokenHash),
   );
 }
 
@@ -30,6 +31,6 @@ export async function getAvailabilitySlots(
   dependencies: GetAvailabilityDependencies,
 ): Promise<AvailabilitySlotsResult> {
   assertValidAvailabilitySearchQuery(query);
-  const inventory = await dependencies.availability.findInventory(query);
+  const inventory = await dependencies.availability.findInventory(query, dependencies.sessionTokenHash);
   return calculateAvailabilitySlots(query, inventory);
 }

@@ -24,6 +24,7 @@
     "verify:foundation:preflight": "npm run test && npm run verify:lockfile && npm run verify:complexity && npm run verify:architecture && npm run setup:reservation-foundation:dry-run",
     "verify:foundation": "npm run typecheck && npm run test && npm run verify:lockfile && npm run verify:complexity && npm run verify:architecture && npm run lint && npm run verify:legacy && npm run build",
     "verify:legacy": "node scripts/verify-legacy-parity.mjs",
+    "test:reservation-db": "node scripts/test-reservation-concurrency.mjs",
     "verify": "npm run typecheck && npm run test && npm run verify:legacy",
     "verify:local": "npm run typecheck && npm test && npm run verify:legacy && npm run build",
     "test:browser": "playwright test",

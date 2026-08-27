@@ -1,7 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { createPublicReservation } from '@/modules/reservations/application/create-public-reservation';
+import { createReservationHold } from '@/modules/reservations/application/create-reservation-hold';
 import type { CreatedPublicReservation } from '@/modules/reservations/application/create-public-reservation';
-import type { PublicReservationInput } from '@/modules/reservations/schemas/public-reservation-schema';
+import type { CreatedReservationHold } from '@/modules/reservations/application/ports';
+import type { PublicReservationInput, ReservationHoldInput } from '@/modules/reservations/schemas/public-reservation-schema';
 import { MysqlAvailabilityRepository } from '@/modules/reservations/infrastructure/mysql-availability-repository';
 import { MysqlCustomerRepository } from '@/modules/reservations/infrastructure/mysql-customer-repository';
 import { MysqlReservationRepository } from '@/modules/reservations/infrastructure/mysql-reservation-repository';
@@ -20,10 +22,12 @@ function createConfirmationTokenHash(): string {
 
 export function submitPublicReservation(
   input: PublicReservationInput,
+  sessionTokenHash: string,
 ): Promise<CreatedPublicReservation> {
   return createPublicReservation({
     publicCode: createPublicCode(),
     confirmationTokenHash: createConfirmationTokenHash(),
+    sessionTokenHash,
     reservationDate: input.date,
     startTime: input.time,
     guestCount: input.guests,
@@ -39,6 +43,23 @@ export function submitPublicReservation(
   }, {
     availability: availabilityRepository,
     customers: customerRepository,
+    reservations: reservationRepository,
+  });
+}
+
+export function submitReservationHold(
+  input: ReservationHoldInput,
+  sessionTokenHash: string,
+): Promise<CreatedReservationHold> {
+  return createReservationHold({
+    reservationDate: input.date,
+    startTime: input.time,
+    guestCount: input.guests,
+    durationMinutes: input.duration,
+    tableIds: input.tableIds,
+    sessionTokenHash,
+  }, {
+    availability: availabilityRepository,
     reservations: reservationRepository,
   });
 }

@@ -38,6 +38,7 @@ yarn-error.log*
 *.backup
 *.dump
 *.sql
+!database/migrations/*.sql
 *.sqlite
 *.sqlite3
 *.zip

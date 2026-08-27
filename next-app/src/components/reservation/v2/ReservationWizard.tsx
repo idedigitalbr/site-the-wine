@@ -51,6 +51,12 @@ type CreatedReservation = {
   status: string;
 };
 
+type CreatedReservationHold = {
+  holdId: number;
+  tableIds: number[];
+  expiresAt: number;
+};
+
 type FormValues = PublicReservationInput;
 
 const specialNeedOptions = [
@@ -67,6 +73,13 @@ const steps = ['Data', 'Horário', 'Seus dados', 'Confirmação'];
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function formatHoldExpiry(timestamp: number): string {
+  return new Intl.DateTimeFormat('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(timestamp));
 }
 
 async function fetchAvailability(
@@ -152,6 +165,7 @@ function StepAvailability({
   selectedTableIds,
   setValue,
   errorTime,
+  holdExpiresAt,
 }: {
   slots: AvailabilitySlot[];
   isLoading: boolean;
@@ -160,6 +174,7 @@ function StepAvailability({
   selectedTableIds: number[];
   setValue: UseFormSetValue<FormValues>;
   errorTime?: string;
+  holdExpiresAt: number | null;
 }) {
   const selectedSlot = slots.find((slot) => slot.startTime === selectedTime);
   const chooseSlot = (slot: AvailabilitySlot) => {
@@ -226,6 +241,12 @@ function StepAvailability({
             })}
           </div>
         </div>
+      )}
+
+      {holdExpiresAt && (
+        <p role="status" className="rounded-[var(--radius-sm)] border border-primary/30 bg-primary/10 p-3 text-sm text-primary">
+          Sua mesa está temporariamente reservada até {formatHoldExpiry(holdExpiresAt)}. Finalize seus dados para confirmar a experiência.
+        </p>
       )}
     </div>
   );
@@ -313,7 +334,7 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StepReview({ values }: { values: FormValues }) {
+function StepReview({ values, holdExpiresAt }: { values: FormValues; holdExpiresAt: number | null }) {
   return (
     <div className="rounded-[var(--radius-md)] border border-border bg-surface-muted/50 p-4 sm:p-6">
       <div className="mb-4 flex items-center gap-2 text-primary">
@@ -325,6 +346,7 @@ function StepReview({ values }: { values: FormValues }) {
       <SummaryItem label="Pessoas" value={String(values.guests)} />
       <SummaryItem label="Mesa" value={values.tableIds.length ? values.tableIds.join(' + ') : 'A definir pela equipe'} />
       <SummaryItem label="Contato" value={`${values.name} · ${values.phone}`} />
+      {holdExpiresAt && <p role="status" className="mt-5 rounded-[var(--radius-sm)] border border-primary/30 bg-primary/10 p-3 text-xs leading-relaxed text-primary">Mesa mantida até {formatHoldExpiry(holdExpiresAt)}. A confirmação precisa ser concluída antes desse horário.</p>}
       <p className="mt-5 text-xs leading-relaxed text-muted">Esta é uma reserva sem pagamento. Nossa equipe poderá entrar em contato para confirmar algum detalhe da experiência.</p>
     </div>
   );
@@ -381,6 +403,7 @@ type WizardContentProps = {
   selectedTableIds: number[];
   setValue: UseFormSetValue<FormValues>;
   specialNeeds: string[];
+  holdExpiresAt: number | null;
 };
 
 function WizardContent({
@@ -394,12 +417,13 @@ function WizardContent({
   selectedTableIds,
   setValue,
   specialNeeds,
+  holdExpiresAt,
 }: WizardContentProps) {
   return (
     <AnimatePresence mode="wait">
       <motion.div key={step} initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.18 }}>
         {step === 1 && <StepDate register={register} errorDate={errors.date?.message} errorGuests={errors.guests?.message} />}
-        {step === 2 && <StepAvailability slots={slots} isLoading={isLoading} hasError={hasError} selectedTime={selectedTime} selectedTableIds={selectedTableIds} setValue={setValue} errorTime={errors.time?.message} />}
+        {step === 2 && <StepAvailability slots={slots} isLoading={isLoading} hasError={hasError} selectedTime={selectedTime} selectedTableIds={selectedTableIds} setValue={setValue} errorTime={errors.time?.message} holdExpiresAt={holdExpiresAt} />}
         {step === 3 && <StepCustomer register={register} selectedNeeds={specialNeeds} errors={errors as Record<string, { message?: string } | undefined>} />}
       </motion.div>
     </AnimatePresence>
@@ -409,18 +433,21 @@ function WizardContent({
 function WizardActions({
   step,
   isSubmitting,
+  isHolding,
   onBack,
   onNext,
 }: {
   step: number;
   isSubmitting: boolean;
+  isHolding: boolean;
   onBack: () => void;
   onNext: () => void;
 }) {
+  const isBusy = isSubmitting || isHolding;
   return (
     <div className="mt-8 flex items-center justify-between gap-3 border-t border-border pt-5">
       {step > 1 ? <button type="button" onClick={onBack} className="reservation-secondary-button"><ArrowLeft aria-hidden="true" size={16} /> Voltar</button> : <span />}
-      {step < 4 ? <button type="button" onClick={onNext} className="reservation-primary-button">Continuar <ArrowRight aria-hidden="true" size={16} /></button> : <button type="submit" disabled={isSubmitting} className="reservation-primary-button">{isSubmitting ? <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> : <Check aria-hidden="true" size={16} />} {isSubmitting ? 'Enviando...' : 'Confirmar reserva'}</button>}
+      {step < 4 ? <button type="button" onClick={onNext} disabled={isBusy} className="reservation-primary-button disabled:cursor-wait disabled:opacity-70">{isHolding ? <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> : <ArrowRight aria-hidden="true" size={16} />} {isHolding ? 'Reservando...' : 'Continuar'}</button> : <button type="submit" disabled={isBusy} className="reservation-primary-button">{isSubmitting ? <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> : <Check aria-hidden="true" size={16} />} {isSubmitting ? 'Enviando...' : 'Confirmar reserva'}</button>}
     </div>
   );
 }
@@ -428,7 +455,9 @@ function WizardActions({
 type ReservationFormProps = Omit<WizardContentProps, 'step'> & {
   step: number;
   values: FormValues;
+  holdExpiresAt: number | null;
   submitError: string;
+  isHolding: boolean;
   isSubmitting: boolean;
   onSubmit: (values: FormValues) => Promise<void>;
   onBack: () => void;
@@ -439,7 +468,9 @@ type ReservationFormProps = Omit<WizardContentProps, 'step'> & {
 function ReservationForm({
   step,
   values,
+  holdExpiresAt,
   submitError,
+  isHolding,
   isSubmitting,
   onSubmit,
   onBack,
@@ -449,10 +480,10 @@ function ReservationForm({
 }: ReservationFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="rounded-[var(--radius-lg)] border border-border bg-surface p-5 shadow-sm sm:p-8">
-      <WizardContent step={step} {...contentProps} />
-      {step === 4 && <StepReview values={values} />}
+      <WizardContent step={step} holdExpiresAt={holdExpiresAt} {...contentProps} />
+      {step === 4 && <StepReview values={values} holdExpiresAt={holdExpiresAt} />}
       {submitError && <p className="mt-5 rounded-[var(--radius-sm)] border border-status-danger/30 bg-status-danger/10 p-3 text-sm text-status-danger">{submitError}</p>}
-      <WizardActions step={step} isSubmitting={isSubmitting} onBack={onBack} onNext={onNext} />
+      <WizardActions step={step} isSubmitting={isSubmitting} isHolding={isHolding} onBack={onBack} onNext={onNext} />
     </form>
   );
 }
@@ -469,7 +500,9 @@ type ReservationShellProps = {
   setValue: UseFormSetValue<FormValues>;
   specialNeeds: string[];
   values: FormValues;
+  holdExpiresAt: number | null;
   submitError: string;
+  isHolding: boolean;
   isSubmitting: boolean;
   onSubmit: (values: FormValues) => Promise<void>;
   onBack: () => void;
@@ -489,7 +522,9 @@ function ReservationShell({
   setValue,
   specialNeeds,
   values,
+  holdExpiresAt,
   submitError,
+  isHolding,
   isSubmitting,
   onSubmit,
   onBack,
@@ -516,8 +551,10 @@ function ReservationShell({
           selectedTableIds={selectedTableIds}
           setValue={setValue}
           specialNeeds={specialNeeds}
+          holdExpiresAt={holdExpiresAt}
           values={values}
           submitError={submitError}
+          isHolding={isHolding}
           isSubmitting={isSubmitting}
           onSubmit={onSubmit}
           onBack={onBack}
@@ -560,6 +597,8 @@ export function ReservationWizard() {
   const resetStep = useReservationWizardStore((state) => state.reset);
   const [confirmation, setConfirmation] = useState<CreatedReservation | null>(null);
   const [submitError, setSubmitError] = useState('');
+  const [hold, setHold] = useState<{ selectionKey: string; expiresAt: number } | null>(null);
+  const [isHolding, setIsHolding] = useState(false);
   const {
     register,
     handleSubmit,
@@ -592,6 +631,8 @@ export function ReservationWizard() {
   const tableIds = useWatch({ control, name: 'tableIds' });
   const specialNeeds = useWatch({ control, name: 'specialNeeds' });
   const values = useWatch({ control }) as FormValues;
+  const selectionKey = [date, guests, duration, time, tableIds.join(',')].join('|');
+  const holdExpiresAt = hold?.selectionKey === selectionKey ? hold.expiresAt : null;
   const availabilityQuery = useQuery({
     queryKey: ['reservation-availability', date, guests, duration],
     queryFn: () => fetchAvailability(date, guests, duration),
@@ -599,13 +640,46 @@ export function ReservationWizard() {
   });
   useEffect(() => () => resetStep(), [resetStep]);
 
+  const createHold = async (): Promise<boolean> => {
+    if (!date || !time || tableIds.length === 0) {
+      setSubmitError('Escolha um horário e uma mesa antes de continuar.');
+      return false;
+    }
+
+    setSubmitError('');
+    setIsHolding(true);
+    try {
+      const response = await fetch('/api/reservations/hold', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, time, guests, duration, tableIds }),
+      });
+      if (!response.ok) {
+        setSubmitError(response.status === 409
+          ? 'Esse horário acabou de ser ocupado. Escolha outro horário, por favor.'
+          : 'Não foi possível reservar a mesa agora. Tente novamente em instantes.');
+        return false;
+      }
+      const hold = await response.json() as CreatedReservationHold;
+      setHold({ selectionKey, expiresAt: hold.expiresAt });
+      return true;
+    } catch {
+      setSubmitError('Não foi possível reservar a mesa agora. Tente novamente em instantes.');
+      return false;
+    } finally {
+      setIsHolding(false);
+    }
+  };
+
   const goNext = async () => {
     const fields: FieldPath<FormValues>[] = step === 1
       ? ['date', 'guests']
       : step === 2
         ? ['time']
         : ['name', 'phone', 'email', 'specialNeedsOther', 'notes'];
-    if (await trigger(fields)) setStep(Math.min(4, step + 1));
+    if (!(await trigger(fields))) return;
+    if (step === 2 && !(await createHold())) return;
+    setStep(Math.min(4, step + 1));
   };
   const goBack = () => setStep(Math.max(1, step - 1));
   const submit = async (input: FormValues) => {
@@ -616,6 +690,7 @@ export function ReservationWizard() {
       body: JSON.stringify(input),
     });
     if (!response.ok) {
+      if (response.status === 409) setHold(null);
       setSubmitError(response.status === 409
         ? 'Esse horário acabou de ser ocupado. Escolha outro horário, por favor.'
         : 'Não foi possível concluir agora. Tente novamente em instantes.');
@@ -641,8 +716,10 @@ export function ReservationWizard() {
           selectedTableIds={tableIds}
           setValue={setValue}
           specialNeeds={specialNeeds}
+          holdExpiresAt={holdExpiresAt}
           values={values}
           submitError={submitError}
+          isHolding={isHolding}
           isSubmitting={isSubmitting}
           onSubmit={submit}
           onBack={goBack}

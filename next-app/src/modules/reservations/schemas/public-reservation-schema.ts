@@ -1,6 +1,17 @@
 import { z } from 'zod';
 
 const phoneDigits = (phone: string) => phone.replace(/\D/g, '');
+const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+const timePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
+function isCalendarDate(value: string): boolean {
+  const [year, month, day] = value.split('-').map(Number);
+  if (!year || !month || !day || month < 1 || month > 12) return false;
+  return day <= new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+const reservationDate = z.string().regex(datePattern).refine(isCalendarDate, 'Informe uma data válida.');
+const reservationTime = z.string().regex(timePattern);
 
 export const specialNeedCodes = [
   'accessibility',
@@ -12,12 +23,20 @@ export const specialNeedCodes = [
   'none',
 ] as const;
 
-export const publicReservationSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+export const reservationHoldSchema = z.object({
+  date: reservationDate,
+  time: reservationTime,
   guests: z.number().int().min(1).max(20),
   duration: z.number().int().min(15).max(720),
-  tableIds: z.array(z.number().int().positive()).max(8),
+  tableIds: z.array(z.number().int().positive()).min(1).max(8),
+});
+
+export const publicReservationSchema = z.object({
+  date: reservationDate,
+  time: reservationTime,
+  guests: z.number().int().min(1).max(20),
+  duration: z.number().int().min(15).max(720),
+  tableIds: z.array(z.number().int().positive()).min(1).max(8),
   name: z.string().trim().min(2).max(160),
   phone: z.string().trim().refine((value) => {
     const digits = phoneDigits(value);
@@ -47,3 +66,4 @@ export const publicReservationSchema = z.object({
 });
 
 export type PublicReservationInput = z.infer<typeof publicReservationSchema>;
+export type ReservationHoldInput = z.infer<typeof reservationHoldSchema>;

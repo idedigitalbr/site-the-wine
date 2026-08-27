@@ -114,7 +114,7 @@ function mapCombinations(rows: CombinationRow[]): TableCombination[] {
 }
 
 export class MysqlAvailabilityRepository implements AvailabilityRepository {
-  async findInventory(query: AvailabilitySearchQuery): Promise<AvailabilityInventory> {
+  async findInventory(query: AvailabilitySearchQuery, sessionTokenHash?: string | null): Promise<AvailabilityInventory> {
     const pool = getDatabasePool();
     const [tableResult, reservationResult, blockResult, combinationResult, serviceWindowResult] = await Promise.all([
       pool.query<TableRow[]>(`
@@ -153,7 +153,30 @@ export class MysqlAvailabilityRepository implements AvailabilityRepository {
         INNER JOIN reservation_tables rt ON rt.reservation_id = r.id
         WHERE r.reservation_date = ?
           AND r.status IN ('hold', 'payment_pending', 'pending', 'confirmed', 'seated')
-      `, [query.reservationDate]),
+        UNION ALL
+        SELECT
+          h.restaurant_table_id AS tableId,
+          CONCAT(
+            DATE_FORMAT(h.reservation_starts_at, '%Y-%m-%d'),
+            'T',
+            TIME_FORMAT(h.reservation_starts_at, '%H:%i:%s'),
+            'Z'
+          ) AS startsAt,
+          CONCAT(
+            DATE_FORMAT(h.reservation_ends_at, '%Y-%m-%d'),
+            'T',
+            TIME_FORMAT(h.reservation_ends_at, '%H:%i:%s'),
+            'Z'
+          ) AS endsAt,
+          'hold' AS status
+        FROM reservation_holds h
+        WHERE h.expires_at > CURRENT_TIMESTAMP
+          AND h.reservation_starts_at IS NOT NULL
+          AND h.reservation_ends_at IS NOT NULL
+          AND h.reservation_starts_at < DATE_ADD(CONCAT(?, ' 00:00:00'), INTERVAL 1 DAY)
+          AND h.reservation_ends_at > CONCAT(?, ' 00:00:00')
+          AND (? IS NULL OR h.session_token_hash <> ?)
+      `, [query.reservationDate, query.reservationDate, query.reservationDate, sessionTokenHash ?? null, sessionTokenHash ?? null]),
       pool.query<BlockRow[]>(`
         SELECT
           restaurant_table_id AS tableId,

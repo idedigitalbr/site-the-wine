@@ -12,12 +12,13 @@ import { MysqlAvailabilityRepository } from '@/modules/reservations/infrastructu
 
 const repository = new MysqlAvailabilityRepository();
 
-export function loadAvailability(query: AvailabilityQuery): Promise<AvailabilityResult> {
-  return getAvailability(query, { availability: repository });
+export function loadAvailability(query: AvailabilityQuery, sessionTokenHash?: string | null): Promise<AvailabilityResult> {
+  return getAvailability(query, { availability: repository, sessionTokenHash });
 }
 
 export function loadAvailabilitySlots(
   query: AvailabilitySearchQuery,
+  sessionTokenHash?: string | null,
 ): Promise<AvailabilitySlotsResult> {
-  return getAvailabilitySlots(query, { availability: repository });
+  return getAvailabilitySlots(query, { availability: repository, sessionTokenHash });
 }

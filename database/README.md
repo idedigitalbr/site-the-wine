@@ -41,6 +41,12 @@ isolada para clientes, salão, mesas, turnos, experiências, reservas, holds e
 lista de espera. A tabela `appointments` permanece legada e não é removida nem
 convertida nesta fase.
 
+`migrations/003_add_reservation_hold_window.sql` adiciona a janela da reserva
+às retenções temporárias. O hold público dura 8 minutos, é associado a um
+cookie de sessão HttpOnly e precisa ser revalidado em transação antes da
+confirmação. A migration é idempotente também em versões do MySQL do Laragon
+que não aceitam `ADD COLUMN IF NOT EXISTS`.
+
 ## Endpoint de disponibilidade
 
 O Next expõe `GET /api/reservations/availability` para consultas informativas.
@@ -48,8 +54,15 @@ Use `date`, `guests` e, opcionalmente, `duration` em minutos (padrão 120). Com
 `time`, a resposta informa as combinações de mesas disponíveis para aquele
 intervalo; sem `time`, retorna os slots de 30 minutos derivados de
 `business_hours` e `service_shifts`. O cálculo considera capacidade, duração,
-reservas ativas, bloqueios e combinações cadastradas. A confirmação futura
-deverá revalidar o inventário em transação.
+reservas ativas, bloqueios e combinações cadastradas. A confirmação revalida o
+inventário em transação antes de gravar a reserva.
+
+O fluxo público cria o hold com `POST /api/reservations/hold` e confirma a
+reserva com `POST /api/reservations`. A confirmação sem hold ativo retorna
+`409 hold_required`. Para exercitar a proteção contra dupla reserva usando o
+MySQL local e o Next em execução na porta 3000, use `npm run test:reservation-db`
+dentro de `next-app`; o comando cria e remove um fixture isolado no database
+configurado.
 
 ## Operação local do painel
 
