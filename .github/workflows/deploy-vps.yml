@@ -33,14 +33,19 @@ jobs:
           
           KNOWN_HOSTS_FILE="$RUNNER_TEMP/thewine_known_hosts"
           MATCHED_HOSTS_FILE="$RUNNER_TEMP/thewine_matched_known_hosts"
+          CANDIDATE_LINE_FILE="$RUNNER_TEMP/thewine_candidate_line"
           : > "$MATCHED_HOSTS_FILE"
           for KEY_TYPE in rsa ecdsa ed25519; do
             CANDIDATE_FILE="$RUNNER_TEMP/thewine_${KEY_TYPE}_known_hosts"
             ssh-keyscan -p "$VPS_PORT" -t "$KEY_TYPE" "$VPS_HOST" > "$CANDIDATE_FILE" 2>/dev/null || true
-            if [ -s "$CANDIDATE_FILE" ] \
-              && ssh-keygen -lf "$CANDIDATE_FILE" -E sha256 | awk '{print $2}' | grep -Fxq "$VPS_SSH_FINGERPRINT"; then
-              cat "$CANDIDATE_FILE" >> "$MATCHED_HOSTS_FILE"
-            fi
+            while IFS= read -r HOST_KEY_LINE; do
+              [ -z "$HOST_KEY_LINE" ] && continue
+              printf '%s\n' "$HOST_KEY_LINE" > "$CANDIDATE_LINE_FILE"
+              LINE_FINGERPRINT=$(ssh-keygen -lf "$CANDIDATE_LINE_FILE" -E sha256 | awk 'NR == 1 {print $2}')
+              if [ "$LINE_FINGERPRINT" = "$VPS_SSH_FINGERPRINT" ]; then
+                printf '%s\n' "$HOST_KEY_LINE" >> "$MATCHED_HOSTS_FILE"
+              fi
+            done < "$CANDIDATE_FILE"
           done
           if [ ! -s "$MATCHED_HOSTS_FILE" ]; then
             echo "ABORTAR: fingerprint SSH da VPS não corresponde ao esperado." >&2
