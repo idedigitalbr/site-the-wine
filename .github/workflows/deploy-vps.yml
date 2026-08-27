@@ -40,8 +40,10 @@ jobs:
             ssh-keyscan -p "$VPS_PORT" -t "$KEY_TYPE" "$VPS_HOST" > "$CANDIDATE_FILE" 2>/dev/null || true
             while IFS= read -r HOST_KEY_LINE; do
               [ -z "$HOST_KEY_LINE" ] && continue
-              printf '%s\n' "$HOST_KEY_LINE" > "$CANDIDATE_LINE_FILE"
-              LINE_FINGERPRINT=$(ssh-keygen -lf "$CANDIDATE_LINE_FILE" -E sha256 | awk 'NR == 1 {print $2}')
+              KEY_MATERIAL=$(printf '%s\n' "$HOST_KEY_LINE" | awk '{print $2 " " $3}')
+              [ -z "$KEY_MATERIAL" ] && continue
+              printf '%s\n' "$KEY_MATERIAL" > "$CANDIDATE_LINE_FILE"
+              LINE_FINGERPRINT=$(ssh-keygen -lf "$CANDIDATE_LINE_FILE" -E sha256 | awk 'NR == 1 {print $2}') || LINE_FINGERPRINT=""
               if [ "$LINE_FINGERPRINT" = "$VPS_SSH_FINGERPRINT" ]; then
                 printf '%s\n' "$HOST_KEY_LINE" >> "$MATCHED_HOSTS_FILE"
               fi

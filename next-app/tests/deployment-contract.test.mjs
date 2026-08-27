@@ -37,6 +37,7 @@ test('deploy workflow validates the pinned VPS host fingerprint and migration re
   assert.match(workflow, /ssh-keygen -lf/);
   assert.match(workflow, /MATCHED_HOSTS_FILE/);
   assert.match(workflow, /while IFS= read -r HOST_KEY_LINE/);
+  assert.match(workflow, /awk '\{print \$2 " " \$3\}'/);
   assert.match(workflow, /LINE_FINGERPRINT.*VPS_SSH_FINGERPRINT/s);
   assert.match(workflow, /cp "\$MATCHED_HOSTS_FILE" "\$KNOWN_HOSTS_FILE"/);
   assert.match(workflow, /docker compose config/);
