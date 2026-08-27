@@ -14,13 +14,15 @@ import {
   Mail,
   MapPin,
   Phone,
-  Sparkles,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useForm, useWatch, type FieldErrors, type FieldPath, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
 import { whatsappLinks } from '@/config/social';
+import { formatPhoneInput } from '@/lib/phone';
+import { MockPaymentDemo } from './MockPaymentDemo';
+import { WaitlistForm } from './WaitlistForm';
 import {
   publicReservationSchema,
   specialNeedCodes,
@@ -48,6 +50,7 @@ type AvailabilityResponse = {
 type CreatedReservation = {
   reservationId: number;
   publicCode: string;
+  secureToken: string;
   status: string;
 };
 
@@ -158,6 +161,8 @@ function StepDate({
 }
 
 function StepAvailability({
+  date,
+  guests,
   slots,
   isLoading,
   hasError,
@@ -167,6 +172,8 @@ function StepAvailability({
   errorTime,
   holdExpiresAt,
 }: {
+  date: string;
+  guests: number;
   slots: AvailabilitySlot[];
   isLoading: boolean;
   hasError: boolean;
@@ -189,10 +196,10 @@ function StepAvailability({
     return <LoadingState label="Consultando os horários do salão..." />;
   }
   if (hasError) {
-    return <EmptyAvailability label="Não foi possível consultar a disponibilidade agora." />;
+    return <EmptyAvailability label="Não foi possível consultar a disponibilidade agora." date={date} guests={guests} />;
   }
   if (slots.length === 0) {
-    return <EmptyAvailability label="Ainda não há horários configurados para esta data." />;
+    return <EmptyAvailability label="Ainda não há horários configurados para esta data." date={date} guests={guests} />;
   }
 
   return (
@@ -231,8 +238,7 @@ function StepAvailability({
                   aria-pressed={selected}
                   className={`reservation-choice justify-between ${selected ? 'reservation-choice-selected' : ''}`}
                 >
-                  <span className="flex items-center gap-2">
-                    <Sparkles aria-hidden="true" size={16} />
+                  <span>
                     {option.combinationId ? `Mesas ${option.tableIds.join(' + ')}` : `Mesa ${option.tableIds[0]}`}
                   </span>
                   <span className="text-xs opacity-75">até {option.capacityMax} pessoas</span>
@@ -261,23 +267,26 @@ function LoadingState({ label }: { label: string }) {
   );
 }
 
-function EmptyAvailability({ label }: { label: string }) {
+function EmptyAvailability({ label, date, guests }: { label: string; date: string; guests: number }) {
   return (
     <div className="rounded-[var(--radius-md)] border border-border bg-surface-muted/40 p-6">
       <div className="flex items-start gap-3 text-sm text-muted">
         <CircleAlert aria-hidden="true" className="mt-0.5 shrink-0 text-primary" size={19} />
         <span>{label} <a className="text-primary underline underline-offset-4" href={whatsappLinks.reservation}>Fale com nossa equipe pelo WhatsApp.</a></span>
       </div>
+      <WaitlistForm date={date} guests={guests} />
     </div>
   );
 }
 
 function StepCustomer({
   register,
+  setValue,
   selectedNeeds,
   errors,
 }: {
   register: UseFormRegister<FormValues>;
+  setValue: UseFormSetValue<FormValues>;
   selectedNeeds: string[];
   errors: Record<string, { message?: string } | undefined>;
 }) {
@@ -289,7 +298,20 @@ function StepCustomer({
           <FieldError message={errors.name?.message} />
         </FormField>
         <FormField label="Telefone" icon={Phone}>
-          <input {...register('phone')} className="reservation-input" placeholder="(91) 99999-9999" inputMode="tel" />
+          <input
+            {...register('phone')}
+            onChange={(event) => setValue('phone', formatPhoneInput(event.target.value), {
+              shouldDirty: true,
+              shouldTouch: true,
+              shouldValidate: true,
+            })}
+            className="reservation-input"
+            placeholder="(91) 99999-9999"
+            inputMode="tel"
+            autoComplete="tel"
+            maxLength={18}
+            aria-invalid={Boolean(errors.phone)}
+          />
           <FieldError message={errors.phone?.message} />
         </FormField>
       </div>
@@ -347,7 +369,7 @@ function StepReview({ values, holdExpiresAt }: { values: FormValues; holdExpires
       <SummaryItem label="Mesa" value={values.tableIds.length ? values.tableIds.join(' + ') : 'A definir pela equipe'} />
       <SummaryItem label="Contato" value={`${values.name} · ${values.phone}`} />
       {holdExpiresAt && <p role="status" className="mt-5 rounded-[var(--radius-sm)] border border-primary/30 bg-primary/10 p-3 text-xs leading-relaxed text-primary">Mesa mantida até {formatHoldExpiry(holdExpiresAt)}. A confirmação precisa ser concluída antes desse horário.</p>}
-      <p className="mt-5 text-xs leading-relaxed text-muted">Esta é uma reserva sem pagamento. Nossa equipe poderá entrar em contato para confirmar algum detalhe da experiência.</p>
+      <p className="mt-5 text-xs leading-relaxed text-muted">A reserva será criada sem cobrança real. Na confirmação, você poderá visualizar o checkout demonstrativo e seus estados.</p>
     </div>
   );
 }
@@ -360,11 +382,15 @@ function Confirmation({ reservation }: { reservation: CreatedReservation }) {
       </span>
       <p className="mt-6 text-xs font-semibold uppercase tracking-[0.24em] text-primary">Reserva recebida</p>
       <h2 className="mt-3 font-display text-4xl text-foreground">Sua experiência está a caminho.</h2>
-      <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted">Anotamos sua reserva. Guarde o código abaixo para falar com nossa equipe.</p>
+      <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted">Anotamos sua reserva. Guarde o código abaixo e acesse o link privado para acompanhar os detalhes.</p>
       <div className="mt-7 rounded-[var(--radius-md)] border border-border bg-surface-muted p-4">
         <span className="block text-xs uppercase tracking-[0.2em] text-muted">Código da reserva</span>
         <strong className="mt-2 block text-xl tracking-[0.18em] text-primary">{reservation.publicCode}</strong>
       </div>
+      <Link href={`/minha-reserva/${reservation.secureToken}`} className="mt-5 inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-primary bg-primary/10 px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/20">
+        Acessar minha reserva <ArrowRight aria-hidden="true" size={16} />
+      </Link>
+      <MockPaymentDemo reservationId={reservation.reservationId} publicCode={reservation.publicCode} />
       <Link href="/" className="mt-8 inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover">
         Voltar ao site <ArrowRight aria-hidden="true" size={16} />
       </Link>
@@ -394,6 +420,8 @@ function StepIndicators({ currentStep }: { currentStep: number }) {
 
 type WizardContentProps = {
   step: number;
+  date: string;
+  guests: number;
   register: UseFormRegister<FormValues>;
   errors: FieldErrors<FormValues>;
   slots: AvailabilitySlot[];
@@ -408,6 +436,8 @@ type WizardContentProps = {
 
 function WizardContent({
   step,
+  date,
+  guests,
   register,
   errors,
   slots,
@@ -423,8 +453,8 @@ function WizardContent({
     <AnimatePresence mode="wait">
       <motion.div key={step} initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.18 }}>
         {step === 1 && <StepDate register={register} errorDate={errors.date?.message} errorGuests={errors.guests?.message} />}
-        {step === 2 && <StepAvailability slots={slots} isLoading={isLoading} hasError={hasError} selectedTime={selectedTime} selectedTableIds={selectedTableIds} setValue={setValue} errorTime={errors.time?.message} holdExpiresAt={holdExpiresAt} />}
-        {step === 3 && <StepCustomer register={register} selectedNeeds={specialNeeds} errors={errors as Record<string, { message?: string } | undefined>} />}
+        {step === 2 && <StepAvailability date={date} guests={guests} slots={slots} isLoading={isLoading} hasError={hasError} selectedTime={selectedTime} selectedTableIds={selectedTableIds} setValue={setValue} errorTime={errors.time?.message} holdExpiresAt={holdExpiresAt} />}
+        {step === 3 && <StepCustomer register={register} setValue={setValue} selectedNeeds={specialNeeds} errors={errors as Record<string, { message?: string } | undefined>} />}
       </motion.div>
     </AnimatePresence>
   );
@@ -490,6 +520,8 @@ function ReservationForm({
 
 type ReservationShellProps = {
   step: number;
+  date: string;
+  guests: number;
   register: UseFormRegister<FormValues>;
   errors: FieldErrors<FormValues>;
   slots: AvailabilitySlot[];
@@ -512,6 +544,8 @@ type ReservationShellProps = {
 
 function ReservationShell({
   step,
+  date,
+  guests,
   register,
   errors,
   slots,
@@ -542,6 +576,8 @@ function ReservationShell({
       <div className="mx-auto mt-10 grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
         <ReservationForm
           step={step}
+          date={date}
+          guests={guests}
           register={register}
           errors={errors}
           slots={slots}
@@ -583,9 +619,12 @@ function ReservationHeader() {
           <span className="font-display text-2xl tracking-normal">THE WINE</span>
           <span className="hidden text-[10px] uppercase text-muted sm:inline">Experience</span>
         </Link>
-        <Link href="/" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-muted transition hover:text-primary">
-          <ArrowLeft aria-hidden="true" size={15} /> Voltar ao site
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/minha-reserva" className="hidden text-xs font-semibold uppercase tracking-[0.15em] text-muted transition hover:text-primary sm:inline">Minha reserva</Link>
+          <Link href="/" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-muted transition hover:text-primary">
+            <ArrowLeft aria-hidden="true" size={15} /> Voltar ao site
+          </Link>
+        </div>
       </div>
     </header>
   );
@@ -707,6 +746,8 @@ export function ReservationWizard() {
       <section className="mx-auto max-w-6xl px-5 pb-16 pt-12 sm:px-8 sm:pt-20">
         {confirmation ? <Confirmation reservation={confirmation} /> : <ReservationShell
           step={step}
+          date={date}
+          guests={guests}
           register={register}
           errors={errors}
           slots={availabilityQuery.data?.slots ?? []}

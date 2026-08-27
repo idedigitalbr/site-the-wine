@@ -17,6 +17,8 @@ import { ReservationSection } from '@/components/sections/ReservationSection';
 export default function HomePage() {
   return (
     <>
+      <link rel="stylesheet" href="/style.css" />
+      <link rel="stylesheet" href="/assets/css/menu-flipbook.css" />
       <Header />
       <HeroSection />
       <AboutSection />

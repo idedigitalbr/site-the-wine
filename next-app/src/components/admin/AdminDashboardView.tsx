@@ -1,6 +1,7 @@
 import { ArrowRight, CalendarDays, CheckCircle2, Clock3, Users, Utensils } from 'lucide-react';
 import Link from 'next/link';
-import type { AdminDashboard, AdminReservation } from '@/modules/admin/application/ports';
+import type { AdminAnalytics, AdminDashboard, AdminReservation } from '@/modules/admin/application/ports';
+import { AdminAnalyticsView } from './AdminAnalyticsView';
 import { ReservationStatusBadge } from './AdminReservationStatus';
 
 const metricCards = [
@@ -25,7 +26,7 @@ function DashboardReservationRow({ reservation }: { reservation: AdminReservatio
   );
 }
 
-export function AdminDashboardView({ dashboard }: { dashboard: AdminDashboard }) {
+export function AdminDashboardView({ dashboard, analytics }: { dashboard: AdminDashboard; analytics: AdminAnalytics }) {
   return (
     <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
       <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
@@ -52,6 +53,7 @@ export function AdminDashboardView({ dashboard }: { dashboard: AdminDashboard })
           <div className="overflow-x-auto"><table className="w-full min-w-[620px] text-left"><thead className="bg-surface-muted text-xs uppercase tracking-wide text-muted"><tr><th className="px-4 py-3 font-semibold sm:px-6">Horário</th><th className="px-4 py-3 font-semibold">Cliente</th><th className="px-4 py-3 font-semibold">Grupo</th><th className="px-4 py-3 font-semibold">Status</th></tr></thead><tbody>{dashboard.reservations.map((reservation) => <DashboardReservationRow key={reservation.id} reservation={reservation} />)}</tbody></table></div>
         )}
       </section>
+      <AdminAnalyticsView initialAnalytics={analytics} />
     </div>
   );
 }

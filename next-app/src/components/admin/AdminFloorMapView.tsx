@@ -1,7 +1,9 @@
 'use client';
 
+import { Background, Controls, Handle, MiniMap, Position, ReactFlow, useEdgesState, useNodesState, type Edge, type Node, type NodeProps } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import { Ban, Check, Clock3, Grip, LoaderCircle, MapPin, Plus, Table2 } from 'lucide-react';
-import { useRef, useState, type DragEvent, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type {
   AdminArea,
   AdminBlockedPeriod,
@@ -15,26 +17,57 @@ const stateLabels = { available: 'Livre', reserved: 'Reservada', blocked: 'Bloqu
 const stateClasses = { available: 'border-emerald-400 bg-emerald-50 text-emerald-800', reserved: 'border-amber-400 bg-amber-50 text-amber-800', blocked: 'border-red-400 bg-red-50 text-red-800' } as const;
 
 function displayPosition(table: FloorTable, index: number): { x: number; y: number } {
-  if (table.positionX !== 0 || table.positionY !== 0) return { x: table.positionX, y: table.positionY };
-  return { x: 12 + (index % 4) * 24, y: 18 + Math.floor(index / 4) * 27 };
+  const positionIsInsideCanvas = table.positionX >= 4 && table.positionX <= 96
+    && table.positionY >= 8 && table.positionY <= 92;
+  if (positionIsInsideCanvas) return { x: table.positionX, y: table.positionY };
+  return { x: 12 + (index % 4) * 24, y: 16 + Math.floor(index / 4) * 24 };
 }
 
-function FloorMapCanvas({ tables, onPositionChange }: { tables: FloorTable[]; onPositionChange: (id: number, x: number, y: number) => Promise<void> }) {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const moveTable = async (event: DragEvent<HTMLButtonElement>, tableId: number) => {
-    const map = mapRef.current;
-    if (!map) return;
-    const bounds = map.getBoundingClientRect();
-    const x = Math.min(96, Math.max(4, ((event.clientX - bounds.left) / bounds.width) * 100));
-    const y = Math.min(92, Math.max(8, ((event.clientY - bounds.top) / bounds.height) * 100));
-    await onPositionChange(tableId, Math.round(x * 10) / 10, Math.round(y * 10) / 10);
+type TableNodeData = { table: FloorTable };
+type TableNode = Node<TableNodeData, 'table'>;
+
+function TableNodeCard({ data }: NodeProps<TableNode>) {
+  const { table } = data;
+  return <div role="button" tabIndex={0} aria-label={`${table.name} · ${stateLabels[table.state]}`} title={`${table.name} · ${stateLabels[table.state]}`} className={`relative flex h-16 w-16 flex-col items-center justify-center rounded-[var(--radius-sm)] border-2 p-1.5 text-center shadow-sm transition hover:scale-105 sm:h-20 sm:w-24 sm:p-2 ${stateClasses[table.state]}`}><Handle type="target" position={Position.Top} className="!h-1 !w-1 !border-0 !bg-transparent" /><Grip aria-hidden="true" size={15} className="mb-1 opacity-50" /><span className="text-[11px] font-bold leading-tight sm:text-xs">{table.name}</span><span className="mt-1 text-[9px] leading-tight sm:text-[10px]">{table.capacityMin}–{table.capacityMax} lugares</span><Handle type="source" position={Position.Bottom} className="!h-1 !w-1 !border-0 !bg-transparent" /></div>;
+}
+
+const nodeTypes = { table: TableNodeCard };
+
+function floorNodes(tables: FloorTable[]): TableNode[] {
+  return tables.map((table, index) => {
+    const position = displayPosition(table, index);
+    return { id: String(table.id), type: 'table', position: { x: position.x * 10, y: position.y * 5 }, data: { table }, draggable: true };
+  });
+}
+
+function combinationEdges(combinations: AdminCombination[]): Edge[] {
+  return combinations.flatMap((combination) => combination.tableIds.slice(1).map((tableId, index) => ({
+    id: `combination-${combination.id}-${index}`,
+    source: String(combination.tableIds[index]),
+    target: String(tableId),
+    type: 'smoothstep',
+    style: { stroke: '#b18a49', strokeWidth: 2, strokeDasharray: '5 4' },
+    label: combination.name,
+    labelStyle: { fill: '#80602d', fontSize: 10 },
+    labelBgStyle: { fill: '#f8f6f1', fillOpacity: 0.9 },
+  })));
+}
+
+function FloorMapCanvas({ tables, combinations, onPositionChange }: { tables: FloorTable[]; combinations: AdminCombination[]; onPositionChange: (id: number, x: number, y: number) => Promise<void> }) {
+  const [nodes, setNodes, onNodesChange] = useNodesState<TableNode>(floorNodes(tables));
+  const [edges, , onEdgesChange] = useEdgesState(combinationEdges(combinations));
+
+  useEffect(() => setNodes(floorNodes(tables)), [tables, setNodes]);
+
+  const onNodeDragStop = async (_event: unknown, node: TableNode) => {
+    const x = Math.min(96, Math.max(4, node.position.x / 10));
+    const y = Math.min(92, Math.max(8, node.position.y / 5));
+    await onPositionChange(Number(node.id), Math.round(x * 10) / 10, Math.round(y * 10) / 10);
   };
 
-  return <div ref={mapRef} className="relative min-h-[430px] overflow-hidden rounded-[var(--radius-md)] border border-dashed border-border-strong bg-[linear-gradient(rgba(169,132,69,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(169,132,69,.08)_1px,transparent_1px)] bg-[size:32px_32px]" onDragOver={(event) => event.preventDefault()}>
-    <span className="absolute left-4 top-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Arraste as mesas para posicionar</span>
-    {tables.map((table, index) => { const position = displayPosition(table, index); return <button key={table.id} type="button" draggable onDragEnd={(event) => void moveTable(event, table.id)} title={`${table.name} · ${stateLabels[table.state]}`} className={`absolute flex h-20 w-24 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-[var(--radius-sm)] border-2 p-2 text-center shadow-sm transition hover:scale-105 ${stateClasses[table.state]}`} style={{ left: `${position.x}%`, top: `${position.y}%` }}><Grip aria-hidden="true" size={15} className="mb-1 opacity-50" /><span className="text-xs font-bold">{table.name}</span><span className="mt-1 text-[10px]">{table.capacityMin}–{table.capacityMax} lugares</span></button>; })}
-    {tables.length === 0 && <div className="absolute inset-0 flex items-center justify-center text-sm text-muted">Cadastre mesas para iniciar o mapa.</div>}
-  </div>;
+  if (tables.length === 0) return <div className="flex min-h-[430px] items-center justify-center rounded-[var(--radius-md)] border border-dashed border-border-strong text-sm text-muted">Cadastre mesas para iniciar o mapa.</div>;
+
+  return <div className="h-[430px] overflow-hidden rounded-[var(--radius-md)] border border-dashed border-border-strong bg-[var(--surface-muted)] sm:h-[520px]"><ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onNodeDragStop={onNodeDragStop} nodeOrigin={[0.5, 0.5]} fitView fitViewOptions={{ padding: 0.18 }} minZoom={0.5} maxZoom={2} nodesConnectable={false} proOptions={{ hideAttribution: true }}><Background color="rgba(169,132,69,.16)" gap={32} size={1} /><Controls showInteractive={false} /><MiniMap pannable zoomable nodeColor={(node) => { const table = (node.data as TableNodeData).table; return table.state === 'available' ? '#10b981' : table.state === 'reserved' ? '#f59e0b' : '#ef4444'; }} /></ReactFlow></div>;
 }
 
 function StateLegend() {
@@ -99,7 +132,7 @@ export function AdminFloorMapView({ initialMap, areas }: { initialMap: AdminFloo
 
   return <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10 lg:py-10"><header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Floor manager</p><h1 className="mt-2 font-display text-4xl text-foreground">Mapa do salão</h1><p className="mt-2 text-sm text-muted">Posicione as mesas e visualize a ocupação operacional.</p></div><div className="flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-xs font-semibold text-muted"><MapPin aria-hidden="true" size={16} className="text-primary" /><input type="date" value={date} onChange={(event) => loadMap(event.target.value, time)} className="admin-input w-auto" /></label><label className="flex items-center gap-2 text-xs font-semibold text-muted"><Clock3 aria-hidden="true" size={16} className="text-primary" /><input type="time" value={time} onChange={(event) => loadMap(date, event.target.value)} className="admin-input w-auto" /></label></div></header>
     {isLoading && <p className="mt-5 flex items-center gap-2 text-sm text-muted"><LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> Atualizando mapa...</p>}{message && <p role="status" className="mt-5 flex items-center gap-2 text-sm text-status-success"><Check aria-hidden="true" size={16} /> {message}</p>}{error && <p role="alert" className="mt-5 text-sm text-status-danger">{error}</p>}
-    <section className="mt-8 rounded-[var(--radius-md)] border border-border bg-surface p-4 shadow-sm sm:p-6"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-display text-2xl text-foreground">Planta operacional</h2><p className="mt-1 text-xs text-muted">Estado das mesas em {date.split('-').reverse().join('/')} às {time}.</p></div><StateLegend /></div><FloorMapCanvas tables={map.tables} onPositionChange={savePosition} /></section>
+    <section className="mt-8 rounded-[var(--radius-md)] border border-border bg-surface p-4 shadow-sm sm:p-6"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-display text-2xl text-foreground">Planta operacional</h2><p className="mt-1 text-xs text-muted">Arraste para posicionar · use a roda do mouse para zoom · linhas tracejadas representam combinações.</p><p className="mt-1 text-xs text-muted">Estado das mesas em {date.split('-').reverse().join('/')} às {time}.</p></div><StateLegend /></div><FloorMapCanvas tables={map.tables} combinations={map.combinations} onPositionChange={savePosition} /></section>
     <div className="mt-8 grid gap-5 xl:grid-cols-2"><CombinationForm tables={map.tables} onCreate={create} /><BlockedPeriodForm areas={areas} tables={map.tables} onCreate={create} /><CombinationList combinations={map.combinations} /><BlockedPeriodList blockedPeriods={map.blockedPeriods} /></div>
     <p className="mt-8 flex items-center gap-2 text-xs text-muted"><Table2 aria-hidden="true" size={15} /> A seleção de mesas no público continua opcional; holds e proteção transacional entram na próxima fase.</p>
   </div>;

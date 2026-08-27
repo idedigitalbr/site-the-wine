@@ -10,8 +10,13 @@ function isCalendarDate(value: string): boolean {
   return day <= new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
-const reservationDate = z.string().regex(datePattern).refine(isCalendarDate, 'Informe uma data válida.');
-const reservationTime = z.string().regex(timePattern);
+const reservationDate = z
+  .string({ error: 'Informe a data da reserva.' })
+  .regex(datePattern, 'Informe uma data válida.')
+  .refine(isCalendarDate, 'Informe uma data válida.');
+const reservationTime = z
+  .string({ error: 'Informe um horário válido.' })
+  .regex(timePattern, 'Informe um horário válido.');
 
 export const specialNeedCodes = [
   'accessibility',
@@ -23,30 +28,75 @@ export const specialNeedCodes = [
   'none',
 ] as const;
 
+const guestCount = z
+  .number({ error: 'Informe a quantidade de pessoas.' })
+  .int('Informe uma quantidade inteira de pessoas.')
+  .min(1, 'Selecione pelo menos uma pessoa.')
+  .max(20, 'Para grupos acima de 20 pessoas, fale com nossa equipe.');
+const reservationDuration = z
+  .number({ error: 'Informe a duração da reserva.' })
+  .int('A duração deve ser informada em minutos inteiros.')
+  .min(15, 'A duração mínima da reserva é de 15 minutos.')
+  .max(720, 'A duração máxima da reserva é de 12 horas.');
+const tableIds = z
+  .array(z.number({ error: 'Selecione uma mesa válida.' }).int('Selecione uma mesa válida.').positive('Selecione uma mesa válida.'), {
+    error: 'Selecione uma mesa para continuar.',
+  })
+  .min(1, 'Selecione uma mesa para continuar.')
+  .max(8, 'Selecione no máximo 8 mesas.');
+const reservationName = z
+  .string({ error: 'Informe seu nome completo.' })
+  .trim()
+  .min(2, 'Informe seu nome completo.')
+  .max(160, 'O nome deve ter no máximo 160 caracteres.');
+const reservationPhone = z
+  .string({ error: 'Informe um telefone válido.' })
+  .trim()
+  .refine((value) => {
+    const digits = phoneDigits(value);
+    return digits.length >= 10 && digits.length <= 13;
+  }, 'Informe um telefone válido.');
+const reservationEmail = z
+  .string({ error: 'Informe um e-mail válido.' })
+  .trim()
+  .email('Informe um e-mail válido.')
+  .max(254, 'O e-mail deve ter no máximo 254 caracteres.');
+const reservationNotes = z
+  .string({ error: 'Informe observações válidas.' })
+  .trim()
+  .max(500, 'As observações devem ter no máximo 500 caracteres.');
+
 export const reservationHoldSchema = z.object({
   date: reservationDate,
   time: reservationTime,
-  guests: z.number().int().min(1).max(20),
-  duration: z.number().int().min(15).max(720),
-  tableIds: z.array(z.number().int().positive()).min(1).max(8),
+  guests: guestCount,
+  duration: reservationDuration,
+  tableIds,
+});
+
+export const publicWaitlistSchema = z.object({
+  date: reservationDate,
+  preferredTime: z.string({ error: 'Informe um horário válido.' }).regex(timePattern, 'Informe um horário válido.').nullable(),
+  guests: guestCount,
+  name: reservationName,
+  phone: reservationPhone,
+  email: reservationEmail,
+  notes: reservationNotes,
 });
 
 export const publicReservationSchema = z.object({
   date: reservationDate,
   time: reservationTime,
-  guests: z.number().int().min(1).max(20),
-  duration: z.number().int().min(15).max(720),
-  tableIds: z.array(z.number().int().positive()).min(1).max(8),
-  name: z.string().trim().min(2).max(160),
-  phone: z.string().trim().refine((value) => {
-    const digits = phoneDigits(value);
-    return digits.length >= 10 && digits.length <= 13;
-  }, 'Informe um telefone válido.'),
-  email: z.string().trim().email().max(254),
-  specialNeeds: z.array(z.enum(specialNeedCodes)).max(10),
-  specialNeedsOther: z.string().trim().max(500),
-  notes: z.string().trim().max(500),
-  marketingConsent: z.boolean(),
+  guests: guestCount,
+  duration: reservationDuration,
+  tableIds,
+  name: reservationName,
+  phone: reservationPhone,
+  email: reservationEmail,
+  specialNeeds: z.array(z.enum(specialNeedCodes, { error: 'Selecione uma necessidade válida.' }), { error: 'Selecione as necessidades válidas.' }).max(10, 'Selecione no máximo 10 necessidades.'),
+  specialNeedsOther: z.string({ error: 'Descreva a outra necessidade.' }).trim().max(500, 'A descrição deve ter no máximo 500 caracteres.'),
+  notes: reservationNotes,
+  marketingConsent: z.boolean({ error: 'Informe sua preferência de comunicação.' }),
 }).superRefine((input, context) => {
   if (input.specialNeeds.includes('none') && input.specialNeeds.length > 1) {
     context.addIssue({
@@ -67,3 +117,4 @@ export const publicReservationSchema = z.object({
 
 export type PublicReservationInput = z.infer<typeof publicReservationSchema>;
 export type ReservationHoldInput = z.infer<typeof reservationHoldSchema>;
+export type PublicWaitlistInput = z.infer<typeof publicWaitlistSchema>;

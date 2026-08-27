@@ -18,14 +18,17 @@ const managedTargets = [
   'src/providers',
   'src/lib',
   'src/app/reservas',
+  'src/app/minha-reserva',
   'src/app/admin',
   'src/app/api/reservations',
   'src/app/api/admin',
+  'src/app/api/internal',
   'src/app/api/payments',
   'src/app/api/webhooks',
   'src/components/ui',
   'src/components/admin',
   'src/components/reservation/v2',
+  'src/components/reservation/portal',
 ];
 
 const expectedGate = `node scripts/check-complexity.mjs ${managedTargets.join(' ')}`;

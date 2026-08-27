@@ -30,6 +30,8 @@ storage/framework/views/*
 storage/logs/*.log
 
 # Local tooling and generated artifacts
+next-app/AGENTS.md
+next-app/CLAUDE.md
 .phpunit.cache
 .phpunit.result.cache
 npm-debug.log*

@@ -4,14 +4,76 @@ import { getDatabasePool } from '@/server/db';
 import type {
   ConfirmReservationWithHoldInput,
   CreatedReservationHold,
+  PortalReservation,
+  ReservationNotificationContact,
   ReservationId,
+  ReservationPortalRepository,
   ReservationRepository,
 } from '../application/ports';
 import { reservationHoldDurationMinutes, type ReservationHoldSelection } from '../domain/hold';
 import type { ReservationDraft } from '../domain/reservation';
+import type { ReservationStatus } from '../domain/reservation-status';
 
 type TableRow = RowDataPacket & { id: number };
 type HoldResultRow = RowDataPacket & { holdId: number; expiresAt: number };
+type PortalReservationRow = RowDataPacket & {
+  id: number;
+  publicCode: string;
+  reservationDate: string;
+  startTime: string;
+  endTime: string;
+  guestCount: number;
+  status: string;
+  customerName: string;
+  tableLabel: string | null;
+};
+type NotificationContactRow = RowDataPacket & { email: string | null };
+
+async function insertReservationEvent(
+  connection: PoolConnection,
+  reservationId: number,
+  eventType: string,
+  fromStatus: ReservationStatus | null,
+  toStatus: ReservationStatus | null,
+  actorType: string,
+  eventKey: string,
+): Promise<void> {
+  await connection.execute(
+    `INSERT INTO reservation_events
+      (reservation_id, event_type, from_status, to_status, actor_type, event_key)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [reservationId, eventType, fromStatus, toStatus, actorType, eventKey],
+  );
+}
+
+function mapPortalReservation(row: PortalReservationRow): PortalReservation {
+  return {
+    id: Number(row.id),
+    publicCode: row.publicCode,
+    reservationDate: row.reservationDate,
+    startTime: row.startTime,
+    endTime: row.endTime,
+    guestCount: Number(row.guestCount),
+    status: row.status as ReservationStatus,
+    customerName: row.customerName,
+    tableLabel: row.tableLabel,
+  };
+}
+
+const portalReservationSelect = `SELECT
+  r.id,
+  r.public_code AS publicCode,
+  DATE_FORMAT(r.reservation_date, '%Y-%m-%d') AS reservationDate,
+  TIME_FORMAT(r.start_time, '%H:%i') AS startTime,
+  TIME_FORMAT(r.end_time, '%H:%i') AS endTime,
+  r.guest_count AS guestCount,
+  r.status,
+  c.name AS customerName,
+  GROUP_CONCAT(DISTINCT CONCAT(t.code, ' · ', t.name) ORDER BY t.id SEPARATOR ', ') AS tableLabel
+FROM reservations r
+INNER JOIN customers c ON c.id = r.customer_id
+LEFT JOIN reservation_tables rt ON rt.reservation_id = r.id
+LEFT JOIN restaurant_tables t ON t.id = rt.restaurant_table_id`;
 
 function placeholders(ids: number[]): string {
   return ids.map(() => '?').join(', ');
@@ -219,7 +281,63 @@ async function readCreatedHold(
   return { holdId: Number(row.holdId), tableIds: ids, expiresAt: Number(row.expiresAt) };
 }
 
-export class MysqlReservationRepository implements ReservationRepository {
+export class MysqlReservationRepository implements ReservationRepository, ReservationPortalRepository {
+  private async findPortalReservationBy(
+    column: 'confirmation_token_hash' | 'public_code',
+    value: string,
+  ): Promise<PortalReservation | null> {
+    const [rows] = await getDatabasePool().execute<PortalReservationRow[]>(
+      `${portalReservationSelect}
+       WHERE r.${column} = ?
+       GROUP BY r.id, c.id
+       LIMIT 1`,
+      [value],
+    );
+    return rows[0] ? mapPortalReservation(rows[0]) : null;
+  }
+
+  async findByConfirmationTokenHash(tokenHash: string): Promise<PortalReservation | null> {
+    return this.findPortalReservationBy('confirmation_token_hash', tokenHash);
+  }
+
+  async findByPublicCode(publicCode: string): Promise<PortalReservation | null> {
+    return this.findPortalReservationBy('public_code', publicCode);
+  }
+
+  async findNotificationContactByConfirmationTokenHash(tokenHash: string): Promise<ReservationNotificationContact | null> {
+    const [rows] = await getDatabasePool().execute<NotificationContactRow[]>(
+      `SELECT c.email
+       FROM reservations r
+       INNER JOIN customers c ON c.id = r.customer_id
+       WHERE r.confirmation_token_hash = ?
+       LIMIT 1`,
+      [tokenHash],
+    );
+    return rows[0] ? { email: rows[0].email } : null;
+  }
+
+  async cancel(id: ReservationId): Promise<void> {
+    await withTransaction(async (connection) => {
+      const [rows] = await connection.execute<RowDataPacket[]>(
+        'SELECT status FROM reservations WHERE id = ? LIMIT 1 FOR UPDATE',
+        [id],
+      );
+      const fromStatus = rows[0]?.status as ReservationStatus | undefined;
+      if (!fromStatus || !['hold', 'payment_pending', 'pending', 'confirmed'].includes(fromStatus)) {
+        throw new Error('Reservation can no longer be cancelled');
+      }
+      const [result] = await connection.execute<ResultSetHeader>(
+        `UPDATE reservations
+         SET status = 'cancelled', cancelled_at = CURRENT_TIMESTAMP
+         WHERE id = ?
+           AND status IN ('hold', 'payment_pending', 'pending', 'confirmed')`,
+        [id],
+      );
+      if (result.affectedRows !== 1) throw new Error('Reservation can no longer be cancelled');
+      await insertReservationEvent(connection, id, 'cancelled', fromStatus, 'cancelled', 'customer', `reservation:${id}:cancelled`);
+    });
+  }
+
   async create(input: ReservationDraft): Promise<number> {
     const [result] = await getDatabasePool().execute<ResultSetHeader>(
       `INSERT INTO reservations
@@ -327,6 +445,7 @@ export class MysqlReservationRepository implements ReservationRepository {
       const reservationId = await insertReservation(connection, input.reservation);
       await insertTableAssignments(connection, reservationId, ids);
       await insertSpecialNeeds(connection, reservationId, input.specialNeeds, input.specialNeedsOther);
+      await insertReservationEvent(connection, reservationId, 'created', null, 'confirmed', 'customer', `reservation:${reservationId}:created`);
       await connection.execute(
         `DELETE FROM reservation_holds
          WHERE session_token_hash = ? AND restaurant_table_id IN (${placeholders(ids)})`,

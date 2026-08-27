@@ -1,9 +1,11 @@
 import type { ReservationDraft } from '../domain/reservation';
+import type { ReservationStatus } from '../domain/reservation-status';
 import type {
   AvailabilityInventory,
   AvailabilitySearchQuery,
 } from '../domain/availability';
 import type { ReservationHoldSelection } from '../domain/hold';
+import type { WaitlistStatus } from '../domain/waitlist';
 
 export type ReservationId = number;
 
@@ -21,6 +23,20 @@ export type CreatedReservationHold = {
   expiresAt: number;
 };
 
+export type CreateWaitlistEntryInput = {
+  customerId: number;
+  reservationDate: string;
+  preferredTime: string | null;
+  guestCount: number;
+  notes: string;
+};
+
+export type CreatedWaitlistEntry = {
+  waitlistId: number;
+  referenceCode: string;
+  status: 'waiting';
+};
+
 export type ConfirmReservationWithHoldInput = {
   reservation: ReservationDraft;
   tableIds: number[];
@@ -35,6 +51,33 @@ export interface ReservationRepository {
   addSpecialNeeds(reservationId: ReservationId, needs: string[], details: string): Promise<void>;
   createHold(input: ReservationHoldSelection): Promise<CreatedReservationHold>;
   confirmWithHold(input: ConfirmReservationWithHoldInput): Promise<ReservationId>;
+}
+
+export type PortalReservation = {
+  id: ReservationId;
+  publicCode: string;
+  reservationDate: string;
+  startTime: string;
+  endTime: string;
+  guestCount: number;
+  status: ReservationStatus;
+  customerName: string;
+  tableLabel: string | null;
+};
+
+export type ReservationNotificationContact = {
+  email: string | null;
+};
+
+export interface ReservationPortalRepository {
+  findByConfirmationTokenHash(tokenHash: string): Promise<PortalReservation | null>;
+  findByPublicCode(publicCode: string): Promise<PortalReservation | null>;
+  findNotificationContactByConfirmationTokenHash(tokenHash: string): Promise<ReservationNotificationContact | null>;
+  cancel(id: ReservationId): Promise<void>;
+}
+
+export interface WaitlistRepository {
+  create(input: CreateWaitlistEntryInput): Promise<number>;
 }
 
 export interface CustomerRepository {

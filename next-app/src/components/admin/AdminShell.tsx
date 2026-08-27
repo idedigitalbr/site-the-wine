@@ -1,9 +1,11 @@
 import {
   CalendarDays,
   ClipboardList,
+  Mail,
   LayoutDashboard,
   Map,
   Settings2,
+  UsersRound,
   Wine,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -13,14 +15,16 @@ import { AdminLogoutButton } from './AdminLogoutButton';
 const navigation = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/reservas', label: 'Reservas', icon: ClipboardList },
+  { href: '/admin/clientes', label: 'Clientes', icon: UsersRound },
   { href: '/admin/salao', label: 'Mapa do salão', icon: Map },
   { href: '/admin/configuracao', label: 'Configuração', icon: Settings2 },
+  { href: '/admin/notificacoes', label: 'Notificações', icon: Mail },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="reservation-admin-theme min-h-screen bg-background font-sans text-foreground lg:flex">
-      <aside className="flex w-full shrink-0 flex-col bg-[var(--sidebar)] text-[var(--sidebar-foreground)] lg:min-h-screen lg:w-64">
+      <aside className="flex w-full shrink-0 flex-col bg-[var(--sidebar)] text-[var(--sidebar-foreground)] lg:sticky lg:top-0 lg:h-screen lg:min-h-screen lg:w-64 lg:min-w-64 lg:max-w-64 lg:flex-none lg:overflow-y-auto">
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-5 lg:block lg:px-6">
           <Link href="/admin" className="flex items-center gap-3 text-[var(--sidebar-accent)]">
             <Wine aria-hidden="true" size={22} strokeWidth={1.6} />

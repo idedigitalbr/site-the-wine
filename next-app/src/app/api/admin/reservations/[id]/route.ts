@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { adminReservationStatusSchema } from '@/modules/admin/schemas/admin-schema';
-import { changeAdminReservationStatus } from '@/server/admin/composition';
+import { adminReservationOperationSchema, adminReservationStatusSchema } from '@/modules/admin/schemas/admin-schema';
+import { changeAdminReservationStatus, operateReservation } from '@/server/admin/composition';
 import { AdminAuthError, requireAdminSession } from '@/server/admin/auth';
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -12,13 +12,18 @@ function parseReservationId(rawId: string): number {
 }
 
 function reservationUpdateError(error: unknown): NextResponse {
-  let message = '';
-  if (error instanceof Error) message = error.message;
-  if (error instanceof AdminAuthError) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  if (message === 'Invalid reservation id') return NextResponse.json({ error: 'invalid_id' }, { status: 400 });
-  if (message === 'Reservation not found') return NextResponse.json({ error: 'not_found' }, { status: 404 });
-  if (message.startsWith('Invalid reservation transition')) return NextResponse.json({ error: 'invalid_transition' }, { status: 409 });
-  if (error instanceof SyntaxError) return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
+  const message = error instanceof Error ? error.message : '';
+  const knownResponses = [
+    { matches: error instanceof AdminAuthError, body: 'unauthorized', status: 401 },
+    { matches: message === 'Invalid reservation id', body: 'invalid_id', status: 400 },
+    { matches: message === 'Reservation not found', body: 'not_found', status: 404 },
+    { matches: message.startsWith('Invalid reservation transition'), body: 'invalid_transition', status: 409 },
+    { matches: message.startsWith('Invalid reservation operation') || message === 'Reservation operation could not be applied', body: 'invalid_operation', status: 409 },
+    { matches: message === 'Reservation state changed', body: 'state_changed', status: 409 },
+    { matches: error instanceof SyntaxError, body: 'invalid_json', status: 400 },
+  ];
+  const response = knownResponses.find((item) => item.matches);
+  if (response) return NextResponse.json({ error: response.body }, { status: response.status });
   console.error('Admin reservation update failed', error);
   return NextResponse.json({ error: 'admin_unavailable' }, { status: 503 });
 }
@@ -28,9 +33,15 @@ export async function PATCH(request: Request, context: RouteContext) {
     await requireAdminSession();
     const { id: rawId } = await context.params;
     const id = parseReservationId(rawId);
-    const parsed = adminReservationStatusSchema.safeParse(await request.json());
-    if (!parsed.success) return NextResponse.json({ error: 'invalid_status' }, { status: 400 });
-    await changeAdminReservationStatus(id, parsed.data.status);
+    const payload = await request.json();
+    const operation = adminReservationOperationSchema.safeParse(payload);
+    if (operation.success) {
+      await operateReservation(id, operation.data.operation);
+      return NextResponse.json({ ok: true });
+    }
+    const status = adminReservationStatusSchema.safeParse(payload);
+    if (!status.success) return NextResponse.json({ error: 'invalid_status' }, { status: 400 });
+    await changeAdminReservationStatus(id, status.data.status);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return reservationUpdateError(error);

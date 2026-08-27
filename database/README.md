@@ -12,11 +12,28 @@ baseado em `.env.example` e execute:
 
 ```bash
 npm run db:migrate:local
+npm run db:seed:restaurant:local
 ```
 
 O executor cria o database configurado caso ele não exista e registra as
 migrations aplicadas em `schema_migrations`. Ele nunca remove tabelas e não
 altera outros databases do servidor local.
+
+O seed cadastra dados demonstrativos idempotentes para o salão local: áreas,
+tipos e mesas, combinações, turnos de almoço/jantar e horários de
+funcionamento. Ele também cria uma massa completa marcada como `DEMO`: 10
+clientes, 12 reservas cobrindo todos os estados do fluxo, 5 entradas de lista
+de espera, 3 bloqueios, 2 holds, 4 appointments legados, 7 pagamentos, 2
+reembolsos, 5 eventos de webhook e 5 notificações em estados variados. As
+reservas demonstrativas usam códigos `DEMO-*` e podem ser usadas para testar
+timeline, check-in, acomodação, conclusão, no-show, cancelamento, atribuição
+de mesa, alteração de horário e analytics. O comando imprime alguns tokens de
+portal para os testes de acesso à reserva.
+
+O seed pode receber `SEED_DATE=YYYY-MM-DD` para concentrar os cenários em uma
+data específica. Ele só executa quando `DATABASE_HOST` é `127.0.0.1` ou
+`localhost` e `DATABASE_NAME` é exatamente `thewine`; não remove nem altera
+outros databases do Laragon.
 
 ## Configuração
 

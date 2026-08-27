@@ -30,7 +30,9 @@ export const rules = {
       'src/components/ui',
       'src/components/admin',
       'src/components/reservation/v2',
+      'src/components/reservation/portal',
       'src/app/reservas',
+      'src/app/minha-reserva',
       'src/app/admin',
     ],
     bannedPrefixes: ['mysql2', '@/server/db'],
@@ -40,6 +42,7 @@ export const rules = {
     targets: [
       'src/app/api/reservations',
       'src/app/api/admin',
+      'src/app/api/internal',
       'src/app/api/payments',
       'src/app/api/webhooks',
     ],

@@ -11,5 +11,6 @@ export async function updateAdminReservationStatus(
   const currentStatus = await dependencies.admin.getReservationStatus(reservationId);
   if (!currentStatus) throw new Error('Reservation not found');
   assertTransition(currentStatus, status);
-  await dependencies.admin.updateReservationStatus(reservationId, status);
+  if (currentStatus === status) return;
+  await dependencies.admin.updateReservationStatus(reservationId, currentStatus, status);
 }

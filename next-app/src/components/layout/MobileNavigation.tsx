@@ -14,9 +14,7 @@ export function MobileNavigation() {
           <a href={item.href} className="mobile-nav-link" key={item.href}>{item.label}</a>
         ))}
         <a
-          href={whatsappLinks.reservation}
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/reservas"
           className="mobile-nav-link"
           style={{ color: 'var(--wine-gold)', marginTop: '1rem', textAlign: 'left' }}
         >

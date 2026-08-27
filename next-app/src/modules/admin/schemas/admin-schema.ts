@@ -1,5 +1,7 @@
 import { z } from 'zod';
+import { reservationOperations } from '@/modules/reservations/domain/reservation-operation';
 import { reservationStatuses, type ReservationStatus } from '@/modules/reservations/domain/reservation-status';
+import { waitlistStatuses, type WaitlistStatus } from '@/modules/reservations/domain/waitlist';
 
 const timePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -19,6 +21,21 @@ function isCalendarDate(value: string): boolean {
 }
 
 export const adminDateSchema = z.string().regex(datePattern).refine(isCalendarDate, 'Informe uma data válida.');
+
+function isAnalyticsRangeValid(from: string, to: string): boolean {
+  const start = Date.parse(`${from}T00:00:00Z`);
+  const end = Date.parse(`${to}T00:00:00Z`);
+  return end >= start && end - start <= 31 * 24 * 60 * 60 * 1000;
+}
+
+export const adminAnalyticsQuerySchema = z.object({
+  from: adminDateSchema,
+  to: adminDateSchema,
+}).refine(({ from, to }) => isAnalyticsRangeValid(from, to), 'O período deve ser válido e ter no máximo 31 dias.');
+
+export const adminCustomerQuerySchema = z.object({
+  search: z.string().trim().max(80).optional(),
+});
 
 const capacityFields = {
   capacityMin: z.number().int().min(1).max(20),
@@ -87,6 +104,83 @@ export const adminConfigurationCommandSchema = z.discriminatedUnion('resource', 
 
 export const adminReservationStatusSchema = z.object({
   status: z.enum(reservationStatuses),
+});
+
+export const adminReservationOperationSchema = z.object({
+  operation: z.enum(reservationOperations),
+});
+
+export const adminReservationTablesSchema = z.object({
+  tableIds: z.array(z.number().int().positive()).max(8),
+}).superRefine((input, context) => {
+  if (new Set(input.tableIds).size !== input.tableIds.length) {
+    context.addIssue({ code: 'custom', path: ['tableIds'], message: 'Uma mesa não pode aparecer duas vezes.' });
+  }
+});
+
+const configurationUpdateId = z.number().int().positive();
+
+export const adminConfigurationUpdateSchema = z.discriminatedUnion('resource', [
+  areaCommand.extend({ id: configurationUpdateId }),
+  tableTypeCommand.extend({ id: configurationUpdateId }),
+  tableCommand.extend({ id: configurationUpdateId }),
+  shiftCommand.extend({ id: configurationUpdateId }),
+  businessHourCommand.extend({ id: configurationUpdateId }),
+]).superRefine((input, context) => {
+  if ('capacityMin' in input && input.capacityMin > input.capacityMax) {
+    context.addIssue({ code: 'custom', path: ['capacityMax'], message: 'A capacidade máxima deve ser maior ou igual à mínima.' });
+  }
+
+  if ('startsAt' in input && input.startsAt >= input.endsAt) {
+    context.addIssue({ code: 'custom', path: ['endsAt'], message: 'O fim do turno deve ser posterior ao início.' });
+  }
+
+  if ('opensAt' in input && input.opensAt >= input.closesAt) {
+    context.addIssue({ code: 'custom', path: ['closesAt'], message: 'O fechamento deve ser posterior à abertura.' });
+  }
+});
+
+export const adminConfigurationDeleteSchema = z.object({
+  resource: z.enum(['area', 'table_type', 'table', 'shift', 'business_hour']),
+  id: configurationUpdateId,
+});
+
+export const adminReservationScheduleSchema = z.object({
+  reservationDate: adminDateSchema,
+  startTime: z.string().regex(timePattern),
+  endTime: z.string().regex(timePattern),
+}).superRefine((input, context) => {
+  if (input.startTime >= input.endTime) {
+    context.addIssue({ code: 'custom', path: ['endTime'], message: 'O fim deve ser posterior ao início.' });
+  }
+});
+
+export const adminWalkInSchema = z.object({
+  date: adminDateSchema,
+  time: z.string().regex(timePattern),
+  duration: z.number().int().min(15).max(720),
+  guests: z.number().int().min(1).max(20),
+  name: z.string().trim().min(2).max(160),
+  phone: z.string().trim().transform((value) => value.replace(/\D/g, '')).refine((value) => (
+    value.length >= 10 && value.length <= 13
+  ), 'Informe um telefone válido.'),
+  email: z.string().trim().max(254).refine((value) => (
+    value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+  ), 'Informe um e-mail válido.'),
+  notes: z.string().trim().max(500),
+  tableIds: z.array(z.number().int().positive()).max(8),
+}).superRefine((input, context) => {
+  const [hours, minutes] = input.time.split(':').map(Number);
+  if ((hours * 60) + minutes + input.duration >= 24 * 60) {
+    context.addIssue({ code: 'custom', path: ['duration'], message: 'A duração deve terminar até 00:00.' });
+  }
+  if (new Set(input.tableIds).size !== input.tableIds.length) {
+    context.addIssue({ code: 'custom', path: ['tableIds'], message: 'Uma mesa não pode aparecer duas vezes.' });
+  }
+});
+
+export const adminWaitlistStatusSchema = z.object({
+  status: z.enum(waitlistStatuses),
 });
 
 export const floorMapQuerySchema = z.object({
@@ -159,3 +253,4 @@ export const tablePositionSchema = z.object({
 export type AdminConfigurationCommand = z.infer<typeof adminConfigurationCommandSchema>;
 export type AdminReservationStatusInput = z.infer<typeof adminReservationStatusSchema>;
 export type AdminReservationStatus = ReservationStatus;
+export type AdminWaitlistStatus = WaitlistStatus;

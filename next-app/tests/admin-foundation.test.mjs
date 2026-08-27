@@ -36,3 +36,24 @@ test('admin configuration validates capacities and service windows on the server
   assert.match(schema, /validateBlockedPeriodScope/);
   assert.match(schema, /z\.discriminatedUnion\('resource'/);
 });
+
+test('admin configuration exposes safe edit and removal operations', () => {
+  const route = source('../src/app/api/admin/configuration/route.ts');
+  const view = source('../src/components/admin/AdminConfigurationView.tsx');
+  assert.match(route, /export async function PATCH/);
+  assert.match(route, /export async function DELETE/);
+  assert.match(route, /adminConfigurationUpdateSchema/);
+  assert.match(route, /adminConfigurationDeleteSchema/);
+  assert.match(view, /Editar/);
+  assert.match(view, /Remover/);
+  assert.match(view, /O histórico será preservado/);
+});
+
+test('walk-in form sanitizes telephone input and identifies invalid fields', () => {
+  const walkIn = source('../src/components/admin/AdminWalkInForm.tsx');
+  const schema = source('../src/modules/admin/schemas/admin-schema.ts');
+  assert.match(walkIn, /formatPhoneInput/);
+  assert.match(walkIn, /aria-invalid/);
+  assert.match(walkIn, /Confira os campos destacados/);
+  assert.match(schema, /value\.replace\(\/\\D\/g, ''\)/);
+});
