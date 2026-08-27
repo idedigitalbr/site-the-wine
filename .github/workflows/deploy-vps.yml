@@ -32,12 +32,21 @@ jobs:
           chmod 700 ~/.ssh
           
           KNOWN_HOSTS_FILE="$RUNNER_TEMP/thewine_known_hosts"
-          ssh-keyscan -p "$VPS_PORT" -t rsa,ecdsa,ed25519 "$VPS_HOST" > "$KNOWN_HOSTS_FILE"
-          ACTUAL_FINGERPRINTS=$(ssh-keygen -lf "$KNOWN_HOSTS_FILE" -E sha256 | awk '{print $2}')
-          if ! printf '%s\n' "$ACTUAL_FINGERPRINTS" | grep -Fxq "$VPS_SSH_FINGERPRINT"; then
+          MATCHED_HOSTS_FILE="$RUNNER_TEMP/thewine_matched_known_hosts"
+          : > "$MATCHED_HOSTS_FILE"
+          for KEY_TYPE in rsa ecdsa ed25519; do
+            CANDIDATE_FILE="$RUNNER_TEMP/thewine_${KEY_TYPE}_known_hosts"
+            ssh-keyscan -p "$VPS_PORT" -t "$KEY_TYPE" "$VPS_HOST" > "$CANDIDATE_FILE" 2>/dev/null || true
+            if [ -s "$CANDIDATE_FILE" ] \
+              && ssh-keygen -lf "$CANDIDATE_FILE" -E sha256 | awk '{print $2}' | grep -Fxq "$VPS_SSH_FINGERPRINT"; then
+              cat "$CANDIDATE_FILE" >> "$MATCHED_HOSTS_FILE"
+            fi
+          done
+          if [ ! -s "$MATCHED_HOSTS_FILE" ]; then
             echo "ABORTAR: fingerprint SSH da VPS não corresponde ao esperado." >&2
             exit 98
           fi
+          cp "$MATCHED_HOSTS_FILE" "$KNOWN_HOSTS_FILE"
           cp "$KNOWN_HOSTS_FILE" ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
           
