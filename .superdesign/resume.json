@@ -20,7 +20,7 @@
         "next-app/src/styles/reservation-tokens.css": "6637a005861ea6bfec83efeb8c1d97436d5fd49822ec7206f00668dbc3bc7063",
         "next-app/src/app/globals.css": "1a5f3da97af988c04cc9b870703b263a1a5c54bb17a208b9f5f52d0a474636de",
         "next-app/src/components/admin/AdminShell.tsx": "711c2bc31e815e4c9c3a86c0ac8a68650f04765fa3bb434115334c925d52e1e7",
-        "next-app/src/components/admin/AdminSystemView.tsx": "42c8d14e2d78ea398eae0b77b00f218af8f5e12042320b1f2ed0d379d77edff5",
+        "next-app/src/components/admin/AdminSystemView.tsx": "d4572e76fae8177e13a069115723da7e5c06a53465d77da3c0d5ca18e38dcd76",
         "next-app/src/components/admin/AdminConfigurationView.tsx": "1538863c8aff2298edb08d8bbd53ab7e3d4d05c54a3e9fe961e400f225fa17b9",
         "next-app/src/components/admin/AdminNotificationsView.tsx": "07efcc04c1efb79abeab42fe88cf6c407af88d740385b28720b102462587bfcd"
       },

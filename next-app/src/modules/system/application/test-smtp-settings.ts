@@ -1,6 +1,6 @@
 import type { SystemRepository } from './ports';
 
-export async function testSmtpSettings(dependencies: { system: SystemRepository }): Promise<{ status: 'success'; message: string }> {
+export async function testSmtpSettings(recipientEmail: string, dependencies: { system: SystemRepository }): Promise<{ status: 'success'; message: string; recipientEmail: string }> {
   const system = await dependencies.system.getSystem();
   if (!system.smtp.host || !system.smtp.fromEmail) {
     throw new Error('SMTP settings incomplete');
@@ -9,6 +9,7 @@ export async function testSmtpSettings(dependencies: { system: SystemRepository 
   await dependencies.system.recordSmtpTest('success');
   return {
     status: 'success',
-    message: 'Teste demonstrativo concluído. Nenhuma conexão SMTP real foi aberta.',
+    message: `Teste demonstrativo direcionado para ${recipientEmail}. Nenhuma conexão SMTP real foi aberta.`,
+    recipientEmail,
   };
 }

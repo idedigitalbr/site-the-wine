@@ -74,7 +74,7 @@ function SmtpPasswordField({ smtp }: { smtp: SystemSmtpSettings }) {
 function SmtpActionBar({ smtp, isTesting, isSaving, onTest }: { smtp: SystemSmtpSettings; isTesting: boolean; isSaving: boolean; onTest: () => void }) {
   const testIcon = isTesting ? <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> : <Send aria-hidden="true" size={16} />;
   const saveIcon = isSaving ? <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> : <Save aria-hidden="true" size={16} />;
-  return <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between"><p className="flex items-center gap-2 text-xs text-muted"><ShieldCheck aria-hidden="true" className="text-primary" size={16} />{statusLabel(smtp.lastTestStatus)}{smtp.lastTestedAt ? ` · ${smtp.lastTestedAt}` : ''}</p><div className="flex flex-wrap gap-2"><button type="button" onClick={onTest} disabled={isTesting || isSaving} className="admin-secondary-button">{testIcon} Testar conexão (mock)</button><button type="submit" disabled={isSaving || isTesting} className="admin-primary-button">{saveIcon} Salvar configuração</button></div></div>;
+  return <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between"><p className="flex items-center gap-2 text-xs text-muted"><ShieldCheck aria-hidden="true" className="text-primary" size={16} />{statusLabel(smtp.lastTestStatus)}{smtp.lastTestedAt ? ` · ${smtp.lastTestedAt}` : ''}</p><div className="flex flex-wrap gap-2"><button type="button" onClick={onTest} disabled={isTesting || isSaving} className="admin-secondary-button">{testIcon} Enviar e-mail de teste (mock)</button><button type="submit" disabled={isSaving || isTesting} className="admin-primary-button">{saveIcon} Salvar configuração</button></div></div>;
 }
 
 function SmtpFeedback({ message, error }: { message: string; error: string }) {
@@ -84,6 +84,7 @@ function SmtpFeedback({ message, error }: { message: string; error: string }) {
 function SmtpPanel({ smtp, onSaved }: { smtp: SystemSmtpSettings; onSaved: () => Promise<void> }) {
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -118,12 +119,16 @@ function SmtpPanel({ smtp, onSaved }: { smtp: SystemSmtpSettings; onSaved: () =>
   };
 
   const test = async () => {
+    if (!testEmail.trim()) {
+      setError('Informe um e-mail de destino para simular o disparo.');
+      return;
+    }
     setIsTesting(true);
     setMessage('');
     setError('');
-    const response = await fetch('/api/admin/system/smtp/test', { method: 'POST' });
+    const response = await fetch('/api/admin/system/smtp/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recipientEmail: testEmail }) });
     if (!response.ok) {
-      setError(response.status === 400 ? 'Preencha servidor e e-mail remetente antes de testar.' : 'Não foi possível executar o teste demonstrativo.');
+      setError(response.status === 400 ? 'Informe um e-mail válido e confira servidor e remetente antes de testar.' : 'Não foi possível executar o teste demonstrativo.');
       setIsTesting(false);
       return;
     }
@@ -158,6 +163,7 @@ function SmtpPanel({ smtp, onSaved }: { smtp: SystemSmtpSettings; onSaved: () =>
           <label><span className="admin-label">E-mail remetente</span><input name="fromEmail" type="email" defaultValue={smtp.fromEmail} className="admin-input" placeholder="reservas@thewine.com.br" /></label>
           <label><span className="admin-label">Nome remetente</span><input name="fromName" defaultValue={smtp.fromName} className="admin-input" placeholder="The Wine Experience" /></label>
         </div>
+        <div className="rounded-[var(--radius-sm)] border border-primary/25 bg-primary/5 p-4"><div className="flex items-start gap-3"><span className="rounded-full bg-primary/10 p-2 text-primary"><Send aria-hidden="true" size={17} /></span><div><strong className="block text-sm text-foreground">Destinatário do teste</strong><p className="mt-1 text-xs leading-relaxed text-muted">Informe um endereço para simular o disparo de uma mensagem. Este valor não é salvo e nenhum e-mail real será enviado.</p></div></div><label className="mt-4 block max-w-xl"><span className="admin-label">E-mail para teste</span><input name="testRecipientEmail" type="email" value={testEmail} onChange={(event) => setTestEmail(event.target.value)} className="admin-input" placeholder="seu-email@exemplo.com" autoComplete="email" /></label></div>
         <SmtpActionBar smtp={smtp} isTesting={isTesting} isSaving={isSaving} onTest={() => void test()} />
         <SmtpFeedback message={message} error={error} />
       </form>

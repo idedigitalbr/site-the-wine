@@ -15,8 +15,8 @@ export function saveSystemSmtpSettings(input: SaveSmtpSettingsInput) {
   return saveSmtpSettings(input, { system: systemRepository });
 }
 
-export function testSystemSmtpSettings() {
-  return testSmtpSettings({ system: systemRepository });
+export function testSystemSmtpSettings(recipientEmail: string) {
+  return testSmtpSettings(recipientEmail, { system: systemRepository });
 }
 
 export function updateSystemEmailTemplate(input: UpdateEmailTemplateInput) {

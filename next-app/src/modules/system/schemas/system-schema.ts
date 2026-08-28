@@ -21,6 +21,10 @@ export const saveSmtpSettingsSchema = z.object({
   }
 });
 
+export const testSmtpSettingsSchema = z.object({
+  recipientEmail: email,
+});
+
 export const updateEmailTemplateSchema = z.object({
   subject: z.string().trim().min(2).max(255),
   body: z.string().trim().min(10).max(20000),

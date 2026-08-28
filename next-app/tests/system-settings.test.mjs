@@ -17,13 +17,17 @@ test('admin system module exposes protected SMTP and template routes', () => {
 test('system configuration keeps SMTP passwords out of the response', () => {
   const migration = source('../database/migrations/008_create_system_settings_and_email_templates.sql');
   const repository = source('src/modules/system/infrastructure/mysql-system-repository.ts');
+  const testRoute = source('src/app/api/admin/system/smtp/test/route.ts');
   const view = source('src/components/admin/AdminSystemView.tsx');
 
   assert.match(migration, /password_ciphertext TEXT/);
   assert.match(repository, /password_ciphertext IS NOT NULL AS passwordConfigured/);
   assert.doesNotMatch(repository, /password_ciphertext AS password/);
   assert.match(view, /senha atual está protegida/i);
-  assert.match(view, /Testar conexão \(mock\)/);
+  assert.match(testRoute, /testSmtpSettingsSchema/);
+  assert.match(view, /Enviar e-mail de teste \(mock\)/);
+  assert.match(view, /E-mail para teste/);
+  assert.match(view, /recipientEmail/);
 });
 
 test('system module ships editable Portuguese templates with safe reset support', () => {
