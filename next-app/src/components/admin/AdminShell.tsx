@@ -4,10 +4,11 @@ import {
   Mail,
   LayoutDashboard,
   Map,
+  Server,
   Settings2,
   UsersRound,
-  Wine,
 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { AdminLogoutButton } from './AdminLogoutButton';
@@ -19,6 +20,7 @@ const navigation = [
   { href: '/admin/salao', label: 'Mapa do salão', icon: Map },
   { href: '/admin/configuracao', label: 'Configuração', icon: Settings2 },
   { href: '/admin/notificacoes', label: 'Notificações', icon: Mail },
+  { href: '/admin/sistema', label: 'Sistema', icon: Server },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
@@ -27,8 +29,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <aside className="flex w-full shrink-0 flex-col bg-[var(--sidebar)] text-[var(--sidebar-foreground)] lg:sticky lg:top-0 lg:h-screen lg:min-h-screen lg:w-64 lg:min-w-64 lg:max-w-64 lg:flex-none lg:overflow-y-auto">
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-5 lg:block lg:px-6">
           <Link href="/admin" className="flex items-center gap-3 text-[var(--sidebar-accent)]">
-            <Wine aria-hidden="true" size={22} strokeWidth={1.6} />
-            <span className="font-display text-2xl">The Wine</span>
+            <Image
+              src="/assets/Logos/logo_the_wine_branco_dourado_transparente.webp"
+              alt="The Wine"
+              width={190}
+              height={62}
+              priority
+              className="h-auto w-[9.75rem] object-contain lg:w-[10.75rem]"
+            />
           </Link>
           <span className="hidden text-[10px] uppercase tracking-[0.22em] text-[var(--sidebar-muted)] lg:mt-2 lg:block">Operations</span>
         </div>

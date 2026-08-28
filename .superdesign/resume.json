@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "targets": {
+    "/admin/sistema": {
+      "targetKind": "new-ui",
+      "projectId": "79d8b9c6-8bd3-4129-9235-b1aa59ab7e51",
+      "activeDraftId": "886bb654-c57b-414e-b878-370cd54f84d6",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "next-app/src/styles/reservation-tokens.css",
+        "next-app/src/app/globals.css",
+        "next-app/src/components/admin/AdminShell.tsx",
+        "next-app/src/components/admin/AdminSystemView.tsx",
+        "next-app/src/components/admin/AdminConfigurationView.tsx",
+        "next-app/src/components/admin/AdminNotificationsView.tsx"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "02df36d91169041819c2ea0c2ffed7b68ee89b4c004c22dfc821c8e05977830c",
+        "next-app/src/styles/reservation-tokens.css": "6637a005861ea6bfec83efeb8c1d97436d5fd49822ec7206f00668dbc3bc7063",
+        "next-app/src/app/globals.css": "1a5f3da97af988c04cc9b870703b263a1a5c54bb17a208b9f5f52d0a474636de",
+        "next-app/src/components/admin/AdminShell.tsx": "711c2bc31e815e4c9c3a86c0ac8a68650f04765fa3bb434115334c925d52e1e7",
+        "next-app/src/components/admin/AdminSystemView.tsx": "42c8d14e2d78ea398eae0b77b00f218af8f5e12042320b1f2ed0d379d77edff5",
+        "next-app/src/components/admin/AdminConfigurationView.tsx": "1538863c8aff2298edb08d8bbd53ab7e3d4d05c54a3e9fe961e400f225fa17b9",
+        "next-app/src/components/admin/AdminNotificationsView.tsx": "07efcc04c1efb79abeab42fe88cf6c407af88d740385b28720b102462587bfcd"
+      },
+      "referenceIds": [
+        "next-app-public-assets-Logos-logo_the_wine_branco_dourado_transparente.webp"
+      ],
+      "brandAssets": {
+        "logo": {
+          "assetKey": "next-app-public-assets-Logos-logo_the_wine_branco_dourado_transparente.webp",
+          "url": "https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/projects/79d8b9c6-8bd3-4129-9235-b1aa59ab7e51/brand-assets/next-app-public-assets-Logos-logo_the_wine_branco_dourado_transparente.webp/logo_the_wine_branco_dourado_transparente.webp",
+          "sourcePath": "next-app/public/assets/Logos/logo_the_wine_branco_dourado_transparente.webp"
+        }
+      },
+      "components": [
+        {
+          "name": "AdminShell",
+          "id": "fc43af94-5622-4ff4-a122-22cb451be324",
+          "sourcePath": "next-app/src/components/admin/AdminShell.tsx",
+          "logoAssetKey": "next-app-public-assets-Logos-logo_the_wine_branco_dourado_transparente.webp"
+        }
+      ],
+      "drafts": {
+        "886bb654-c57b-414e-b878-370cd54f84d6": {
+          "title": "Sistema — SMTP e Templates de e-mail",
+          "visualDirection": "Existing The Wine Operations admin system with official logo, SMTP configuration, and editable customer email templates",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-08-27T12:40:00.000Z"
+    }
+  }
+}
