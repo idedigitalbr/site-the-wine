@@ -28,6 +28,8 @@ test('system configuration keeps SMTP passwords out of the response', () => {
   assert.match(view, /Enviar e-mail de teste \(mock\)/);
   assert.match(view, /E-mail para teste/);
   assert.match(view, /recipientEmail/);
+  assert.match(view, /incomplete_settings/);
+  assert.match(view, /Preencha o servidor SMTP e o e-mail remetente acima/);
 });
 
 test('system module ships editable Portuguese templates with safe reset support', () => {

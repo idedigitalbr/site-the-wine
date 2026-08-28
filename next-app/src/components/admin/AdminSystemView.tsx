@@ -77,6 +77,13 @@ function SmtpActionBar({ smtp, isTesting, isSaving, onTest }: { smtp: SystemSmtp
   return <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between"><p className="flex items-center gap-2 text-xs text-muted"><ShieldCheck aria-hidden="true" className="text-primary" size={16} />{statusLabel(smtp.lastTestStatus)}{smtp.lastTestedAt ? ` · ${smtp.lastTestedAt}` : ''}</p><div className="flex flex-wrap gap-2"><button type="button" onClick={onTest} disabled={isTesting || isSaving} className="admin-secondary-button">{testIcon} Enviar e-mail de teste (mock)</button><button type="submit" disabled={isSaving || isTesting} className="admin-primary-button">{saveIcon} Salvar configuração</button></div></div>;
 }
 
+function testSmtpErrorLabel(status: number, code?: string): string {
+  if (code === 'incomplete_settings') return 'Preencha o servidor SMTP e o e-mail remetente acima para executar o teste.';
+  if (code === 'invalid_test_recipient') return 'Informe um e-mail de teste válido.';
+  if (status === 400) return 'Confira os dados do SMTP antes de testar.';
+  return 'Não foi possível executar o teste demonstrativo.';
+}
+
 function SmtpFeedback({ message, error }: { message: string; error: string }) {
   return <>{message && <p role="status" className="flex items-center gap-2 text-sm text-status-success"><Check aria-hidden="true" size={16} />{message}</p>}{error && <p role="alert" className="text-sm text-status-danger">{error}</p>}</>;
 }
@@ -127,14 +134,14 @@ function SmtpPanel({ smtp, onSaved }: { smtp: SystemSmtpSettings; onSaved: () =>
     setMessage('');
     setError('');
     const response = await fetch('/api/admin/system/smtp/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recipientEmail: testEmail }) });
+    const result = await response.json().catch(() => ({})) as { error?: string; message?: string };
     if (!response.ok) {
-      setError(response.status === 400 ? 'Informe um e-mail válido e confira servidor e remetente antes de testar.' : 'Não foi possível executar o teste demonstrativo.');
+      setError(testSmtpErrorLabel(response.status, result.error));
       setIsTesting(false);
       return;
     }
-    const result = await response.json() as { message: string };
     await onSaved();
-    setMessage(result.message);
+    setMessage(result.message ?? 'Teste demonstrativo registrado.');
     setIsTesting(false);
   };
 
