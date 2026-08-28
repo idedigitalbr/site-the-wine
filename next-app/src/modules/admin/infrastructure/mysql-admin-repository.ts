@@ -18,6 +18,7 @@ import type {
   AdminCustomerReservation,
   AdminDashboard,
   AdminFloorMap,
+  AdminFloorPlanSettings,
   AdminRepository,
   AdminReservation,
   AdminReservationAssignment,
@@ -40,6 +41,7 @@ import type {
   FloorTable,
   FloorTableState,
   UpdateTablePositionInput,
+  UpdateFloorPlanSettingsInput,
 } from '../application/ports';
 
 type ReservationRow = RowDataPacket & {
@@ -214,6 +216,7 @@ type CombinationRow = RowDataPacket & {
   tableLabel: string | null;
   active: number;
 };
+type FloorPlanSettingsRow = RowDataPacket & { backgroundUrl: string | null; backgroundOpacity: number };
 type BlockedPeriodRow = RowDataPacket & {
   id: number;
   areaId: number | null;
@@ -411,6 +414,13 @@ function mapCombination(row: CombinationRow): AdminCombination {
     tableIds: row.tableIds ? row.tableIds.split(',').map(Number) : [],
     tableLabel: row.tableLabel ?? '',
     active: Boolean(row.active),
+  };
+}
+
+function mapFloorPlanSettings(row: FloorPlanSettingsRow | undefined): AdminFloorPlanSettings {
+  return {
+    url: row?.backgroundUrl ?? null,
+    opacity: Math.min(0.8, Math.max(0.1, Number(row?.backgroundOpacity ?? 0.24))),
   };
 }
 
@@ -1302,7 +1312,7 @@ export class MysqlAdminRepository implements AdminRepository {
 
   async getFloorMap(date: string, time: string): Promise<AdminFloorMap> {
     const pool = getDatabasePool();
-    const [tableResult, combinationResult, blockedResult] = await Promise.all([
+    const [tableResult, combinationResult, blockedResult, settingsResult] = await Promise.all([
       pool.execute<FloorTableRow[]>(`
         SELECT
           t.id, t.code, t.name, t.area_id AS areaId, a.name AS areaName,
@@ -1373,6 +1383,12 @@ export class MysqlAdminRepository implements AdminRepository {
           AND bp.ends_at > CONCAT(?, ' 00:00:00')
         ORDER BY bp.starts_at
       `, [date, date]),
+      pool.execute<FloorPlanSettingsRow[]>(`
+        SELECT background_url AS backgroundUrl, background_opacity AS backgroundOpacity
+        FROM floor_plan_settings
+        WHERE id = 1
+        LIMIT 1
+      `),
     ]);
     return {
       date,
@@ -1380,6 +1396,7 @@ export class MysqlAdminRepository implements AdminRepository {
       tables: tableResult[0].map(mapFloorTable),
       combinations: combinationResult[0].map(mapCombination),
       blockedPeriods: blockedResult[0].map(mapBlockedPeriod),
+      background: mapFloorPlanSettings(settingsResult[0][0]),
     };
   }
 
@@ -1418,6 +1435,14 @@ export class MysqlAdminRepository implements AdminRepository {
     }
   }
 
+  async deactivateCombination(id: number): Promise<void> {
+    const [result] = await getDatabasePool().execute<ResultSetHeader>(
+      'UPDATE table_combinations SET active = 0 WHERE id = ? AND active = 1',
+      [id],
+    );
+    if (result.affectedRows !== 1) throw new Error('Combination not found');
+  }
+
   async createBlockedPeriod(input: CreateBlockedPeriodInput): Promise<number> {
     if (input.areaId !== null) {
       const [areas] = await getDatabasePool().execute<RowDataPacket[]>(
@@ -1440,6 +1465,15 @@ export class MysqlAdminRepository implements AdminRepository {
       [input.areaId, input.tableId, input.startsAt.replace('T', ' '), input.endsAt.replace('T', ' '), input.reason],
     );
     return result.insertId;
+  }
+
+  async updateFloorPlanSettings(input: UpdateFloorPlanSettingsInput): Promise<void> {
+    await getDatabasePool().execute(
+      `INSERT INTO floor_plan_settings (id, background_url, background_opacity)
+       VALUES (1, ?, ?)
+       ON DUPLICATE KEY UPDATE background_url = ?, background_opacity = ?`,
+      [input.url, input.opacity, input.url, input.opacity],
+    );
   }
 
   async updateTablePosition(input: UpdateTablePositionInput): Promise<void> {

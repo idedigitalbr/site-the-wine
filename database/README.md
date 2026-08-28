@@ -74,6 +74,11 @@ cookie de sessão HttpOnly e precisa ser revalidado em transação antes da
 confirmação. A migration é idempotente também em versões do MySQL do Laragon
 que não aceitam `ADD COLUMN IF NOT EXISTS`.
 
+`migrations/010_create_floor_plan_settings.sql` cria a configuração singleton
+do fundo visual da planta. A URL da imagem e a opacidade são persistidas no
+MySQL, enquanto combinações desfeitas permanecem no histórico e apenas são
+desativadas para não participar de novas disponibilidades.
+
 ## Endpoint de disponibilidade
 
 O Next expõe `GET /api/reservations/availability` para consultas informativas.

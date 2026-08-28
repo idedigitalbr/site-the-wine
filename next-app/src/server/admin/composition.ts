@@ -12,6 +12,7 @@ import { saveAdminConfiguration } from '@/modules/admin/application/save-configu
 import { removeAdminConfiguration } from '@/modules/admin/application/remove-configuration';
 import { updateAdminConfiguration } from '@/modules/admin/application/update-configuration';
 import { saveAdminFloorMapCommand, type SaveFloorMapCommand } from '@/modules/admin/application/save-floor-map';
+import { removeAdminCombination } from '@/modules/admin/application/remove-combination';
 import { updateAdminReservationStatus } from '@/modules/admin/application/update-reservation-status';
 import { updateAdminReservationSchedule } from '@/modules/admin/application/update-reservation-schedule';
 import { updateAdminWaitlistStatus } from '@/modules/admin/application/update-waitlist-status';
@@ -105,6 +106,10 @@ export function loadFloorMap(date: string, time: string) {
 
 export function saveFloorMapCommand(input: SaveFloorMapCommand) {
   return saveAdminFloorMapCommand(input, { admin: adminRepository });
+}
+
+export function removeFloorMapCombination(id: number) {
+  return removeAdminCombination(id, { admin: adminRepository });
 }
 
 export function saveTablePosition(tableId: number, positionX: number, positionY: number) {

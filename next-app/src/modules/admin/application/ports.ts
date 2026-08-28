@@ -225,6 +225,12 @@ export type AdminFloorMap = {
   tables: FloorTable[];
   combinations: AdminCombination[];
   blockedPeriods: AdminBlockedPeriod[];
+  background: AdminFloorPlanSettings;
+};
+
+export type AdminFloorPlanSettings = {
+  url: string | null;
+  opacity: number;
 };
 
 export type CreateAreaInput = { code: string; name: string };
@@ -259,6 +265,7 @@ export type CreateBlockedPeriodInput = {
   endsAt: string;
   reason: string;
 };
+export type UpdateFloorPlanSettingsInput = AdminFloorPlanSettings;
 export type UpdateTablePositionInput = { tableId: number; positionX: number; positionY: number };
 
 export interface AdminRepository {
@@ -289,6 +296,8 @@ export interface AdminRepository {
   deactivateConfiguration(resource: ConfigurationResource, id: number): Promise<void>;
   getFloorMap(date: string, time: string): Promise<AdminFloorMap>;
   createCombination(input: CreateCombinationInput): Promise<number>;
+  deactivateCombination(id: number): Promise<void>;
   createBlockedPeriod(input: CreateBlockedPeriodInput): Promise<number>;
+  updateFloorPlanSettings(input: UpdateFloorPlanSettingsInput): Promise<void>;
   updateTablePosition(input: UpdateTablePositionInput): Promise<void>;
 }

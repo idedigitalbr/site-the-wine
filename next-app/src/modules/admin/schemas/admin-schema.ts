@@ -188,6 +188,11 @@ export const floorMapQuerySchema = z.object({
   time: z.string().regex(timePattern),
 });
 
+const floorPlanBackgroundUrlSchema = z.string().trim().max(2048).nullable().refine(
+  (value) => value === null || value === '' || value.startsWith('/') || value.startsWith('https://'),
+  'Informe um caminho local do site ou uma URL HTTPS.',
+);
+
 function validateCombinationIds(tableIds: number[], context: z.RefinementCtx): void {
   if (new Set(tableIds).size !== tableIds.length) {
     context.addIssue({ code: 'custom', path: ['tableIds'], message: 'Uma mesa não pode aparecer duas vezes.' });
@@ -239,6 +244,11 @@ export const floorMapCommandSchema = z.discriminatedUnion('resource', [
     startsAt: z.string().regex(dateTimePattern).refine((value) => isCalendarDate(value.slice(0, 10)), 'Informe uma data válida.'),
     endsAt: z.string().regex(dateTimePattern).refine((value) => isCalendarDate(value.slice(0, 10)), 'Informe uma data válida.'),
     reason: z.string().trim().min(2).max(255),
+  }),
+  z.object({
+    resource: z.literal('background'),
+    backgroundUrl: floorPlanBackgroundUrlSchema,
+    backgroundOpacity: z.number().min(0.1).max(0.8),
   }),
 ]).superRefine((input, context) => {
   if (input.resource === 'combination') validateCombinationIds(input.tableIds, context);
