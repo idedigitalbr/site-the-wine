@@ -1,5 +1,10 @@
 ﻿# Changelog
 
+## 2026-09-02
+
+- **Ajuste de Copy no Accordion de Experiências**:
+  - Tag superior atualizada para: O que você encontrará
+  - Título principal atualizado para: Eventos & Experiências (removido 'Nossos')
 ## 2026-08-28
 
 - **Aprimoramento da Planta Operacional de Mesas (/admin)**:
@@ -39,3 +44,4 @@
 
 - **Correção Visual do Ícone do YouTube**:
   - Corrigido o triângulo interno de play com preenchimento em dourado no rodapé.
+
