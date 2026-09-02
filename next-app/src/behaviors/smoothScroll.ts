@@ -1,19 +1,23 @@
 import type { Cleanup } from './types';
 
 export function setupSmoothScroll(): Cleanup {
-  const anchors = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'));
+  const anchors = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href^="#"], a[href^="/#"]'));
   const handlers = new Map<HTMLAnchorElement, EventListener>();
 
   anchors.forEach((anchor) => {
     const handler: EventListener = (event) => {
-      const href = anchor.getAttribute('href');
-      if (!href || href === '#' || !href.startsWith('#')) return;
+      const rawHref = anchor.getAttribute('href');
+      if (!rawHref || rawHref === '#' || rawHref === '/#') return;
 
-      const target = document.querySelector(href);
+      const hash = rawHref.startsWith('/#') ? rawHref.slice(1) : rawHref;
+      const target = document.querySelector(hash);
       if (!target) return;
 
       event.preventDefault();
       target.scrollIntoView({ behavior: 'smooth' });
+      if (typeof window !== 'undefined' && window.history.pushState) {
+        window.history.pushState(null, '', hash);
+      }
     };
 
     handlers.set(anchor, handler);

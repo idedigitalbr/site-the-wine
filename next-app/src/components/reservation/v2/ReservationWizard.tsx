@@ -19,6 +19,7 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useForm, useWatch, type FieldErrors, type FieldPath, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
+import { siteConfig } from '@/config/site';
 import { whatsappLinks } from '@/config/social';
 import { formatPhoneInput } from '@/lib/phone';
 import { MockPaymentDemo } from './MockPaymentDemo';
@@ -600,33 +601,32 @@ function ReservationShell({
         <aside className="hidden h-fit rounded-[var(--radius-lg)] border border-border bg-surface p-6 lg:block">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">The Wine</p>
           <h2 className="mt-3 font-display text-3xl text-foreground">Uma noite para lembrar.</h2>
-          <p className="mt-4 text-sm leading-relaxed text-muted">Av. Alcindo Cacela, 1848 · Nazaré · Belém – PA</p>
-          <div className="mt-6 space-y-3 border-t border-border pt-5 text-sm text-muted">
-            <p className="flex items-start gap-2"><MapPin aria-hidden="true" className="mt-0.5 shrink-0 text-primary" size={16} /> Mezanino do +B Supermercados</p>
-            <p className="flex items-start gap-2"><Clock3 aria-hidden="true" className="mt-0.5 shrink-0 text-primary" size={16} /> Segunda a sábado, 12h–15h e 19h–23h</p>
+          <div className="mt-6 space-y-4 border-t border-border pt-5 text-sm text-muted">
+            <div className="flex items-start gap-2.5">
+              <MapPin aria-hidden="true" className="mt-0.5 shrink-0 text-primary" size={16} />
+              <div className="leading-snug">
+                <p className="font-medium text-foreground">{siteConfig.address.street}</p>
+                <p>{siteConfig.address.neighborhood}, {siteConfig.address.city} – {siteConfig.address.region}</p>
+                <p className="mt-0.5 text-xs opacity-75">({siteConfig.address.complement})</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <Clock3 aria-hidden="true" className="mt-0.5 shrink-0 text-primary" size={16} />
+              <div className="space-y-2 leading-snug">
+                <div>
+                  <p className="font-medium text-foreground">Segunda a Sábado:</p>
+                  <p className="text-xs text-muted">{siteConfig.openingHours.mondayToSaturday}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Domingo:</p>
+                  <p className="text-xs text-muted">{siteConfig.openingHours.sunday}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </aside>
       </div>
     </>
-  );
-}
-
-function ReservationHeader() {
-  return (
-    <header className="border-b border-border bg-surface/95">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
-        <Link href="/" className="flex items-center gap-3 text-sm tracking-[0.18em] text-primary">
-          <span className="font-display text-2xl tracking-normal">THE WINE</span>
-          <span className="hidden text-[10px] uppercase text-muted sm:inline">Experience</span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/minha-reserva" className="hidden text-xs font-semibold uppercase tracking-[0.15em] text-muted transition hover:text-primary sm:inline">Minha reserva</Link>
-          <Link href="/" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-muted transition hover:text-primary">
-            <ArrowLeft aria-hidden="true" size={15} /> Voltar ao site
-          </Link>
-        </div>
-      </div>
-    </header>
   );
 }
 
@@ -741,9 +741,7 @@ export function ReservationWizard() {
 
   return (
     <main className="reservation-theme min-h-screen bg-background font-sans text-foreground">
-      <ReservationHeader />
-
-      <section className="mx-auto max-w-6xl px-5 pb-16 pt-12 sm:px-8 sm:pt-20">
+      <section className="mx-auto max-w-6xl px-5 pb-20 pt-28 sm:px-8 sm:pt-36">
         {confirmation ? <Confirmation reservation={confirmation} /> : <ReservationShell
           step={step}
           date={date}

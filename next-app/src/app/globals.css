@@ -95,6 +95,8 @@ html.menu-modal-open #menuModal * {
   height: 100%;
   display: block;
   border: 0;
+  filter: invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%);
+  transition: filter 300ms ease;
 }
 
 .reservation-theme .reservation-input {

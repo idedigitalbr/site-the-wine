@@ -9,7 +9,7 @@ export function Header() {
     <>
       <header className="header" id="navbar">
         <div className="header-container">
-          <a href="#home" className="header-logo" aria-label="Voltar ao topo">
+          <a href="/#home" className="header-logo" aria-label="Voltar ao topo">
             <img src="/assets/Logos/logo_the_wine_branco_dourado_transparente.webp" alt="The Wine Experience Logo" />
           </a>
 

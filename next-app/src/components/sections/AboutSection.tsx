@@ -8,7 +8,7 @@ export function AboutSection() {
         <h2 className="historia-headline reveal-up" style={{ transitionDelay: '0.05s' }}>THE WINE EXPERIENCE</h2>
 
         <p className="historia-paragraph reveal-up" style={{ transitionDelay: '0.1s' }}>
-          No coração de Belém, o The Wine Experience reúne gastronomia autoral, uma seleção criteriosa de vinhos e harmonizações que transformam cada visita em um momento especial.
+          No coração de Belém, um ambiente acolhedor reúne gastronomia autoral, uma seleção criteriosa de vinhos e harmonizações que transformam cada visita em um momento especial.
         </p>
 
         <div className="divider-diamond reveal-up" style={{ transitionDelay: '0.15s' }}>

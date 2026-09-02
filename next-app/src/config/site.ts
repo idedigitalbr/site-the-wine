@@ -12,7 +12,7 @@ export const siteConfig = {
   whatsappPhone: '5591984040710',
   address: {
     street: 'Av. Alcindo Cacela, 1848',
-    complement: 'Mezanino do +B Supermercados',
+    complement: 'Mezanino do +B Supermercados - Unidade Alcindo Cacela',
     neighborhood: 'Nazaré',
     city: 'Belém',
     region: 'PA',

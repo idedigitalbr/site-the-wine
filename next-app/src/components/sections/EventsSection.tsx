@@ -5,7 +5,6 @@ export function EventsSection() {
   return (
     <>
       <div className="tw-acc-header" id="eventos">
-        <span className="tw-acc-header__tag">O que você encontrará</span>
         <h2 className="tw-acc-header__title">Eventos <em>&amp;</em> Experiências</h2>
       </div>
 

@@ -45,7 +45,7 @@ export function ExperiencePillarsSection() {
                 <span className="line" />
               </div>
               <h3>Carta de Vinhos</h3>
-              <p>Curadoria especial de rótulos nacionais e internacionais para harmonizações sofisticadas e momentos especiais.</p>
+              <p>Curadoria especial de rótulos nacionais e internacionais para harmonizações exclusivas e momentos especiais.</p>
             </div>
           </div>
 

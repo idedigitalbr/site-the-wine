@@ -1,4 +1,7 @@
 import type { Metadata } from 'next';
+import { SiteBehaviorController } from '@/components/behaviors/SiteBehaviorController';
+import { Footer } from '@/components/layout/Footer';
+import { Header } from '@/components/layout/Header';
 import { ReservationWizard } from '@/components/reservation/v2/ReservationWizard';
 
 export const metadata: Metadata = {
@@ -7,5 +10,13 @@ export const metadata: Metadata = {
 };
 
 export default function ReservationsPage() {
-  return <ReservationWizard />;
+  return (
+    <>
+      <link rel="stylesheet" href="/style.css" />
+      <Header />
+      <ReservationWizard />
+      <Footer />
+      <SiteBehaviorController />
+    </>
+  );
 }

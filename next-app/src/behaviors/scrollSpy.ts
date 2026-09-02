@@ -31,7 +31,8 @@ export function setupScrollSpy(): Cleanup {
 
   const updateActiveLink = (links: HTMLAnchorElement[], id: string) => {
     links.forEach((link) => {
-      link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+      const href = link.getAttribute('href');
+      link.classList.toggle('active', href === `#${id}` || href === `/#${id}`);
     });
   };
 
