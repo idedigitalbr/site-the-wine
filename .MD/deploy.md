@@ -1,47 +1,33 @@
-# Deploy
+﻿# Deploy & Infraestrutura
 
-atualizado: 2026-08-25
+atualizado: 2026-09-02
 
-## Ambiente
+## Ambientes
 
-- **Produção**: `https://thewine.suporteide.digital`
-- **Diretório na VPS**: `/opt/thewine-site/app`
-- **Container Docker**: `thewine-web` (Nginx Alpine)
-- **Proxy reverso**: Traefik com TLS/SSL
-- **Branch de produção**: `main`
+- **Local**: Desenvolvimento (`next-app`)
+- **GitHub**: Repositório `idedigitalbr/site-the-wine` (Branch `main`)
+- **Produção (VPS)**:
+  - **URL Pública**: `https://thewine.suporteide.digital`
+  - **IP do Servidor**: `161.97.108.92` (Contabo VPS)
+  - **Diretório na VPS**: `/opt/thewine-site/app`
+  - **Containers Docker**:
+    - `thewine-web`: Next.js 15+ Standalone Runtime (porta interna mapeada para Traefik)
+    - `thewine-mysql`: MySQL 8.0 com volume persistente para banco de dados
+  - **Proxy Reverso**: Traefik com terminação SSL/TLS automática (Let's Encrypt)
+  - **DNS & CDN**: Cloudflare
 
-## Processo de Deploy
+## Pipeline de CI/CD (GitHub Actions)
 
-O workflow `.github/workflows/deploy-vps.yml` permanece restrito à branch `main`.
+O workflow `.github/workflows/deploy-vps.yml` executa as seguintes etapas a cada push na branch `main`:
 
-Nesta branch de hardening não devem ser executados deploys nem validações via GitHub Actions. As verificações devem ser feitas localmente antes de qualquer merge futuro.
+1. Checkout do repositório no runner do GitHub.
+2. Execução de testes automatizados e validações de qualidade.
+3. Conexão SSH segura na VPS (`161.97.108.92`) usando segredos (`DEPLOY_HOST`, `DEPLOY_KEY`, `DEPLOY_USER`, `DEPLOY_PORT`).
+4. Atualização dos arquivos locais via Git (`git fetch && git reset --hard origin/main`).
+5. Execução do script de migrations do MySQL (`node scripts/migrate.mjs`).
+6. Build e reinício dos containers Docker (`docker compose up -d --build`).
 
-## Arquivos publicados no container
+## Chaves e Credenciais
 
-O Dockerfile usa uma allowlist explícita. Somente estes recursos são copiados para a raiz pública do Nginx:
-
-- `index.html`
-- `style.css`
-- `eventos-accordion-standalone.html`
-- `assets/`
-
-Diretórios como `.MD/`, `.agents/`, `docs/`, `tests/`, `.github/` e `node_modules/` não fazem parte da imagem publicada.
-
-## Verificação local
-
-Executar localmente, sem GitHub Actions:
-
-```bash
-node --test tests/*.test.mjs
-```
-
-```bash
-docker build -t thewine-site:local .
-```
-
-## Cuidados
-
-- Não executar deploy a partir desta branch de hardening.
-- Manter `main` como única branch de produção.
-- Não registrar chaves privadas, senhas, tokens ou caminhos pessoais de credenciais na documentação.
-- Manter `.gitignore` e `.dockerignore` atualizados quando novos artefatos locais forem introduzidos.
+- **Chave SSH de Deploy**: Configurada nos secrets do GitHub Actions e autorizada na VPS (`/root/.ssh/id_ed25519_thewine`).
+- **Variáveis de Ambiente**: Arquivo `.env` protegido na VPS contendo strings de conexão do MySQL, credenciais de admin e configurações SMTP.

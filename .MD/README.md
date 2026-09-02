@@ -1,45 +1,22 @@
-# site-the-wine (THE WINE Experience)
+﻿# site-the-wine (THE WINE Experience)
 
-atualizado: 2026-08-25
+atualizado: 2026-09-02
 
 ## Resumo
 
-Site institucional e landing page da THE WINE Experience, publicado em produção e mantido como aplicação estática.
+Site institucional, plataforma enogastronômica e sistema completo de reservas online e gestão operacional da **THE WINE Experience** (Belém - PA).
 
-## Stack principal
+## Repositório & Ambientes
 
-- HTML5
-- CSS3
-- Vanilla JavaScript
-- Docker + Nginx Alpine
-- Traefik na VPS
+- **Caminho Local**: `G:\Meu Drive\.PROJETOS\Sites Institucionais\site-the-wine`
+- **Branch Atual**: `main`
+- **Git Remote**: `https://github.com/idedigitalbr/site-the-wine.git`
+- **Produção (VPS)**: `https://thewine.suporteide.digital`
+- **Stack Principal**: Next.js 15+ / React 19 / TypeScript / Tailwind CSS / MySQL 8.0 / Docker Compose / Traefik
 
-## Estado atual
+## Estado Atual
 
-- Site publicado em `https://thewine.suporteide.digital`.
-- Branch de produção: `main`.
-- Testes automatizados disponíveis em `tests/*.test.mjs` usando o test runner nativo do Node.js.
-- Nesta branch de hardening, testes e build devem ser executados localmente, sem GitHub Actions e sem deploy.
-- A imagem Nginx publica apenas `index.html`, `style.css`, `eventos-accordion-standalone.html` e `assets/`.
-- Materiais internos, documentação, testes e dependências locais não são enviados para a raiz pública do Nginx.
-- `node_modules/` não deve permanecer versionado no repositório.
-
-## Verificação local
-
-Para executar a suíte de testes:
-
-```bash
-node --test tests/*.test.mjs
-```
-
-Para validar a imagem localmente:
-
-```bash
-docker build -t thewine-site:local .
-```
-
-## Próximos cuidados
-
-- Não executar deploy desta branch de hardening.
-- Manter alterações isoladas em branch antes de qualquer merge em `main`.
-- Continuar evitando arquivos gerados, dependências e dados sensíveis no repositório.
+- **Frontend & Institucional**: Migrado para Next.js App Router com paridade visual 1:1, menu interativo (flipbook), galeria e seções autorais.
+- **Sistema de Reservas (`/reservas`)**: Wizard público de reservas em etapas com motor de disponibilidade e bloqueio de mesas em tempo real.
+- **Painel Administrativo (`/admin`)**: Planta de mesas operacional interativa, controle de capacidade, bloqueios manuais e configurações de sistema/notificações.
+- **CI/CD & Deploy**: Pipeline automático via GitHub Actions integrado à VPS com container standalone e banco de dados MySQL conteinerizado.
