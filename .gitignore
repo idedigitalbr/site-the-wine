@@ -48,3 +48,4 @@ yarn-error.log*
 *.tar
 *.tar.gz
 *.7z
+*.rar

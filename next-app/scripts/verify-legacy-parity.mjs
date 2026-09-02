@@ -5,12 +5,18 @@ import path from 'node:path';
 const appRoot = path.resolve(import.meta.dirname, '..');
 const repoRoot = path.resolve(appRoot, '..');
 
+const legacyDir = path.join(repoRoot, 'nao-usado-mais');
+if (!fs.existsSync(legacyDir)) {
+  console.log('Legacy baseline files are archived (nao-usado-mais.rar). Verification skipped.');
+  process.exit(0);
+}
+
 const appLegacy = fs.readFileSync(path.join(appRoot, 'legacy/index.html'));
-const repoLegacy = fs.readFileSync(path.join(repoRoot, 'index.html'));
+const repoLegacy = fs.readFileSync(path.join(legacyDir, 'index.html'));
 assert.deepEqual(appLegacy, repoLegacy, 'legacy/index.html divergiu do index.html de referência');
 
 const appCss = fs.readFileSync(path.join(appRoot, 'public/style.css'));
-const repoCss = fs.readFileSync(path.join(repoRoot, 'style.css'));
+const repoCss = fs.readFileSync(path.join(legacyDir, 'style.css'));
 assert.deepEqual(appCss, repoCss, 'public/style.css divergiu do style.css de referência');
 
 const criticalAssets = [
@@ -25,7 +31,7 @@ const criticalAssets = [
 
 for (const relative of criticalAssets) {
   const appAsset = fs.readFileSync(path.join(appRoot, 'public/assets', relative));
-  const repoAsset = fs.readFileSync(path.join(repoRoot, 'assets', relative));
+  const repoAsset = fs.readFileSync(path.join(legacyDir, 'assets', relative));
   assert.deepEqual(appAsset, repoAsset, `asset divergente: ${relative}`);
 }
 

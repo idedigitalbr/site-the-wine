@@ -12,14 +12,12 @@ import {
   Clock3,
   LoaderCircle,
   Mail,
-  MapPin,
   Phone,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useForm, useWatch, type FieldErrors, type FieldPath, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
-import { siteConfig } from '@/config/site';
 import { whatsappLinks } from '@/config/social';
 import { formatPhoneInput } from '@/lib/phone';
 import { MockPaymentDemo } from './MockPaymentDemo';
@@ -377,7 +375,7 @@ function StepReview({ values, holdExpiresAt }: { values: FormValues; holdExpires
 
 function Confirmation({ reservation }: { reservation: CreatedReservation }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-xl rounded-[var(--radius-lg)] border border-border bg-surface p-8 text-center shadow-sm sm:p-12">
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="reservation-confirmation-container mx-auto max-w-xl rounded-[var(--radius-lg)] border border-border bg-surface p-8 text-center shadow-sm sm:p-12">
       <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
         <Check aria-hidden="true" size={28} strokeWidth={2.2} />
       </span>
@@ -401,7 +399,7 @@ function Confirmation({ reservation }: { reservation: CreatedReservation }) {
 
 function StepIndicators({ currentStep }: { currentStep: number }) {
   return (
-    <div className="mx-auto mt-10 flex max-w-3xl items-center justify-between">
+    <div className="reservation-stepper-container mx-auto mt-10 flex max-w-3xl items-center justify-between">
       {steps.map((label, index) => {
         const number = index + 1;
         const active = currentStep >= number;
@@ -568,13 +566,12 @@ function ReservationShell({
 }: ReservationShellProps) {
   return (
     <>
-      <div className="mx-auto max-w-2xl text-center">
+      <div className="reservation-header-container mx-auto max-w-2xl text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">The Wine Experience</p>
         <h1 className="mt-4 font-display text-5xl leading-none text-foreground sm:text-6xl">Reserve sua experiência</h1>
-        <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-muted sm:text-base">Escolha o melhor momento para viver uma noite especial no mezanino do +B Supermercados.</p>
       </div>
       <StepIndicators currentStep={step} />
-      <div className="mx-auto mt-10 grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="reservation-card-grid mx-auto mt-10">
         <ReservationForm
           step={step}
           date={date}
@@ -598,33 +595,6 @@ function ReservationShell({
           onNext={onNext}
           handleSubmit={handleSubmit}
         />
-        <aside className="hidden h-fit rounded-[var(--radius-lg)] border border-border bg-surface p-6 lg:block">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">The Wine</p>
-          <h2 className="mt-3 font-display text-3xl text-foreground">Uma noite para lembrar.</h2>
-          <div className="mt-6 space-y-4 border-t border-border pt-5 text-sm text-muted">
-            <div className="flex items-start gap-2.5">
-              <MapPin aria-hidden="true" className="mt-0.5 shrink-0 text-primary" size={16} />
-              <div className="leading-snug">
-                <p className="font-medium text-foreground">{siteConfig.address.street}</p>
-                <p>{siteConfig.address.neighborhood}, {siteConfig.address.city} – {siteConfig.address.region}</p>
-                <p className="mt-0.5 text-xs opacity-75">({siteConfig.address.complement})</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <Clock3 aria-hidden="true" className="mt-0.5 shrink-0 text-primary" size={16} />
-              <div className="space-y-2 leading-snug">
-                <div>
-                  <p className="font-medium text-foreground">Segunda a Sábado:</p>
-                  <p className="text-xs text-muted">{siteConfig.openingHours.mondayToSaturday}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">Domingo:</p>
-                  <p className="text-xs text-muted">{siteConfig.openingHours.sunday}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </aside>
       </div>
     </>
   );
@@ -740,8 +710,8 @@ export function ReservationWizard() {
   };
 
   return (
-    <main className="reservation-theme min-h-screen bg-background font-sans text-foreground">
-      <section className="mx-auto max-w-6xl px-5 pb-20 pt-28 sm:px-8 sm:pt-36">
+    <main className="reservation-theme reservation-page-wrapper min-h-screen bg-background font-sans text-foreground">
+      <section className="mx-auto max-w-6xl px-5 pb-20 sm:px-8">
         {confirmation ? <Confirmation reservation={confirmation} /> : <ReservationShell
           step={step}
           date={date}

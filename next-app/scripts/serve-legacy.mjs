@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(scriptDir, '../..');
+const root = path.resolve(scriptDir, '../../nao-usado-mais');
 const host = process.env.LEGACY_HOST || '127.0.0.1';
 const port = Number(process.env.LEGACY_PORT || 4173);
 

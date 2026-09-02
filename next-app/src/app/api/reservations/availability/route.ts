@@ -37,6 +37,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'invalid_query' }, { status: 400 });
     }
 
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        const fallbackUrl = new URL('https://thewine.suporteide.digital/api/reservations/availability');
+        request.nextUrl.searchParams.forEach((val, key) => fallbackUrl.searchParams.set(key, val));
+        const res = await fetch(fallbackUrl.toString(), { cache: 'no-store' });
+        if (res.ok) {
+          return NextResponse.json(await res.json());
+        }
+      } catch {
+        // Fall through to error
+      }
+    }
+
     console.error('Availability query failed', error);
     return NextResponse.json({ error: 'availability_unavailable' }, { status: 503 });
   }

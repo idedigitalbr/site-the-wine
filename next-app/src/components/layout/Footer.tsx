@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { CalendarDays, Clock, MapPin } from 'lucide-react';
 import { FacebookIcon, InstagramIcon, TikTokIcon, WhatsAppIcon, YouTubeIcon } from '@/components/icons/SocialIcons';
 import { socialLinks, whatsappLinks } from '@/config/social';
@@ -40,7 +41,11 @@ export function Footer() {
             <span>
               Av. Alcindo Cacela, 1848<br />
               Nazaré, Belém – PA<br />
-              <span style={{ opacity: 0.65, fontSize: '0.78rem' }}>(Mezanino do +B Supermercados)</span>
+              <span style={{ display: 'block', opacity: 0.65, fontSize: '0.78rem', lineHeight: 1.35, marginTop: '3px' }}>
+                <span style={{ display: 'block', whiteSpace: 'nowrap' }}>(Mezanino do +B</span>
+                <span style={{ display: 'block', whiteSpace: 'nowrap' }}>Supermercados –</span>
+                <span style={{ display: 'block', whiteSpace: 'nowrap' }}>Unidade Alcindo Cacela)</span>
+              </span>
             </span>
           </div>
         </div>
@@ -120,12 +125,30 @@ export function Footer() {
 
       <div className="footer-bottom">
         <div className="footer-bottom__inner">
-          <span className="footer-bottom__left">© <span id="currentYear">2026</span> The Wine Experience. Todos os direitos reservados.</span>
+          <span className="footer-bottom__left">
+            Copyright © <span id="currentYear">2026</span> The Wine Experience – Todos os direitos reservados
+          </span>
 
-          <div className="footer-bottom__right">
-            <a href="#">Política de Privacidade</a>
-            <span style={{ color: 'rgba(234, 187, 117, 0.5)', fontSize: '0.7rem' }}>·</span>
-            <a href="#">Termos de Uso</a>
+          <Link href="/termos-e-privacidade" className="footer-bottom__link">
+            Termos & Privacidade
+          </Link>
+
+          <div className="footer-dev">
+            <span>Desenvolvido por:</span>
+            <a
+              href="https://digital.ideinstituto.com.br/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="IDE Digital"
+            >
+              <img
+                src="/assets/Logos/logo-idedigital.png"
+                alt="IDE Digital"
+                className="footer-dev-logo"
+                width={90}
+                height={18}
+              />
+            </a>
           </div>
         </div>
       </div>

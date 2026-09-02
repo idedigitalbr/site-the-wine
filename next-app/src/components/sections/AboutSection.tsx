@@ -1,5 +1,3 @@
-import { Brackets } from 'lucide-react';
-
 export function AboutSection() {
   return (
     <section id="sobre" className="historia-section">
@@ -18,13 +16,25 @@ export function AboutSection() {
         </div>
 
         <div className="highlighted-container reveal-up" style={{ transitionDelay: '0.2s' }}>
-          <Brackets className="bracket-svg bracket-left" aria-hidden="true" stroke="var(--wine-gold)" strokeWidth={1.2} />
+          <svg className="bracket-svg bracket-left" width="30" height="90" viewBox="0 0 30 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M 28 8 L 8 8 L 8 82 L 28 82" stroke="var(--wine-gold)" strokeWidth="1.2" strokeLinecap="square" />
+            <circle cx="8" cy="8" r="2.5" fill="var(--wine-gold)" />
+            <circle cx="8" cy="82" r="2.5" fill="var(--wine-gold)" />
+            <circle cx="28" cy="8" r="1.5" fill="var(--wine-gold)" />
+            <circle cx="28" cy="82" r="1.5" fill="var(--wine-gold)" />
+          </svg>
 
           <p className="highlighted-text">
             Um ambiente sofisticado para brindar,<br />compartilhar e viver novas experiências.
           </p>
 
-          <Brackets className="bracket-svg bracket-right" aria-hidden="true" stroke="var(--wine-gold)" strokeWidth={1.2} />
+          <svg className="bracket-svg bracket-right" width="30" height="90" viewBox="0 0 30 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M 2 8 L 22 8 L 22 82 L 2 82" stroke="var(--wine-gold)" strokeWidth="1.2" strokeLinecap="square" />
+            <circle cx="22" cy="8" r="2.5" fill="var(--wine-gold)" />
+            <circle cx="22" cy="82" r="2.5" fill="var(--wine-gold)" />
+            <circle cx="2" cy="8" r="1.5" fill="var(--wine-gold)" />
+            <circle cx="2" cy="82" r="1.5" fill="var(--wine-gold)" />
+          </svg>
         </div>
 
         <div className="divider-glow reveal-up" style={{ transitionDelay: '0.25s', marginTop: '2rem' }} />
@@ -32,3 +42,4 @@ export function AboutSection() {
     </section>
   );
 }
+

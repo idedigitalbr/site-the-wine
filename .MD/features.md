@@ -23,6 +23,7 @@ atualizado: 2026-09-02
 - [x] Galeria contínua de fotos com visualizador Lightbox
 - [x] Rodapé completo com horários, mapa interativo e contatos
 - [x] SEO otimizado, Open Graph, Twitter Cards e Schema.org Restaurant
+- [x] Gestão de Cookies e Consentimento LGPD via Cookiebot CMP (auto-blocking ativo) [ver .MD/cookiebot.md]
 
 ## 📅 SISTEMA DE RESERVAS PÚBLICO (/reservas) [Implementado]
 - [x] Wizard interativo passo a passo (Passos 1 a 4)
@@ -55,3 +56,4 @@ atualizado: 2026-09-02
 - [x] CI/CD automático no GitHub Actions com chave SSH na VPS
 - [x] Sistema de migração automática do banco no deploy
 - [x] Deploy em produção: `https://thewine.suporteide.digital`
+

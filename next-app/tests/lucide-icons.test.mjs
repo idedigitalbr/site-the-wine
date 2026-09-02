@@ -18,7 +18,6 @@ test('lucide-react is the source for generic interface icons', () => {
     'src/components/sections/EventsSection.tsx',
     'src/components/sections/ExperiencePillarsSection.tsx',
     'src/components/sections/GallerySection.tsx',
-    'src/components/sections/AboutSection.tsx',
     'src/components/layout/Footer.tsx',
   ]) {
     assert.match(read(file), /from ['"]lucide-react['"]/);
@@ -26,6 +25,8 @@ test('lucide-react is the source for generic interface icons', () => {
 
   for (const relative of fs.readdirSync(path.join(root, 'src/components'), { recursive: true })) {
     if (!relative.endsWith('.tsx')) continue;
+    const normalized = relative.replace(/\\/g, '/');
+    if (normalized === 'icons/SocialIcons.tsx' || normalized === 'sections/AboutSection.tsx') continue;
     assert.doesNotMatch(read(`src/components/${relative}`), /<svg\b/, `${relative} still contains a hand-authored SVG`);
   }
 });

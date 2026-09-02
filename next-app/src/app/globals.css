@@ -99,6 +99,98 @@ html.menu-modal-open #menuModal * {
   transition: filter 300ms ease;
 }
 
+/* ==========================================================================
+   Reservation Wizard Centering & Layout Guardrails (Overrides unlayered resets)
+   ========================================================================== */
+main.reservation-page-wrapper {
+  min-height: 100vh !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  background-color: var(--wine-black, #000000) !important;
+}
+
+.reservation-theme section {
+  width: 100% !important;
+  max-width: 1080px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-top: 155px !important;
+  padding-bottom: 120px !important;
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 768px) {
+  .reservation-theme section {
+    padding-top: 120px !important;
+    padding-bottom: 80px !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+.reservation-theme .mx-auto {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.reservation-theme .text-center {
+  text-align: center !important;
+}
+
+.reservation-theme .grid {
+  display: grid !important;
+}
+
+.reservation-theme .flex {
+  display: flex !important;
+}
+
+.reservation-theme .reservation-card-grid {
+  display: block !important;
+  max-width: 760px !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-top: 2.5rem !important;
+}
+
+@media (max-width: 1024px) {
+  .reservation-theme .reservation-card-grid {
+    max-width: 100% !important;
+  }
+}
+
+.reservation-theme .reservation-stepper-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  max-width: 680px !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-top: 2.5rem !important;
+}
+
+.reservation-theme .reservation-header-container {
+  max-width: 720px !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+}
+
+.reservation-theme .reservation-confirmation-container {
+  max-width: 640px !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+}
+
 .reservation-theme .reservation-input {
   width: 100%;
   border: 1px solid var(--border);

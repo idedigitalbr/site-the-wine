@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import Script from 'next/script';
 import './globals.css';
 import { restaurantJsonLd, siteConfig } from '@/config/site';
 import { AppProviders } from '@/providers/AppProviders';
@@ -48,7 +49,17 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantJsonLd) }}
         />
       </head>
-      <body><AppProviders>{children}</AppProviders></body>
+      <body>
+        <Script
+          id="Cookiebot"
+          src="https://consent.cookiebot.com/uc.js"
+          data-cbid="b812919e-de18-41f1-824c-bb88bba1a892"
+          data-blockingmode="auto"
+          type="text/javascript"
+          strategy="beforeInteractive"
+        />
+        <AppProviders>{children}</AppProviders>
+      </body>
     </html>
   );
 }

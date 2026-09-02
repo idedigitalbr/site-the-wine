@@ -57,10 +57,6 @@ export function EventsSection() {
                   <span className="tw-acc__desc">
                     No The Wine Experience, você escolhe o rótulo, a origem e o estilo direto na nossa máquina de vinhos — uma forma prática e elegante de descobrir novos sabores, na medida da sua taça.
                   </span>
-                  <a className="tw-acc__btn" href={whatsappLinks.wineMachines} target="_blank" rel="noopener noreferrer">
-                    Saiba mais
-                    <ArrowRight aria-hidden="true" strokeWidth={2} />
-                  </a>
                 </span>
               </span>
             </div>

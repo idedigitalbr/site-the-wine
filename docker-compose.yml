@@ -84,22 +84,9 @@ services:
     networks:
       - default
 
-  legacy-backup:
-    build:
-      context: .
-      dockerfile: Dockerfile.legacy
-    container_name: thewine-legacy-backup
-    restart: unless-stopped
-    expose:
-      - "80"
-    networks:
-      - legacy
-
 networks:
   proxy:
     external: true
-  legacy:
-    internal: true
 
 volumes:
   thewine_mysql_data:

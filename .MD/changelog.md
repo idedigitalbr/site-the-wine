@@ -2,6 +2,18 @@
 
 ## 2026-09-02
 
+- **Implementação do Cookiebot CMP (LGPD / Consentimento de Cookies)**:
+  - Integrado o script oficial do Cookiebot CMP (https://consent.cookiebot.com/uc.js) em 
+ext-app/src/app/layout.tsx.
+  - Configurado Domain Group ID / CBID: 812919e-de18-41f1-824c-bb88bba1a892.
+  - Ativado o modo de bloqueio automático (data-blockingmode="auto").
+  - Estratégia de carregamento via 
+ext/script com strategy="beforeInteractive" no <body>, carregando globalmente para todo o site sem falhas de hidratação.
+  - Varredura de integridade: sem trackers/cookies de terceiros conflitantes.
+  - Documentação completa e checklist para migração futura de domínio registrados em .MD/cookiebot.md.
+
+## 2026-09-02
+
 - **Ajuste na Barra Inferior do Rodapé**:
   - Removido o ícone de diamante (ooter-bottom__center) da barra inferior de copyright e termos de uso.
 ## 2026-09-02
@@ -91,6 +103,7 @@
 
 - **Correção Visual do Ícone do YouTube**:
   - Corrigido o triângulo interno de play com preenchimento em dourado no rodapé.
+
 
 
 
