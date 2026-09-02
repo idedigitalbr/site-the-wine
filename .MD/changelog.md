@@ -2,6 +2,11 @@
 
 ## 2026-09-02
 
+- **Ajuste Visual no Ícone do WhatsApp do Rodapé**:
+  - Removidos o preenchimento amarelo espesso e o efeito de brilho/drop-shadow da classe .footer-whatsapp-icon svg.
+  - Aplicado traço limpo em outline dourado (stroke: currentColor, stroke-width: 1.5, ill: none), padronizado com a identidade visual do projeto.
+## 2026-09-02
+
 - **Restauração dos Ícones Oficiais das Redes Sociais**:
   - Restaurados os SVGs autênticos de marca para Facebook, Instagram e WhatsApp no Header e Menu Mobile.
   - Restaurados os SVGs autênticos de Instagram, Facebook, TikTok, YouTube e WhatsApp no Rodapé.
@@ -73,6 +78,7 @@
 
 - **Correção Visual do Ícone do YouTube**:
   - Corrigido o triângulo interno de play com preenchimento em dourado no rodapé.
+
 
 
 

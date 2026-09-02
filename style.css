@@ -620,7 +620,7 @@
         }
 
         /* ========================================
-           SEÇÃO SOBRE / HISTÓRIA (16:9 / 100VH)
+           SEﾃ�グ SOBRE / HISTﾃ迭IA (16:9 / 100VH)
            ======================================== */
         .historia-section {
             position: relative;
@@ -833,7 +833,7 @@
         }
 
         /* ========================================
-           SEÇÃO 3: GASTRONOMIA, VINHOS E AMBIENTE
+           SEﾃ�グ 3: GASTRONOMIA, VINHOS E AMBIENTE
            ======================================== */
         .mvv-section {
             width: 100%;
@@ -858,7 +858,7 @@
             height: 100%;
         }
 
-        /* Coluna Estilo Base (Sem bordas divisórias no fundo) */
+        /* Coluna Estilo Base (Sem bordas divisﾃｳrias no fundo) */
         .mvv-column {
             position: relative;
             overflow: hidden;
@@ -884,7 +884,7 @@
             filter: brightness(0.9) contrast(1.02) saturate(0.9);
         }
 
-        /* Imagem de Fundo no Hover (Fica 100% potente / vívida / colorida) */
+        /* Imagem de Fundo no Hover (Fica 100% potente / vﾃｭvida / colorida) */
         .mvv-column:hover .mvv-bg-img {
             transform: translate3d(0, var(--parallax-y, 0px), 0) scale(1.08);
             filter: brightness(1) contrast(1.15) saturate(1.1);
@@ -929,7 +929,7 @@
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
         }
 
-        /* Hover Instantâneo (100% Destaque + Borda & Brilho Dourado como no Print 2) */
+        /* Hover Instantﾃ｢neo (100% Destaque + Borda & Brilho Dourado como no Print 2) */
         .mvv-column:hover .mvv-card {
             transform: translateY(-6px) scale(1.01);
             background: rgba(11, 10, 8, 0.82);
@@ -939,7 +939,7 @@
             box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85), 0 0 35px rgba(221, 185, 118, 0.4);
         }
 
-        /* Ícone Dourado */
+        /* ﾃ皇one Dourado */
         .mvv-icon {
             width: 64px;
             height: 64px;
@@ -993,7 +993,7 @@
             box-shadow: 0 0 10px rgba(221, 185, 118, 0.8);
         }
 
-        /* Título do Card (Maior, mais forte e com sombra pronunciada) */
+        /* Tﾃｭtulo do Card (Maior, mais forte e com sombra pronunciada) */
         .mvv-card h3 {
             font-family: 'Cormorant Garamond', serif !important;
             font-size: 41px !important;
@@ -1010,7 +1010,7 @@
             text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95), 0 0 25px rgba(221, 185, 118, 0.6);
         }
 
-        /* Texto de Descrição (Aumentado, mais espesso e com sombra de alto contraste) */
+        /* Texto de Descriﾃｧﾃ｣o (Aumentado, mais espesso e com sombra de alto contraste) */
         .mvv-card p {
             font-family: 'Albert Sans', sans-serif !important;
             font-size: 17px !important;
@@ -1026,7 +1026,7 @@
             text-shadow: 0 2px 12px rgba(0, 0, 0, 1);
         }
 
-        /* Responsividade para a seção MVV */
+        /* Responsividade para a seﾃｧﾃ｣o MVV */
         @media (max-width: 992px) {
             .mvv-section {
                 height: auto;
@@ -1092,7 +1092,7 @@
         }
 
         @media (max-width: 768px) {
-            /* Desativa translação dinâmica no mobile para economizar processamento e manter rolagem nativa suave */
+            /* Desativa translaﾃｧﾃ｣o dinﾃ｢mica no mobile para economizar processamento e manter rolagem nativa suave */
             .parallax-img {
                 position: absolute !important;
                 top: 0 !important;
@@ -1164,7 +1164,7 @@
         }
 
         /* ========================================
-           SEÇÃO 4: HARMONIZAÇÕES EXCLUSIVAS (SPLIT V2 - 3 COLUMNS)
+           SEﾃ�グ 4: HARMONIZAﾃ�髭S EXCLUSIVAS (SPLIT V2 - 3 COLUMNS)
            ======================================== */
         .split-section-v2 {
             padding: 0;
@@ -1271,7 +1271,7 @@
         }
 
         /* ========================================
-           SEÇÃO 5: CARDÁPIO SPLIT (CREAM + VIDEO)
+           SEﾃ�グ 5: CARDﾃ￣IO SPLIT (CREAM + VIDEO)
            ======================================== */
         .cardapio-split-section {
             display: flex;
@@ -1355,7 +1355,7 @@
             box-shadow: 0 8px 30px rgba(210, 154, 60, 0.5);
         }
 
-        /* --- Lado Direito: Vídeo de Fundo (34%) --- */
+        /* --- Lado Direito: Vﾃｭdeo de Fundo (34%) --- */
         .cardapio-right-video {
             width: 34%;
             position: relative;
@@ -1386,7 +1386,7 @@
             transition: none !important;
         }
 
-        /* --- Imagem Flutuante do Cardápio --- */
+        /* --- Imagem Flutuante do Cardﾃ｡pio --- */
         .cardapio-menu-float {
             position: absolute;
             z-index: 3;
@@ -1411,7 +1411,7 @@
 
 
         /* ========================================
-           SEÇÃO 6: EVENTOS & EXPERIÊNCIAS (ACCORDION)
+           SEﾃ�グ 6: EVENTOS & EXPERIﾃ劾CIAS (ACCORDION)
            ======================================== */
         .tw-acc-header {
             width: 100%;
@@ -1832,7 +1832,7 @@
         }
 
         /* ========================================
-           SEÇÃO 7: RESERVE SUA EXPERIÊNCIA (MESA ESPERANDO)
+           SEﾃ�グ 7: RESERVE SUA EXPERIﾃ劾CIA (MESA ESPERANDO)
            ======================================== */
         .reserva-banner-section {
             background-color: #100E0C;
@@ -1922,7 +1922,7 @@
         }
 
         /* ========================================
-           SEÇÃO 8: INSTAGRAM / FEED VISUAL
+           SEﾃ�グ 8: INSTAGRAM / FEED VISUAL
            ======================================== */
         .instagram-section {
             background-color: var(--wine-black);
@@ -2050,7 +2050,7 @@
         }
 
         /* ========================================
-           SEÇÃO 9: LOCALIZAÇÃO & FOOTER
+           SEﾃ�グ 9: LOCALIZAﾃ�グ & FOOTER
            ======================================== */
         .localizacao-section {
             background-color: var(--wine-ink);
@@ -2405,7 +2405,7 @@
         }
 
         /* Floating buttons & WhatsApp link */
-        /* (Consolidado na seção FLOATING WHATSAPP CTA WIDGET) */
+        /* (Consolidado na seﾃｧﾃ｣o FLOATING WHATSAPP CTA WIDGET) */
 
         /* ========================================
            SCROLL REVEAL ANIMATIONS
@@ -2471,7 +2471,7 @@
                 max-height: 400px;
             }
 
-            /* Cardápio split: empilha verticalmente */
+            /* Cardﾃ｡pio split: empilha verticalmente */
             .cardapio-split-section {
                 flex-direction: column;
                 min-height: auto;
@@ -3298,23 +3298,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: none;
-            border: none;
-            border-radius: 0;
-            box-shadow: none;
+            color: var(--wine-gold);
         }
 
         .footer-whatsapp-icon svg {
             width: 28px;
             height: 28px;
-            fill: #d29a3c;
-            filter: drop-shadow(0 0 10px rgba(210, 154, 60, 0.75));
-            transition: transform 300ms ease, filter 300ms ease;
+            stroke: currentColor;
+            stroke-width: 1.5;
+            fill: none;
+            filter: none;
+            transition: transform 300ms ease, color 300ms ease;
         }
 
         .footer-whatsapp-icon:hover svg {
             transform: scale(1.1);
-            filter: drop-shadow(0 0 16px rgba(210, 154, 60, 0.95));
+            color: var(--wine-gold-soft);
+            filter: none;
         }
 
         .footer-whatsapp-number {
@@ -3889,7 +3889,7 @@ body.menu-modal-open {
 }
 
 /* =============================================================
-   CARD�PIO FLIPBOOK READER
+   CARDﾁPIO FLIPBOOK READER
    ============================================================= */
 .menu-modal-overlay {
     padding: 1rem !important;
