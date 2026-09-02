@@ -2,6 +2,12 @@
 
 ## 2026-09-02
 
+- **Ajuste de Copy nas Seções**:
+  - Tag superior da seção Harmonizações/Gastronomia atualizada para: THE WINE - XPERIENCE
+  - Tag superior da seção Accordion atualizada para: O que você encontrará
+  - Título principal da seção Accordion atualizado para: Eventos & Experiências
+## 2026-09-02
+
 - **Ajuste de Copy no Accordion de Experiências**:
   - Tag superior atualizada para: O que você encontrará
   - Título principal atualizado para: Eventos & Experiências (removido 'Nossos')
@@ -44,4 +50,5 @@
 
 - **Correção Visual do Ícone do YouTube**:
   - Corrigido o triângulo interno de play com preenchimento em dourado no rodapé.
+
 

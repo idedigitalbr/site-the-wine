@@ -12,7 +12,7 @@ export function PairingsSection() {
       </div>
 
       <div className="split-v2-content reveal-up parallax-element" data-parallax-speed="0.10" style={{ transitionDelay: '0.1s' }}>
-        <span className="split-tag">O que você encontrará no The Wine</span>
+        <span className="split-tag">THE WINE - XPERIENCE</span>
         <h2 className="split-title">
           Cada detalhe pensado para <br /><span className="italic-script">encantar</span> seu paladar
         </h2>
