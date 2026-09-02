@@ -21,7 +21,7 @@ export function EventsSection() {
                 <span className="tw-acc__extra">
                   <span className="tw-acc__desc">Menus exclusivos criados pelo chef, onde cada prato encontra seu vinho perfeito em uma experiência enogastronômica completa.</span>
                   <a className="tw-acc__btn" href={whatsappLinks.dinner} target="_blank" rel="noopener noreferrer">
-                    Saiba mais
+                    Fazer reserva
                     <ArrowRight aria-hidden="true" strokeWidth={2} />
                   </a>
                 </span>
@@ -39,7 +39,7 @@ export function EventsSection() {
                 <span className="tw-acc__extra">
                   <span className="tw-acc__desc">Celebrações íntimas, encontros corporativos e ocasiões especiais com ambientação personalizada e serviço impecável.</span>
                   <a className="tw-acc__btn" href={whatsappLinks.corporate} target="_blank" rel="noopener noreferrer">
-                    Saiba mais
+                    Fazer reserva
                     <ArrowRight aria-hidden="true" strokeWidth={2} />
                   </a>
                 </span>

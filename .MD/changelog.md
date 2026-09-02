@@ -2,6 +2,14 @@
 
 ## 2026-09-02
 
+- **Ajuste de Botões nos Cards de Experiências**:
+  - Botão do card 'Jantar Harmonizado' atualizado para: Fazer reserva
+  - Botão do card 'Evento Corporativo' atualizado para: Fazer reserva
+  - Tag superior da seção Harmonizações atualizada para: THE WINE - XPERIENCE
+  - Tag superior da seção Accordion atualizada para: O que você encontrará
+  - Título principal da seção Accordion atualizado para: Eventos & Experiências
+## 2026-09-02
+
 - **Ajuste de Copy nas Seções**:
   - Tag superior da seção Harmonizações/Gastronomia atualizada para: THE WINE - XPERIENCE
   - Tag superior da seção Accordion atualizada para: O que você encontrará
@@ -50,5 +58,6 @@
 
 - **Correção Visual do Ícone do YouTube**:
   - Corrigido o triângulo interno de play com preenchimento em dourado no rodapé.
+
 
 
