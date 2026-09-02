@@ -1,4 +1,4 @@
-import { CalendarDays, Clock, Gem, MapPin } from 'lucide-react';
+import { CalendarDays, Clock, MapPin } from 'lucide-react';
 import { FacebookIcon, InstagramIcon, TikTokIcon, WhatsAppIcon, YouTubeIcon } from '@/components/icons/SocialIcons';
 import { socialLinks, whatsappLinks } from '@/config/social';
 
@@ -40,10 +40,7 @@ export function Footer() {
             <span>
               Av. Alcindo Cacela, 1848<br />
               Nazaré, Belém – PA<br />
-              <span style={{ display: 'block', opacity: 0.65, fontSize: '0.78rem', lineHeight: 1.35, marginTop: '3px' }}>
-                <span style={{ display: 'block' }}>(Mezanino do +B Supermercados</span>
-                <span style={{ display: 'block' }}>- Unidade Alcindo Cacela)</span>
-              </span>
+              <span style={{ opacity: 0.65, fontSize: '0.78rem' }}>(Mezanino do +B Supermercados)</span>
             </span>
           </div>
         </div>
@@ -60,13 +57,14 @@ export function Footer() {
               title="Mapa da localização do The Wine Experience em Nazaré, Belém"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              allowFullScreen
             />
           </div>
         </div>
 
         <div className="footer-col footer-col-hours">
-          <h3 className="footer-col__title">Horário de<br />Funcionamento</h3>
+          <h3 className="footer-col__title">
+            Horário de<br />Funcionamento
+          </h3>
 
           <div className="footer-hours-ornament">
             <span className="footer-hours-ornament__line" />
@@ -123,12 +121,6 @@ export function Footer() {
       <div className="footer-bottom">
         <div className="footer-bottom__inner">
           <span className="footer-bottom__left">© <span id="currentYear">2026</span> The Wine Experience. Todos os direitos reservados.</span>
-
-          <div className="footer-bottom__center">
-            <span className="footer-bottom__center-line" />
-            <Gem className="footer-bottom__center-icon" aria-hidden="true" strokeWidth={1.5} />
-            <span className="footer-bottom__center-line" />
-          </div>
 
           <div className="footer-bottom__right">
             <a href="#">Política de Privacidade</a>

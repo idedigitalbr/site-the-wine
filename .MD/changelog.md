@@ -2,6 +2,10 @@
 
 ## 2026-09-02
 
+- **Ajuste na Barra Inferior do Rodapé**:
+  - Removido o ícone de diamante (ooter-bottom__center) da barra inferior de copyright e termos de uso.
+## 2026-09-02
+
 - **Ajuste na Linha Divisória do Rodapé**:
   - Mantida a linha dourada contínua com gradiente suave (ooter-logo-divider__line) abaixo da logo, removendo apenas o ícone de diamante central.
 ## 2026-09-02
@@ -87,6 +91,7 @@
 
 - **Correção Visual do Ícone do YouTube**:
   - Corrigido o triângulo interno de play com preenchimento em dourado no rodapé.
+
 
 
 
