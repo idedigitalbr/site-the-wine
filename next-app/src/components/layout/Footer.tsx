@@ -1,4 +1,5 @@
-import { Camera, CalendarDays, CirclePlay, Clock, Gem, MessageCircle, Music2, MapPin, Share2 } from 'lucide-react';
+import { CalendarDays, Clock, Gem, MapPin } from 'lucide-react';
+import { FacebookIcon, InstagramIcon, TikTokIcon, WhatsAppIcon, YouTubeIcon } from '@/components/icons/SocialIcons';
 import { socialLinks, whatsappLinks } from '@/config/social';
 
 export function Footer() {
@@ -20,16 +21,16 @@ export function Footer() {
 
           <div className="footer-socials">
             <a href={socialLinks.instagram} target="_blank" className="footer-social-link" aria-label="Siga-nos no Instagram">
-              <Camera aria-hidden="true" strokeWidth={1.5} />
+              <InstagramIcon />
             </a>
             <a href={socialLinks.facebook} target="_blank" className="footer-social-link" aria-label="Siga-nos no Facebook">
-              <Share2 aria-hidden="true" strokeWidth={1.5} />
+              <FacebookIcon />
             </a>
             <a href={socialLinks.tiktok} target="_blank" className="footer-social-link" aria-label="Siga-nos no TikTok">
-              <Music2 aria-hidden="true" strokeWidth={1.5} />
+              <TikTokIcon />
             </a>
             <a href={socialLinks.youtube} target="_blank" className="footer-social-link" aria-label="Assista no YouTube">
-              <CirclePlay aria-hidden="true" strokeWidth={1.5} />
+              <YouTubeIcon />
             </a>
           </div>
         </div>
@@ -41,7 +42,7 @@ export function Footer() {
             <span>
               Av. Alcindo Cacela, 1848<br />
               Nazaré, Belém – PA<br />
-              <span style={{ opacity: 0.65, fontSize: '0.78rem' }}>(Mezanino do +B Supermercados)</span>
+              <span style={{ opacity: 0.65, fontSize: '0.78rem' }}>(Mezanino do +B Supermercados - Unidade Alcindo Cacela)</span>
             </span>
           </div>
         </div>
@@ -105,7 +106,7 @@ export function Footer() {
           </div>
 
           <div className="footer-whatsapp-icon">
-            <MessageCircle aria-hidden="true" strokeWidth={1.5} />
+            <WhatsAppIcon />
           </div>
 
           <a href={whatsappLinks.reservation} target="_blank" className="footer-whatsapp-number">

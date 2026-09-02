@@ -1,4 +1,5 @@
-import { Camera, MessageCircle, Share2, X } from 'lucide-react';
+import { X } from 'lucide-react';
+import { FacebookIcon, InstagramIcon, WhatsAppIcon } from '@/components/icons/SocialIcons';
 import { navigation } from '@/config/navigation';
 import { socialLinks, whatsappLinks } from '@/config/social';
 
@@ -22,13 +23,13 @@ export function MobileNavigation() {
         </a>
         <div className="mobile-socials" style={{ marginTop: 'auto', display: 'flex', gap: '1.5rem', paddingTop: '2rem' }}>
           <a href={socialLinks.headerFacebook} target="_blank" style={{ color: 'var(--wine-cream)' }} aria-label="Siga-nos no Facebook">
-            <Share2 aria-hidden="true" strokeWidth={1.5} size={22} />
+            <FacebookIcon style={{ width: 22, height: 22 }} />
           </a>
           <a href={socialLinks.headerInstagram} target="_blank" style={{ color: 'var(--wine-cream)' }} aria-label="Siga-nos no Instagram">
-            <Camera aria-hidden="true" strokeWidth={1.5} size={22} />
+            <InstagramIcon style={{ width: 22, height: 22 }} />
           </a>
           <a href={whatsappLinks.contact} target="_blank" style={{ color: 'var(--wine-cream)' }} aria-label="Fale conosco no WhatsApp">
-            <MessageCircle aria-hidden="true" strokeWidth={1.5} size={22} />
+            <WhatsAppIcon style={{ width: 22, height: 22 }} />
           </a>
         </div>
       </nav>

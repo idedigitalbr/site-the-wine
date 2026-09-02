@@ -1,4 +1,5 @@
-import { Camera, Menu, MessageCircle, Share2, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import { FacebookIcon, InstagramIcon, WhatsAppIcon } from '@/components/icons/SocialIcons';
 import { MobileNavigation } from '@/components/layout/MobileNavigation';
 import { navigation } from '@/config/navigation';
 import { socialLinks, whatsappLinks } from '@/config/social';
@@ -27,13 +28,13 @@ export function Header() {
             </a>
             <span className="header-separator">|</span>
             <a href={socialLinks.headerFacebook} target="_blank" className="header-social-link" aria-label="Siga-nos no Facebook">
-              <Share2 className="header-social-icon" aria-hidden="true" strokeWidth={1.5} />
+              <FacebookIcon className="header-social-icon" />
             </a>
             <a href={socialLinks.headerInstagram} target="_blank" className="header-social-link" aria-label="Siga-nos no Instagram">
-              <Camera className="header-social-icon" aria-hidden="true" strokeWidth={1.5} />
+              <InstagramIcon className="header-social-icon" />
             </a>
             <a href={whatsappLinks.contact} target="_blank" className="header-social-link" aria-label="Fale conosco no WhatsApp">
-              <MessageCircle className="header-social-icon" aria-hidden="true" strokeWidth={1.5} />
+              <WhatsAppIcon className="header-social-icon" />
             </a>
           </div>
 

@@ -2,6 +2,12 @@
 
 ## 2026-09-02
 
+- **Restauração dos Ícones Oficiais das Redes Sociais**:
+  - Restaurados os SVGs autênticos de marca para Facebook, Instagram e WhatsApp no Header e Menu Mobile.
+  - Restaurados os SVGs autênticos de Instagram, Facebook, TikTok, YouTube e WhatsApp no Rodapé.
+  - Removidas as substituições genéricas de bibliotecas de ícones.
+## 2026-09-02
+
 - **Ajuste no Card Máquinas de Vinho**:
   - Removida a linha de pergunta 'Qual seria a sua escolha hoje?' da descrição.
   - Botão do card 'Jantar Harmonizado' atualizado para: Fazer reserva
@@ -67,6 +73,7 @@
 
 - **Correção Visual do Ícone do YouTube**:
   - Corrigido o triângulo interno de play com preenchimento em dourado no rodapé.
+
 
 
 
