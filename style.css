@@ -3075,22 +3075,13 @@
             justify-content: center;
             width: 100%;
             max-width: 170px;
-            gap: 0.5rem;
-            margin-bottom: 1.1rem;
+            margin: 0.2rem auto 1.1rem;
         }
 
         .footer-logo-divider__line {
-            flex: 1;
+            width: 100%;
             height: 1px;
-            background: linear-gradient(to right, transparent, rgba(210, 154, 60, 0.35), transparent);
-        }
-
-        .footer-logo-divider__icon {
-            width: 15px;
-            height: 15px;
-            fill: #d29a3c;
-            opacity: 0.85;
-            flex-shrink: 0;
+            background: linear-gradient(90deg, transparent, rgba(210, 154, 60, 0.45) 50%, transparent);
         }
 
         .footer-socials {
@@ -3139,7 +3130,7 @@
             color: #d2cfc9;
             line-height: 1.45;
             font-weight: 300;
-            white-space: nowrap;
+            white-space: normal;
         }
 
         .footer-contact-item svg {

@@ -13,6 +13,10 @@ export function Footer() {
             className="footer-logo-img"
           />
 
+          <div className="footer-logo-divider">
+            <span className="footer-logo-divider__line" />
+          </div>
+
           <div className="footer-socials">
             <a href={socialLinks.instagram} target="_blank" className="footer-social-link" aria-label="Siga-nos no Instagram">
               <InstagramIcon />
@@ -36,7 +40,10 @@ export function Footer() {
             <span>
               Av. Alcindo Cacela, 1848<br />
               Nazaré, Belém – PA<br />
-              <span style={{ opacity: 0.65, fontSize: '0.78rem' }}>(Mezanino do +B Supermercados<br />- Unidade Alcindo Cacela)</span>
+              <span style={{ display: 'block', opacity: 0.65, fontSize: '0.78rem', lineHeight: 1.35, marginTop: '3px' }}>
+                <span style={{ display: 'block' }}>(Mezanino do +B Supermercados</span>
+                <span style={{ display: 'block' }}>- Unidade Alcindo Cacela)</span>
+              </span>
             </span>
           </div>
         </div>

@@ -2,6 +2,10 @@
 
 ## 2026-09-02
 
+- **Ajuste na Linha Divisória do Rodapé**:
+  - Mantida a linha dourada contínua com gradiente suave (ooter-logo-divider__line) abaixo da logo, removendo apenas o ícone de diamante central.
+## 2026-09-02
+
 - **Ajuste Visual no Rodapé (Coluna da Logo)**:
   - Removido o divisor com ícone de diamante (ooter-logo-divider) que ficava entre a logo e os ícones de redes sociais.
   - O visual agora apresenta um espaçamento limpo e elegante diretamente entre a logo e os ícones sociais.
@@ -83,6 +87,7 @@
 
 - **Correção Visual do Ícone do YouTube**:
   - Corrigido o triângulo interno de play com preenchimento em dourado no rodapé.
+
 
 
 
