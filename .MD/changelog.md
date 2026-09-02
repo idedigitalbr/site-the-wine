@@ -1,4 +1,16 @@
-﻿# Changelog
+# Changelog
+
+## 2026-09-02 (Commit 38b05da)
+
+- **Otimização e Refatoração da Página de Reservas (/reservas)**:
+  - Centralização horizontal de todos os elementos (título, stepper, formulário) com regras de alta especificidade para evitar sobrescrita por resets legados.
+  - Ajuste no espaçamento superior (155px) para descolar completamente do cabeçalho fixo sem encavalar textos.
+  - Ajuste no espaçamento inferior (120px) antes do rodapé institucional.
+  - Remoção da coluna lateral de informações redundantes a pedido do cliente, deixando o formulário em coluna única elegante e focado (max-width: 760px).
+  - Remoção do subtítulo redundante abaixo do título principal.
+  - Resiliência na API de reservas em ambiente local: conexão com API online da VPS em caso de banco local desligado, garantindo fluxo completo 100% testável.
+  - Adição da página institucional de Termos e Privacidade (/termos-e-privacidade).
+  - Atualização do crédito da agência no rodapé com logo oficial IDE Digital e links diretos.
 
 ## 2026-09-02
 
