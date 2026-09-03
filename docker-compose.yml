@@ -22,7 +22,7 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
       ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?ADMIN_SESSION_SECRET must be set}
       NOTIFICATION_JOB_SECRET: ${NOTIFICATION_JOB_SECRET:?NOTIFICATION_JOB_SECRET must be set}
-      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://thewine.suporteide.digital}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://thewineexperience.com.br}
       PAYMENT_MODE: ${PAYMENT_MODE:-mock}
     depends_on:
       db:

@@ -5,7 +5,7 @@ export const siteConfig = {
     'The Wine Experience - Uma jornada sensorial por rótulos selecionados, gastronomia autoral contemporânea e momentos memoráveis no mezanino do +B Supermercados em Belém.',
   shortDescription:
     'Uma jornada sensorial por rótulos selecionados, gastronomia autoral contemporânea e momentos memoráveis em Belém.',
-  canonical: 'https://thewine.suporteide.digital/',
+  canonical: 'https://thewineexperience.com.br/',
   themeColor: '#050505',
   phoneDisplay: '(91) 98404-0710',
   phoneE164: '+5591984040710',

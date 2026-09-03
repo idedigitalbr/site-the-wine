@@ -32,7 +32,7 @@ const sampleValues: Record<string, string> = {
   reservation_date: '28/08/2026',
   reservation_time: '19:00',
   guest_count: '4',
-  private_link: 'thewine.suporteide.digital/minha-reserva',
+  private_link: 'thewineexperience.com.br/minha-reserva',
   waitlist_code: 'WL-000024',
 };
 

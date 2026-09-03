@@ -427,6 +427,9 @@
         .hero {
             position: relative;
             height: 100vh;
+            height: 100dvh;
+            min-height: 100vh;
+            min-height: 100dvh;
             width: 100%;
             overflow: hidden;
             display: flex;
@@ -813,8 +816,21 @@
         }
 
         @media (max-width: 600px) {
+            .historia-section {
+                padding: 4.5rem 1.25rem;
+                min-height: auto;
+            }
+            .historia-headline {
+                font-size: clamp(1.65rem, 6.5vw, 2.1rem);
+                letter-spacing: 0.03em;
+            }
+            .historia-paragraph {
+                font-size: 0.98rem;
+                line-height: 1.65;
+            }
             .highlighted-container {
                 gap: 0.8rem;
+                margin-top: 1.2rem;
             }
             .bracket-svg {
                 display: none;
@@ -822,7 +838,9 @@
             .highlighted-text {
                 border-left: 1px solid var(--wine-border);
                 border-right: 1px solid var(--wine-border);
-                padding: 0 1rem;
+                padding: 0.4rem 0.85rem;
+                font-size: 1.05rem;
+                line-height: 1.5;
             }
             .divider-diamond {
                 margin: 1.2rem auto;
@@ -1055,6 +1073,33 @@
                 backdrop-filter: blur(6px) !important;
                 -webkit-backdrop-filter: blur(6px) !important;
                 border-color: var(--wine-gold) !important;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .mvv-column {
+                min-height: 340px;
+                padding: 1.5rem 1rem;
+            }
+            .mvv-card {
+                padding: 2.2rem 1.25rem;
+                background: rgba(11, 10, 8, 0.72) !important;
+                backdrop-filter: blur(8px) !important;
+                -webkit-backdrop-filter: blur(8px) !important;
+                border-color: rgba(221, 185, 118, 0.38) !important;
+            }
+            .mvv-icon {
+                width: 48px;
+                height: 48px;
+                margin-bottom: 0.6rem;
+            }
+            .mvv-card h3 {
+                font-size: clamp(26px, 7vw, 32px) !important;
+                margin-bottom: 0.8rem;
+            }
+            .mvv-card p {
+                font-size: 15px !important;
+                line-height: 1.6 !important;
             }
         }
 
@@ -1787,20 +1832,32 @@
 
             .tw-acc__panel {
                 flex: none;
-                height: 22vh;
-                min-height: 140px;
-                transition: height 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+                height: 80px;
+                min-height: 80px;
+                transition: height 0.5s cubic-bezier(0.25, 1, 0.5, 1), min-height 0.5s cubic-bezier(0.25, 1, 0.5, 1);
             }
 
             .tw-acc__panel:hover,
             .tw-acc__panel:focus-within,
             .tw-acc__panel--active {
                 flex-grow: 1;
-                height: 50vh;
+                height: auto;
+                min-height: 340px;
+            }
+
+            .tw-acc__panel--active .tw-acc__extra {
+                max-height: 320px;
+                opacity: 1;
             }
 
             .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) {
-                height: 22vh;
+                height: auto;
+                min-height: 340px;
+            }
+
+            .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) .tw-acc__extra {
+                max-height: 320px;
+                opacity: 1;
             }
 
             .tw-acc__panel + .tw-acc__panel {
@@ -1813,7 +1870,7 @@
             }
 
             .tw-acc__cap {
-                padding: 0 20px 24px;
+                padding: 14px 18px 20px;
             }
 
             .tw-acc__cap-title {
@@ -1826,8 +1883,21 @@
                 font-size: 1.25rem;
             }
 
+            .tw-acc__desc {
+                font-size: 0.92rem;
+                line-height: 1.55;
+                margin-top: 10px;
+                max-width: 320px;
+            }
+
+            .tw-acc__btn {
+                min-height: 44px;
+                padding: 10px 24px;
+                touch-action: manipulation;
+            }
+
             .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) .tw-acc__cap-title {
-                font-size: 1rem;
+                font-size: 1.25rem;
             }
         }
 
@@ -2544,13 +2614,72 @@
                 gap: 1rem;
             }
 
+            .header-container {
+                padding: 0 1.25rem;
+            }
+
             .btn-gold-fill, .btn-gold-outline {
                 width: 100%;
                 text-align: center;
+                min-height: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                touch-action: manipulation;
+            }
+
+            .split-v2-content {
+                padding: 3rem 1.25rem;
+                text-align: center;
+                align-items: center;
+            }
+
+            .split-v2-content > div[style*="flex-start"] {
+                align-self: center !important;
+                width: 100%;
+                display: flex;
+                justify-content: center;
+            }
+
+            .split-v2-content .btn-gold-outline {
+                max-width: 280px;
+            }
+
+            .cardapio-left-cream {
+                padding: 3rem 1.25rem;
+                text-align: center;
+            }
+
+            .cardapio-left-content {
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .cardapio-left-content .btn-cardapio {
+                width: 100%;
+                max-width: 260px;
+                min-height: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                margin: 1.2rem auto 0;
+                touch-action: manipulation;
+            }
+
+            .cardapio-right-video {
+                min-height: 220px;
+            }
+
+            .cardapio-menu-float {
+                width: 240px !important;
+                max-width: 78% !important;
+                margin: 1.5rem auto !important;
             }
 
             .section-tag-center, .split-title, .cardapio-left-content h2, .eventos-left-side h2, .reserva-center-box h2 {
-                font-size: 2.1rem;
+                font-size: clamp(1.8rem, 6.5vw, 2.2rem);
                 white-space: normal;
             }
 
@@ -2580,7 +2709,13 @@
             }
 
             .modal-card {
-                padding: 2.5rem 1.5rem;
+                padding: 2.2rem 1.25rem;
+                width: min(94vw, 420px);
+            }
+
+            .modal-card .btn-gold-outline {
+                width: 100%;
+                max-width: 100%;
             }
 
             .modal-booking-form {
@@ -2589,6 +2724,10 @@
 
             .form-group.full-width, .booking-actions {
                 grid-column: span 1;
+            }
+
+            .hero-explore-indicator {
+                bottom: 1.2rem;
             }
         }
 
@@ -3599,7 +3738,7 @@
             }
 
             .footer-map-link {
-                width: 100 !important;
+                width: 100% !important;
                 max-width: 320px !important;
                 height: 180px !important;
                 margin: 0 auto !important;

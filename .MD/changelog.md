@@ -7,6 +7,9 @@
     - `thewineexperience.com.br` (domínio oficial)
     - `www.thewineexperience.com.br` (domínio oficial com www)
     - `thewine.suporteide.digital` (subdomínio técnico mantido ativo para paridade e redundância)
+  - Atualizada a URL canônica oficial para `https://thewineexperience.com.br/` em `next-app/src/config/site.ts`.
+  - Atualizados metadados OpenGraph, Twitter Cards, Schema.org Restaurant (`url` e `image`) e fallback de `PUBLIC_APP_URL`.
+  - Atualizadas rotas de fallback de disponibilidade e referências administrativas para o domínio oficial.
   - Configurado na VPS Contabo (`161.97.108.92`), validando resolução DNS via Cloudflare e teste de conectividade HTTPS com resposta `200 OK`.
 
 ## 2026-09-02 (Commit 38b05da)

@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     if (process.env.NODE_ENV !== 'production') {
       try {
-        const fallbackUrl = new URL('https://thewine.suporteide.digital/api/reservations/availability');
+        const fallbackUrl = new URL('https://thewineexperience.com.br/api/reservations/availability');
         request.nextUrl.searchParams.forEach((val, key) => fallbackUrl.searchParams.set(key, val));
         const res = await fetch(fallbackUrl.toString(), { cache: 'no-store' });
         if (res.ok) {
