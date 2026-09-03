@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-03
+
+- **Configuração e Apontamento do Domínio Oficial (`thewineexperience.com.br`)**:
+  - Adicionado roteamento no Traefik (`docker-compose.yml`) com suporte a múltiplos domínios e certificados SSL Let's Encrypt independentes:
+    - `thewineexperience.com.br` (domínio oficial)
+    - `www.thewineexperience.com.br` (domínio oficial com www)
+    - `thewine.suporteide.digital` (subdomínio técnico mantido ativo para paridade e redundância)
+  - Configurado na VPS Contabo (`161.97.108.92`), validando resolução DNS via Cloudflare e teste de conectividade HTTPS com resposta `200 OK`.
+
 ## 2026-09-02 (Commit 38b05da)
 
 - **Otimização e Refatoração da Página de Reservas (/reservas)**:

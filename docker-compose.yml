@@ -34,10 +34,25 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
+      # Router - suporteide.digital
       - "traefik.http.routers.thewine-router.rule=Host(`thewine.suporteide.digital`)"
       - "traefik.http.routers.thewine-router.entrypoints=websecure"
       - "traefik.http.routers.thewine-router.tls=true"
       - "traefik.http.routers.thewine-router.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.thewine-router.service=thewine-service"
+      # Router - thewineexperience.com.br
+      - "traefik.http.routers.thewine-oficial.rule=Host(`thewineexperience.com.br`)"
+      - "traefik.http.routers.thewine-oficial.entrypoints=websecure"
+      - "traefik.http.routers.thewine-oficial.tls=true"
+      - "traefik.http.routers.thewine-oficial.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.thewine-oficial.service=thewine-service"
+      # Router - www.thewineexperience.com.br
+      - "traefik.http.routers.thewine-oficial-www.rule=Host(`www.thewineexperience.com.br`)"
+      - "traefik.http.routers.thewine-oficial-www.entrypoints=websecure"
+      - "traefik.http.routers.thewine-oficial-www.tls=true"
+      - "traefik.http.routers.thewine-oficial-www.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.thewine-oficial-www.service=thewine-service"
+      # Servico compartilhado
       - "traefik.http.services.thewine-service.loadbalancer.server.port=3000"
 
   db:

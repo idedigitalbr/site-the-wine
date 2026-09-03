@@ -1,19 +1,22 @@
-﻿# Deploy & Infraestrutura
+# Deploy & Infraestrutura
 
-atualizado: 2026-09-02
+atualizado: 2026-09-03
 
 ## Ambientes
 
 - **Local**: Desenvolvimento (`next-app`)
 - **GitHub**: Repositório `idedigitalbr/site-the-wine` (Branch `main`)
 - **Produção (VPS)**:
-  - **URL Pública**: `https://thewine.suporteide.digital`
+  - **URLs Públicas**:
+    - `https://thewineexperience.com.br` (Domínio Oficial de Produção)
+    - `https://www.thewineexperience.com.br` (Domínio Oficial com www)
+    - `https://thewine.suporteide.digital` (Subdomínio Técnico IDE)
   - **IP do Servidor**: `161.97.108.92` (Contabo VPS)
   - **Diretório na VPS**: `/opt/thewine-site/app`
   - **Containers Docker**:
     - `thewine-web`: Next.js 15+ Standalone Runtime (porta interna mapeada para Traefik)
     - `thewine-mysql`: MySQL 8.0 com volume persistente para banco de dados
-  - **Proxy Reverso**: Traefik com terminação SSL/TLS automática (Let's Encrypt)
+  - **Proxy Reverso**: Traefik com roteamento multi-domínio e terminação SSL/TLS automática (Let's Encrypt)
   - **DNS & CDN**: Cloudflare
 
 ## Pipeline de CI/CD (GitHub Actions)
