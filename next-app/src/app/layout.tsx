@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import Script from 'next/script';
+// import Script from 'next/script';
 import './globals.css';
 import { restaurantJsonLd, siteConfig } from '@/config/site';
 import { AppProviders } from '@/providers/AppProviders';
@@ -50,6 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         />
       </head>
       <body>
+        {/* Cookiebot desativado temporariamente:
         <Script
           id="Cookiebot"
           src="https://consent.cookiebot.com/uc.js"
@@ -57,7 +58,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           data-blockingmode="auto"
           type="text/javascript"
           strategy="beforeInteractive"
-        />
+        /> */}
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

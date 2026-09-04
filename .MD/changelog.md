@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-04
+
+- **Desativação Temporária do Cookiebot**:
+  - Script do Cookiebot CMP comentado e desativado temporariamente no `layout.tsx` a pedido do cliente/gestão, mantendo a estrutura pronta para reativação futura.
+
 ## 2026-09-03
 
 - **Configuração e Apontamento do Domínio Oficial (`thewineexperience.com.br`)**:
