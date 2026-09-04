@@ -60,3 +60,20 @@ Não transformar `page.tsx` inteiro em `use client`.
 Antes de remover, renomear ou substituir qualquer classe, ID, asset ou script, verificar se ele aparece no contrato de comportamento ou nos testes existentes.
 
 Quando houver dúvida entre melhorar e preservar, preservar primeiro.
+
+## ⚡ REGRA DE OURO: AGILIDADE E VELOCIDADE EM AJUSTES DE FRONTEND (NEXT.JS / CSS / UI)
+
+**Ajustes de layout, estilo, CSS, tipografia, espaçamento (px, rem, margin, padding, cores, tamanhos) devem ser resolvidos em SEGUNDOS, sem rebuliço.**
+
+1. **Ajuste Direto e Imediato:**
+   - Fazer a edição pontual direta no arquivo CSS ou componente JSX/TSX usando `replace_file_content`.
+   - Responder imediatamente ao usuário após a alteração.
+
+2. **🚫 PROIBIDO EM AJUSTES DE FRONTEND / CSS:**
+   - **NÃO rodar `npm run typecheck` ou `tsc`** para checar mudanças cosméticas ou de pixels.
+   - **NÃO rodar `npm run build`** para validar alterações simples de CSS/JSX.
+   - **NÃO fazer requisições de rede (`read_url_content`)** para testar se a página carregou em ajustes de estilo.
+   - **NÃO reiniciar servidores dev (`npm run dev`)** desnecessariamente. O Next.js possui **Fast Refresh nativo**, que reflete as alterações no navegador em milissegundos.
+
+3. **Quando usar Typecheck / Build:**
+   - **Apenas** quando houver alteração estrutural profunda de lógica/TypeScript, criação de novas rotas de API, refatoração de contratos de dados, instalação de novas dependências, ou quando o usuário **pedir expressamente** para validar a build ou fazer commit.

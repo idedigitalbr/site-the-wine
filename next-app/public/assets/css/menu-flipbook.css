@@ -101,7 +101,9 @@
     .menu-modal-card {
         width: calc(100vw - 0.7rem);
         height: 96vh;
+        height: 96dvh;
         max-height: 96vh;
+        max-height: 96dvh;
     }
 
     .flipbook-header {

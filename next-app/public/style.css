@@ -3092,6 +3092,29 @@
             text-align: center;
         }
 
+        @media (max-width: 768px) {
+            .lightbox-close {
+                top: max(16px, env(safe-area-inset-top, 16px));
+                right: 16px;
+                width: 44px;
+                height: 44px;
+            }
+            .lightbox-nav {
+                width: 42px;
+                height: 42px;
+            }
+            .lightbox-prev { left: 8px; }
+            .lightbox-next { right: 8px; }
+            .lightbox-content {
+                max-width: 95vw;
+                max-height: 82dvh;
+            }
+            .lightbox-image {
+                max-width: 95vw;
+                max-height: 75dvh;
+            }
+        }
+
         .footer-premium {
             background: #080c0e;
             padding: 0;
@@ -4040,7 +4063,9 @@ body.menu-modal-open {
     }
     .menu-modal-card {
         height: 96vh;
+        height: 96dvh;
         max-height: 96vh;
+        max-height: 96dvh;
     }
     .menu-modal-close {
         top: -16px !important;
@@ -4396,7 +4421,9 @@ body.menu-modal-open {
     .menu-modal-card {
         width: calc(100vw - 0.7rem);
         height: 96vh;
+        height: 96dvh;
         max-height: 96vh;
+        max-height: 96dvh;
         border-radius: 10px;
     }
 

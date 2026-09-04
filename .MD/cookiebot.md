@@ -1,8 +1,9 @@
-﻿# Cookiebot CMP & Gestão de Cookies (LGPD)
+# Cookiebot CMP & Gestão de Cookies (LGPD)
 
-> **Status Atual**: Implementado no código e pronto para validação pós-deploy  
-> **Data de Implementação**: 2026-09-02  
-> **Ambiente Atual**: `https://thewine.suporteide.digital` (Subdomínio provisório na VPS)  
+> **Status Atual**: Ativo em Produção (Validado e Registrado no Painel)  
+> **Data de Atualização**: 2026-09-03  
+> **Ambiente Principal**: `https://thewineexperience.com.br` (Domínio Oficial Registrado)  
+> **Ambiente Alternativo**: `https://thewine.suporteide.digital` (Subdomínio Provisório)  
 
 ---
 

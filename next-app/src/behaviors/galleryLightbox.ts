@@ -171,14 +171,48 @@ export function setupGalleryLightbox(): Cleanup {
 
   const handleMouseMove = (event: MouseEvent) => handleDragMove(event.clientX);
 
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchIntentDecided = false;
+  let isHorizontalTouch = false;
+
   const handleTouchStart = (event: TouchEvent) => {
     const touch = event.touches[0];
-    if (touch) handleDragStart(touch.clientX);
+    if (!touch) return;
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    touchIntentDecided = false;
+    isHorizontalTouch = false;
+    handleDragStart(touch.clientX);
   };
 
   const handleTouchMove = (event: TouchEvent) => {
     const touch = event.touches[0];
-    if (touch) handleDragMove(touch.clientX);
+    if (!touch) return;
+
+    if (!touchIntentDecided) {
+      const dx = Math.abs(touch.clientX - touchStartX);
+      const dy = Math.abs(touch.clientY - touchStartY);
+      if (dx > 6 || dy > 6) {
+        touchIntentDecided = true;
+        isHorizontalTouch = dx >= dy;
+        if (!isHorizontalTouch) {
+          isDragging = false;
+          scheduleResume();
+          return;
+        }
+      }
+    }
+
+    if (isHorizontalTouch) {
+      handleDragMove(touch.clientX);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchIntentDecided = false;
+    isHorizontalTouch = false;
+    handleDragEnd();
   };
 
   const handleResize = () => {
@@ -256,6 +290,33 @@ export function setupGalleryLightbox(): Cleanup {
     }
   };
 
+  let lightboxTouchStartX = 0;
+  let lightboxTouchStartY = 0;
+
+  const handleLightboxTouchStart = (event: TouchEvent) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    lightboxTouchStartX = touch.clientX;
+    lightboxTouchStartY = touch.clientY;
+  };
+
+  const handleLightboxTouchEnd = (event: TouchEvent) => {
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    const diffX = touch.clientX - lightboxTouchStartX;
+    const diffY = touch.clientY - lightboxTouchStartY;
+
+    if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY) * 1.3) {
+      if (diffX < 0) {
+        nextImage();
+      } else {
+        previousImage();
+      }
+    } else if (diffY > 75 && Math.abs(diffY) > Math.abs(diffX) * 1.5) {
+      closeLightbox();
+    }
+  };
+
   const handleLightboxOverlay = (event: MouseEvent) => {
     if (event.target === lightbox) closeLightbox();
   };
@@ -273,7 +334,7 @@ export function setupGalleryLightbox(): Cleanup {
   gallery.addEventListener('mousedown', handleMouseDown);
   gallery.addEventListener('touchstart', handleTouchStart, { passive: true });
   gallery.addEventListener('touchmove', handleTouchMove, { passive: true });
-  gallery.addEventListener('touchend', handleDragEnd);
+  gallery.addEventListener('touchend', handleTouchEnd);
   window.addEventListener('mousemove', handleMouseMove);
   window.addEventListener('mouseup', handleDragEnd);
   window.addEventListener('resize', handleResize);
@@ -284,6 +345,8 @@ export function setupGalleryLightbox(): Cleanup {
   lightboxPrev?.addEventListener('click', previousImage);
   lightboxNext?.addEventListener('click', nextImage);
   lightbox?.addEventListener('click', handleLightboxOverlay);
+  lightbox?.addEventListener('touchstart', handleLightboxTouchStart, { passive: true });
+  lightbox?.addEventListener('touchend', handleLightboxTouchEnd, { passive: true });
   document.addEventListener('keydown', handleKeyDown);
 
   return () => {
@@ -298,7 +361,7 @@ export function setupGalleryLightbox(): Cleanup {
     gallery.removeEventListener('mousedown', handleMouseDown);
     gallery.removeEventListener('touchstart', handleTouchStart);
     gallery.removeEventListener('touchmove', handleTouchMove);
-    gallery.removeEventListener('touchend', handleDragEnd);
+    gallery.removeEventListener('touchend', handleTouchEnd);
     window.removeEventListener('mousemove', handleMouseMove);
     window.removeEventListener('mouseup', handleDragEnd);
     window.removeEventListener('resize', handleResize);
@@ -309,6 +372,8 @@ export function setupGalleryLightbox(): Cleanup {
     lightboxPrev?.removeEventListener('click', previousImage);
     lightboxNext?.removeEventListener('click', nextImage);
     lightbox?.removeEventListener('click', handleLightboxOverlay);
+    lightbox?.removeEventListener('touchstart', handleLightboxTouchStart);
+    lightbox?.removeEventListener('touchend', handleLightboxTouchEnd);
     document.removeEventListener('keydown', handleKeyDown);
 
     closeLightbox();

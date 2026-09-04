@@ -404,12 +404,12 @@ function StepIndicators({ currentStep }: { currentStep: number }) {
         const number = index + 1;
         const active = currentStep >= number;
         return (
-          <div key={label} className="flex items-center last:flex-none">
+          <div key={label} className="flex flex-1 items-center last:flex-none">
             <div className="flex flex-col items-center gap-2">
               <span className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold ${active ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted'}`}>{number}</span>
               <span className={`hidden text-[10px] uppercase tracking-[0.16em] sm:block ${active ? 'text-primary' : 'text-muted'}`}>{label}</span>
             </div>
-            {number < steps.length && <span className={`mx-2 h-px w-8 sm:mx-4 sm:w-20 ${currentStep > number ? 'bg-primary' : 'bg-border'}`} />}
+            {number < steps.length && <span className={`mx-1.5 h-px flex-1 sm:mx-4 sm:w-20 sm:flex-none ${currentStep > number ? 'bg-primary' : 'bg-border'}`} />}
           </div>
         );
       })}

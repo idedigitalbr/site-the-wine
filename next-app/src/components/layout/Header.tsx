@@ -21,7 +21,9 @@ export function Header() {
 
           <div className="header-right-side">
             <a
-              href="/reservas"
+              href={whatsappLinks.reservation}
+              target="_blank"
+              rel="noopener noreferrer"
               className="btn-header-reserve"
             >
               FAÇA SUA RESERVA

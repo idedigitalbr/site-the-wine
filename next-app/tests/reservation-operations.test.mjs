@@ -143,7 +143,7 @@ test('phase nine exposes a protected customer directory with operational history
   assert.match(shell, /\/admin\/clientes/);
 });
 
-test('public reservation entry points open the native booking flow', () => {
+test('public reservation entry points open WhatsApp directly', () => {
   const header = source('src/components/layout/Header.tsx');
   const mobileNavigation = source('src/components/layout/MobileNavigation.tsx');
   const pairings = source('src/components/sections/PairingsSection.tsx');
@@ -151,9 +151,10 @@ test('public reservation entry points open the native booking flow', () => {
   const bookingModal = source('src/components/reservation/BookingModal.tsx');
 
   for (const component of [header, mobileNavigation, pairings, reservationSection]) {
-    assert.match(component, /href="\/reservas"/);
+    assert.match(component, /whatsappLinks\.(reservation|experience)/);
+    assert.doesNotMatch(component, /href="\/reservas"/);
   }
-  assert.match(bookingModal, /Reservar pelo site/);
+  assert.doesNotMatch(bookingModal, /Reservar pelo site/);
   assert.match(bookingModal, /Reservar no WhatsApp/);
 });
 
