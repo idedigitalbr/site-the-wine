@@ -12,7 +12,7 @@ export function ReservationSection() {
           em um ambiente exclusivo.
         </p>
         <a
-          href="/reservar"
+          href="/reservas"
           className="cta-reservation__btn"
           id="btn-reservar-agora"
         >
