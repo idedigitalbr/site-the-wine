@@ -1,5 +1,3 @@
-import { whatsappLinks } from '@/config/social';
-
 export function ReservationSection() {
   return (
     <section className="cta-reservation" id="reserva">
@@ -14,9 +12,7 @@ export function ReservationSection() {
           em um ambiente exclusivo.
         </p>
         <a
-          href={whatsappLinks.experience}
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/reservas"
           className="cta-reservation__btn"
           id="btn-reservar-agora"
         >

@@ -1,5 +1,3 @@
-import { whatsappLinks } from '@/config/social';
-
 export function PairingsSection() {
   return (
     <section id="gastronomia" className="split-section-v2 parallax-container">
@@ -23,9 +21,7 @@ export function PairingsSection() {
 
         <div style={{ alignSelf: 'flex-start' }}>
           <a
-            href={whatsappLinks.reservation}
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/reservas"
             className="btn-gold-outline"
           >
             FAÇA SUA RESERVA
