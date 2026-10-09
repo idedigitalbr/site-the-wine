@@ -8,7 +8,9 @@
   - Ícones ampliados para 42px com destaque dourado e sombras de profundidade.
   - Boxes ampliados com altura mínima de 440px, cantos arredondados (14px), bordas douradas e respiro de 20px entre eles.
   - Botão de reserva com toque otimizado (48px) e redirecionamento direto ao WhatsApp sem travas.
-  - Adicionado `loading="lazy"` e `decoding="async"` nas imagens dos eventos para carregamento assíncrono ultra-rápido no celular.
+- **Remoção do Botão de Download do Cardápio**:
+  - Removido o botão de download de PDF da barra de ferramentas do leitor do cardápio (`MenuModal`), mantendo apenas os controles de navegação e tela cheia.
+  - Removido o link de download no fallback de erro, garantindo que o PDF não fique exposto para download direto.
 
 ## 2026-09-04
 

@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Download, Maximize2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
 import { menuPages } from '@/config/content';
 
 export function MenuModal() {
@@ -46,17 +46,6 @@ export function MenuModal() {
                 <Maximize2 aria-hidden="true" strokeWidth={1.5} />
               </button>
 
-              <a
-                id="menuDownloadBtn"
-                className="flipbook-icon-button"
-                href={menuPages.pdf}
-                download
-                aria-label="Baixar PDF"
-                title="Baixar PDF"
-              >
-                <Download aria-hidden="true" strokeWidth={1.5} />
-              </a>
-
               <button
                 className="flipbook-icon-button flipbook-nav flipbook-toolbar-nav flipbook-nav-next"
                 id="menuNextBtn"
@@ -83,10 +72,9 @@ export function MenuModal() {
 
           <div className="menu-pdf-error" id="menuPdfError" role="alert" hidden>
             <strong>Não foi possível carregar o cardápio.</strong>
-            <span>Verifique sua conexão ou baixe o PDF para continuar.</span>
+            <span>Verifique sua conexão ou tente recarregar para continuar.</span>
             <div className="flipbook-error-actions">
               <button id="menuRetryBtn" type="button">Tentar novamente</button>
-              <a href={menuPages.pdf} download>Baixar PDF</a>
             </div>
           </div>
         </div>
