@@ -15,11 +15,7 @@ export function setupEventsAccordion(): Cleanup {
       if (!isMobile()) return;
 
       const target = event.target;
-      if (
-        target instanceof Element &&
-        target.closest('.tw-acc__btn') &&
-        panel.classList.contains('tw-acc__panel--active')
-      ) {
+      if (target instanceof Element && target.closest('.tw-acc__btn')) {
         return;
       }
 

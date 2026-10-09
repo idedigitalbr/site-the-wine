@@ -1817,52 +1817,76 @@
         /* Responsive Media Query para Accordion */
         @media (max-width: 860px) {
             .tw-acc-header {
-                padding: 56px 16px 36px;
+                padding: 48px 16px 28px;
+            }
+
+            .tw-acc-header__title {
+                font-size: 32px !important;
             }
 
             .tw-acc {
                 height: auto;
-                min-height: 100vh;
+                min-height: auto;
+                padding-bottom: 36px;
             }
 
             .tw-acc__row {
                 flex-direction: column;
-                gap: 2px;
+                gap: 20px;
+                padding: 0 16px;
             }
 
             .tw-acc__panel {
                 flex: none;
-                height: 80px;
-                min-height: 80px;
-                transition: height 0.5s cubic-bezier(0.25, 1, 0.5, 1), min-height 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+                width: 100%;
+                height: auto;
+                min-height: 440px;
+                border-radius: 14px;
+                overflow: hidden;
+                position: relative;
+                border: 1px solid rgba(211, 185, 123, 0.22);
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
             }
 
             .tw-acc__panel:hover,
             .tw-acc__panel:focus-within,
             .tw-acc__panel--active {
-                flex-grow: 1;
+                flex: none;
                 height: auto;
-                min-height: 340px;
+                min-height: 440px;
+                border-color: rgba(211, 185, 123, 0.45);
             }
 
-            .tw-acc__panel--active .tw-acc__extra {
-                max-height: 320px;
-                opacity: 1;
+            .tw-acc__link {
+                height: 100%;
+                min-height: 440px;
             }
 
-            .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) {
-                height: auto;
-                min-height: 340px;
+            .tw-acc__link::after {
+                opacity: 1 !important;
+                background: linear-gradient(
+                    to top,
+                    rgba(0, 0, 0, 0.98) 0%,
+                    rgba(0, 0, 0, 0.88) 38%,
+                    rgba(0, 0, 0, 0.55) 65%,
+                    rgba(0, 0, 0, 0.2) 85%,
+                    rgba(0, 0, 0, 0.05) 100%
+                );
             }
 
+            /* No mobile, todos os cards ficam com conteúdo aberto e visível */
+            .tw-acc__extra,
+            .tw-acc__panel .tw-acc__extra,
+            .tw-acc__panel--active .tw-acc__extra,
             .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) .tw-acc__extra {
-                max-height: 320px;
-                opacity: 1;
+                max-height: none !important;
+                opacity: 1 !important;
+                display: flex !important;
             }
 
             .tw-acc__panel + .tw-acc__panel {
-                border-left: none;
-                border-top: 1px solid rgba(211, 185, 123, 0.12);
+                border-left: 1px solid rgba(211, 185, 123, 0.22);
+                border-top: 1px solid rgba(211, 185, 123, 0.22);
             }
 
             .tw-acc__panel::before {
@@ -1870,34 +1894,65 @@
             }
 
             .tw-acc__cap {
-                padding: 14px 18px 20px;
+                padding: 32px 20px 36px;
+                min-height: 440px;
+                justify-content: flex-end;
             }
 
-            .tw-acc__cap-title {
-                font-size: 1rem;
+            .tw-acc__cap-icon {
+                width: 42px;
+                height: 42px;
+                margin-bottom: 12px;
+                color: var(--wine-gold);
+                transform: scale(1.1);
             }
 
+            .tw-acc__cap-title,
             .tw-acc__panel:hover .tw-acc__cap-title,
             .tw-acc__panel:focus-within .tw-acc__cap-title,
-            .tw-acc__panel--active .tw-acc__cap-title {
-                font-size: 1.25rem;
+            .tw-acc__panel--active .tw-acc__cap-title,
+            .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) .tw-acc__cap-title {
+                font-size: 1.85rem !important;
+                font-weight: 600;
+                line-height: 1.25;
+            }
+
+            .tw-acc__cap-sub,
+            .tw-acc__panel:hover .tw-acc__cap-sub,
+            .tw-acc__panel:focus-within .tw-acc__cap-sub,
+            .tw-acc__panel--active .tw-acc__cap-sub,
+            .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) .tw-acc__cap-sub {
+                font-size: 1.1rem !important;
+                color: var(--wine-gold-soft);
+                margin-top: 6px;
+                letter-spacing: 0.05em;
             }
 
             .tw-acc__desc {
-                font-size: 0.92rem;
-                line-height: 1.55;
-                margin-top: 10px;
-                max-width: 320px;
+                font-size: 1.05rem;
+                line-height: 1.6;
+                margin-top: 12px;
+                max-width: 360px;
+                color: rgba(245, 240, 235, 0.92);
             }
 
             .tw-acc__btn {
-                min-height: 44px;
-                padding: 10px 24px;
+                min-height: 48px;
+                padding: 12px 28px;
+                font-size: 0.78rem;
+                letter-spacing: 0.2em;
+                font-weight: 600;
+                color: var(--wine-gold);
+                border: 1px solid var(--wine-gold);
+                background: rgba(211, 185, 123, 0.12);
+                border-radius: 8px;
                 touch-action: manipulation;
+                margin-top: 18px;
             }
 
-            .tw-acc__row:hover .tw-acc__panel--active:not(:hover):not(:focus-within) .tw-acc__cap-title {
-                font-size: 1.25rem;
+            .tw-acc__btn svg {
+                width: 14px;
+                height: 14px;
             }
         }
 

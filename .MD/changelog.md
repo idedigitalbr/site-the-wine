@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-09
+
+- **Otimização e Expansão Visual da Seção Eventos & Experiências no Mobile**:
+  - Abertura padrão de todos os cards da seção no mobile (Jantar Harmonizado, Evento Corporativo e Máquinas de Vinho), removendo caixas colapsadas.
+  - Aumento expressivo da tipografia (títulos para 1.85rem, subtítulos para 1.1rem, descrições para 1.05rem).
+  - Ícones ampliados para 42px com destaque dourado e sombras de profundidade.
+  - Boxes ampliados com altura mínima de 440px, cantos arredondados (14px), bordas douradas e respiro de 20px entre eles.
+  - Botão de reserva com toque otimizado (48px) e redirecionamento direto ao WhatsApp sem travas.
+  - Adicionado `loading="lazy"` e `decoding="async"` nas imagens dos eventos para carregamento assíncrono ultra-rápido no celular.
+
 ## 2026-09-04
 
 - **Desativação Temporária do Cookiebot**:

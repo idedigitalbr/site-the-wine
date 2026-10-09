@@ -12,7 +12,7 @@ export function EventsSection() {
         <ul className="tw-acc__row">
           <li className="tw-acc__panel tw-acc__panel--active">
             <div className="tw-acc__link">
-              <img src="/assets/Gastronomia/prato-carne-grelhada-gnocchi.webp" width="700" height="900" alt="Prato gourmet do jantar harmonizado no The Wine" />
+              <img src="/assets/Gastronomia/prato-carne-grelhada-gnocchi.webp" width="700" height="900" alt="Prato gourmet do jantar harmonizado no The Wine" loading="lazy" decoding="async" />
               <span className="tw-acc__cap">
                 <Utensils className="tw-acc__cap-icon" aria-hidden="true" strokeWidth={1.5} />
                 <span className="tw-acc__cap-title">Jantar Harmonizado</span>
@@ -30,7 +30,7 @@ export function EventsSection() {
 
           <li className="tw-acc__panel">
             <div className="tw-acc__link">
-              <img src="/assets/Ambiente/mesa-reservada-adega.webp" width="700" height="900" alt="Mesa reservada para evento corporativo na adega do The Wine" />
+              <img src="/assets/Ambiente/mesa-reservada-adega.webp" width="700" height="900" alt="Mesa reservada para evento corporativo na adega do The Wine" loading="lazy" decoding="async" />
               <span className="tw-acc__cap">
                 <Users className="tw-acc__cap-icon" aria-hidden="true" strokeWidth={1.5} />
                 <span className="tw-acc__cap-title">Evento Corporativo</span>
