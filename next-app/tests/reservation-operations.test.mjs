@@ -167,6 +167,14 @@ test('public reservation entry points open the website flow and keep WhatsApp as
   assert.match(reservationPortal, /Falar com a equipe/);
 });
 
+test('reservation page uses a route-specific canonical and app-managed stylesheet import', () => {
+  const page = source('src/app/reservas/page.tsx');
+
+  assert.match(page, /alternates:\s*{\s*canonical:\s*'\/reservas'/);
+  assert.match(page, /import\s+['"]\.\.\/\.\.\/\.\.\/public\/style\.css['"]/);
+  assert.doesNotMatch(page, /<link\b[^>]*rel=["']stylesheet["']/);
+});
+
 test('public reservation forms expose sanitized contact and field-level validation', () => {
   const phone = source('src/lib/phone.ts');
   const wizard = source('src/components/reservation/v2/ReservationWizard.tsx');
