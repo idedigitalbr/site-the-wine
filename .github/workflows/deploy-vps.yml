@@ -95,6 +95,20 @@ jobs:
       group: deploy-thewine
       cancel-in-progress: false
     steps:
+      - name: Prepare writable deploy environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${RUNNER_TEMP:?}" "${GITHUB_RUN_ID:?}" "${GITHUB_RUN_ATTEMPT:?}" "${GITHUB_JOB:?}"
+          job_env="$RUNNER_TEMP/deploy-env-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$GITHUB_JOB"
+          mkdir -p "$job_env/home"
+          chmod 700 "$job_env/home"
+          touch "$job_env/home/.gitconfig"
+          test -w "$job_env/home" || { echo "Deploy directory is not writable: $job_env/home" >&2; exit 1; }
+          test -w "$job_env/home/.gitconfig"
+          printf 'HOME=%s\nGIT_CONFIG_GLOBAL=%s\n' \
+            "$job_env/home" "$job_env/home/.gitconfig" >> "$GITHUB_ENV"
+
       - name: Checkout tested commit
         uses: actions/checkout@v4
 
