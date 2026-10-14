@@ -43,6 +43,8 @@ test('deploy workflow pins the VPS and updates only the web and migration servic
   assert.match(workflow, /while IFS= read -r HOST_KEY_LINE/);
   assert.match(workflow, /awk '\{print \$2 " " \$3\}'/);
   assert.match(workflow, /LINE_FINGERPRINT.*VPS_SSH_FINGERPRINT/s);
+  assert.match(workflow, /HOST_PATTERN="\$VPS_HOST"/);
+  assert.match(workflow, /printf '%s %s\\n' "\$HOST_PATTERN" "\$KEY_MATERIAL"/);
   assert.match(workflow, /install -m 600 "\$MATCHED_HOSTS_FILE" ~\/\.ssh\/known_hosts/);
   assert.match(workflow, /HostKeyAlgorithms=\$PINNED_HOST_KEY_ALGORITHMS/);
   assert.match(workflow, /docker compose --project-name thewine --file "\$STACK_COMPOSE"/);
