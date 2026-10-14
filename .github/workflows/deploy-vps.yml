@@ -1,39 +1,143 @@
-name: Deploy VPS
+name: CI and Deploy VPS
 
 on:
   push:
     branches:
       - main
+      - 'codex/**'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
-concurrency:
-  group: deploy-thewine
-  cancel-in-progress: true
+permissions:
+  contents: read
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-
+  ci:
+    name: Verify
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, linux, x64, oracle-vps, docker]
+    timeout-minutes: 45
+    concurrency:
+      group: thewine-ci-${{ github.ref }}
+      cancel-in-progress: true
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Configure SSH and Deploy to VPS
-        env:
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_SSH_PORT }}
-          VPS_SSH_FINGERPRINT: ${{ secrets.VPS_SSH_FINGERPRINT || 'SHA256:8t59KrIspxmOiPKsLydWUMDMVnrJ/NKRSio5dpEDovE' }}
+      - name: Prepare writable job environment
+        shell: bash
         run: |
           set -euo pipefail
-          
+          : "${RUNNER_TEMP:?}" "${GITHUB_RUN_ID:?}" "${GITHUB_RUN_ATTEMPT:?}" "${GITHUB_JOB:?}"
+          job_env="$RUNNER_TEMP/ci-env-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$GITHUB_JOB"
+          mkdir -p "$job_env/home" "$job_env/npm-cache" "$job_env/docker"
+          chmod 700 "$job_env/home" "$job_env/docker"
+          touch "$job_env/home/.gitconfig"
+          for dir in "$job_env/home" "$job_env/npm-cache" "$job_env/docker"; do
+            test -w "$dir" || { echo "Job directory is not writable: $dir" >&2; exit 1; }
+          done
+          test -w "$job_env/home/.gitconfig"
+          printf 'HOME=%s\nGIT_CONFIG_GLOBAL=%s\nDOCKER_CONFIG=%s\nNPM_CONFIG_CACHE=%s\n' \
+            "$job_env/home" "$job_env/home/.gitconfig" "$job_env/docker" "$job_env/npm-cache" >> "$GITHUB_ENV"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: next-app/package-lock.json
+
+      - name: Check runner disk capacity
+        shell: bash
+        run: |
+          df -h "$RUNNER_TEMP" "$GITHUB_WORKSPACE"
+          df -i "$RUNNER_TEMP" "$GITHUB_WORKSPACE"
+
+      - name: Install locked dependencies
+        run: npm ci --include=optional --prefer-offline --no-audit --fund=false
+        working-directory: next-app
+
+      - name: Type check
+        run: npm run typecheck
+        working-directory: next-app
+
+      - name: Unit and migration tests
+        run: npm test
+        working-directory: next-app
+
+      - name: Verify lockfile
+        run: npm run verify:lockfile
+        working-directory: next-app
+
+      - name: Verify complexity and architecture
+        run: |
+          npm run verify:complexity
+          npm run verify:architecture
+        working-directory: next-app
+
+      - name: Lint
+        run: npm run lint
+        working-directory: next-app
+
+      - name: Build production app
+        run: npm run build
+        working-directory: next-app
+
+  deploy:
+    name: Deploy production
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, linux, x64, oracle-vps, docker]
+    timeout-minutes: 30
+    concurrency:
+      group: deploy-thewine
+      cancel-in-progress: false
+    steps:
+      - name: Prepare writable deploy environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${RUNNER_TEMP:?}" "${GITHUB_RUN_ID:?}" "${GITHUB_RUN_ATTEMPT:?}" "${GITHUB_JOB:?}"
+          job_env="$RUNNER_TEMP/deploy-env-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$GITHUB_JOB"
+          mkdir -p "$job_env/home"
+          chmod 700 "$job_env/home"
+          touch "$job_env/home/.gitconfig"
+          test -w "$job_env/home" || { echo "Deploy directory is not writable: $job_env/home" >&2; exit 1; }
+          test -w "$job_env/home/.gitconfig"
+          printf 'HOME=%s\nGIT_CONFIG_GLOBAL=%s\n' \
+            "$job_env/home" "$job_env/home/.gitconfig" >> "$GITHUB_ENV"
+
+      - name: Checkout tested commit
+        uses: actions/checkout@v4
+
+      - name: Configure SSH and deploy tested commit
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: 179.236.75.128
+          VPS_USER: root
+          VPS_PORT: '22'
+          VPS_SSH_FINGERPRINT: SHA256:mq8COg7DKr2CSTiuioJCov0JMs3+YBkTzjPXZtUfh8E
+          DEPLOY_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${VPS_SSH_KEY:?VPS_SSH_KEY is required}" "${VPS_HOST:?VPS_HOST is required}" \
+            "${VPS_USER:?VPS_USER is required}" "${VPS_SSH_FINGERPRINT:?VPS_SSH_FINGERPRINT is required}"
+          [[ "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid deployment commit SHA" >&2; exit 96; }
+
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          
-          KNOWN_HOSTS_FILE="$RUNNER_TEMP/thewine_known_hosts"
+
           MATCHED_HOSTS_FILE="$RUNNER_TEMP/thewine_matched_known_hosts"
           CANDIDATE_LINE_FILE="$RUNNER_TEMP/thewine_candidate_line"
+          PINNED_HOST_KEY_ALGORITHMS=""
+          if [ "$VPS_PORT" = "22" ]; then
+            HOST_PATTERN="$VPS_HOST"
+          else
+            HOST_PATTERN="[$VPS_HOST]:$VPS_PORT"
+          fi
           : > "$MATCHED_HOSTS_FILE"
           for KEY_TYPE in rsa ecdsa ed25519; do
             CANDIDATE_FILE="$RUNNER_TEMP/thewine_${KEY_TYPE}_known_hosts"
@@ -45,47 +149,185 @@ jobs:
               printf '%s\n' "$KEY_MATERIAL" > "$CANDIDATE_LINE_FILE"
               LINE_FINGERPRINT=$(ssh-keygen -lf "$CANDIDATE_LINE_FILE" -E sha256 | awk 'NR == 1 {print $2}') || LINE_FINGERPRINT=""
               if [ "$LINE_FINGERPRINT" = "$VPS_SSH_FINGERPRINT" ]; then
-                printf '%s\n' "$HOST_KEY_LINE" >> "$MATCHED_HOSTS_FILE"
+                printf '%s %s\n' "$HOST_PATTERN" "$KEY_MATERIAL" >> "$MATCHED_HOSTS_FILE"
+                HOST_KEY_TYPE=$(printf '%s\n' "$HOST_KEY_LINE" | awk '{print $2}')
+                if [ "$HOST_KEY_TYPE" = "ssh-rsa" ]; then
+                  PINNED_HOST_KEY_ALGORITHMS="rsa-sha2-512,rsa-sha2-256,ssh-rsa"
+                else
+                  PINNED_HOST_KEY_ALGORITHMS="$HOST_KEY_TYPE"
+                fi
               fi
             done < "$CANDIDATE_FILE"
           done
-          if [ ! -s "$MATCHED_HOSTS_FILE" ]; then
-            echo "ABORTAR: fingerprint SSH da VPS não corresponde ao esperado." >&2
+          if [ ! -s "$MATCHED_HOSTS_FILE" ] || [ -z "$PINNED_HOST_KEY_ALGORITHMS" ]; then
+            echo "ABORT: SSH fingerprint does not match the configured VPS fingerprint." >&2
             exit 98
           fi
-          cp "$MATCHED_HOSTS_FILE" "$KNOWN_HOSTS_FILE"
-          cp "$KNOWN_HOSTS_FILE" ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
-          
+          install -m 600 "$MATCHED_HOSTS_FILE" ~/.ssh/known_hosts
+
+          ARCHIVE_PATH="$RUNNER_TEMP/thewine-source-$DEPLOY_SHA.tar.gz"
+          git archive --format=tar "$DEPLOY_SHA" | gzip -1 > "$ARCHIVE_PATH"
+          test -s "$ARCHIVE_PATH" || { echo "ABORT: verified source archive is empty." >&2; exit 96; }
+
           eval "$(ssh-agent -s)"
-          trap 'ssh-agent -k >/dev/null' EXIT
+          trap 'rm -f "$ARCHIVE_PATH"; ssh-agent -k >/dev/null' EXIT
           ssh-add - <<< "$VPS_SSH_KEY"
-          
-          ssh -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER"@"$VPS_HOST" <<'REMOTE'
-          set -e
-          
+
+          SSH_OPTIONS=(
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=$MATCHED_HOSTS_FILE"
+            -o GlobalKnownHostsFile=/dev/null
+            -o "HostKeyAlgorithms=$PINNED_HOST_KEY_ALGORITHMS"
+          )
+          REMOTE_ARCHIVE="/tmp/thewine-deploy-$DEPLOY_SHA.tar.gz"
+          scp -P "$VPS_PORT" "${SSH_OPTIONS[@]}" "$ARCHIVE_PATH" "$VPS_USER@$VPS_HOST:$REMOTE_ARCHIVE"
+          ssh -p "$VPS_PORT" "${SSH_OPTIONS[@]}" \
+            "$VPS_USER@$VPS_HOST" "DEPLOY_SHA='$DEPLOY_SHA' bash -s" <<'REMOTE'
+          set -euo pipefail
+
           PROJECT_DIR="/opt/thewine-site/app"
-          
+          PROJECT_ROOT="/opt/thewine-site"
+          RELEASES_DIR="$PROJECT_ROOT/releases"
+          STACK_COMPOSE="/opt/migrated-stacks/thewine/compose.json"
+          REMOTE_ARCHIVE="/tmp/thewine-deploy-$DEPLOY_SHA.tar.gz"
+          [[ "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "ABORT: invalid deployment commit SHA." >&2; exit 96; }
           RESOLVED_DIR=$(realpath "$PROJECT_DIR")
-          if [ "$RESOLVED_DIR" = "/" ] || [ "$RESOLVED_DIR" = "/opt" ] || [ "$RESOLVED_DIR" = "/var" ] || [ "$RESOLVED_DIR" = "/home" ] || [ "$RESOLVED_DIR" = "/root" ] || [ -z "$RESOLVED_DIR" ]; then
-            echo "ABORTAR: Diretório inválido!" >&2
+          if [ "$RESOLVED_DIR" != "$PROJECT_DIR" ]; then
+            echo "ABORT: invalid project directory" >&2
             exit 99
           fi
-          
+          if [ ! -d "$PROJECT_ROOT" ] || [ "$(realpath "$PROJECT_ROOT")" != "$PROJECT_ROOT" ]; then
+            echo "ABORT: invalid project root." >&2
+            exit 99
+          fi
+          if [ ! -f "$STACK_COMPOSE" ]; then
+            echo "ABORT: the active Portainer Compose file was not found." >&2
+            exit 99
+          fi
+          if [ ! -f "$REMOTE_ARCHIVE" ]; then
+            echo "ABORT: the tested source archive was not uploaded." >&2
+            exit 99
+          fi
+
           cd "$RESOLVED_DIR"
-          
-          git fetch origin main
-          git reset --hard origin/main
-          git clean -fd
-          
-          docker compose config >/dev/null
-          docker compose up -d --build --remove-orphans
-          MIGRATION_STATUS=$(docker inspect -f '{{.State.ExitCode}}' thewine-migrate)
+          REMOTE_URL=$(git remote get-url origin)
+          python3 - "$REMOTE_URL" <<'PY'
+          import sys
+          from urllib.parse import urlparse
+
+          value = sys.argv[1]
+          if value.startswith("git@") and ":" in value:
+              host, path = value.split("@", 1)[1].split(":", 1)
+              path = "/" + path
+          else:
+              parsed = urlparse(value)
+              host, path = parsed.hostname or "", parsed.path
+          if host.lower() != "github.com" or path.strip("/").removesuffix(".git").lower() != "idedigitalbr/site-the-wine":
+              raise SystemExit("ABORT: deployment checkout does not match the expected repository.")
+          PY
+
+          mkdir -p "$RELEASES_DIR"
+          if [ "$(realpath "$RELEASES_DIR")" != "$RELEASES_DIR" ]; then
+            echo "ABORT: release directory resolves outside the expected project root." >&2
+            exit 99
+          fi
+          STAGING_DIR=$(mktemp -d "$RELEASES_DIR/.$DEPLOY_SHA.staging.XXXXXX")
+          STAGING_REAL_DIR=$(realpath "$STAGING_DIR")
+          case "$STAGING_REAL_DIR" in
+            "$RELEASES_DIR"/.*) ;;
+            *) echo "ABORT: staging directory escaped the release directory." >&2; exit 99 ;;
+          esac
+          trap 'if [ -n "${STAGING_DIR:-}" ] && [ -d "$STAGING_DIR" ]; then rm -rf -- "$STAGING_DIR"; fi; rm -f -- "$REMOTE_ARCHIVE"' EXIT
+          tar --no-same-owner -xzf "$REMOTE_ARCHIVE" -C "$STAGING_DIR"
+          if [ ! -f "$STAGING_DIR/Dockerfile" ] || [ ! -f "$STAGING_DIR/next-app/package.json" ]; then
+            echo "ABORT: tested source archive is incomplete." >&2
+            exit 99
+          fi
+          printf '%s\n' "$DEPLOY_SHA" > "$STAGING_DIR/.thewine-deploy-sha"
+
+          RELEASE_DIR="$RELEASES_DIR/$DEPLOY_SHA"
+          if [ -L "$RELEASE_DIR" ]; then
+            echo "ABORT: release path is a symbolic link." >&2
+            exit 99
+          elif [ -e "$RELEASE_DIR" ]; then
+            if [ ! -d "$RELEASE_DIR" ] || [ ! -f "$RELEASE_DIR/.thewine-deploy-sha" ] || [ "$(cat "$RELEASE_DIR/.thewine-deploy-sha")" != "$DEPLOY_SHA" ]; then
+              echo "ABORT: existing release path does not match the tested commit." >&2
+              exit 99
+            fi
+          else
+            mv -- "$STAGING_DIR" "$RELEASE_DIR"
+            STAGING_DIR=""
+          fi
+          echo "Prepared source release $DEPLOY_SHA from the CI-tested archive."
+
+          DB_CONTAINER_ID=$(docker inspect -f '{{.Id}}' thewine-db)
+          python3 - "$STACK_COMPOSE" "$RELEASE_DIR" <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          compose_path = Path(sys.argv[1])
+          source_dir = os.path.realpath(sys.argv[2])
+          data = json.loads(compose_path.read_text(encoding="utf-8"))
+          services = data.get("services", {})
+          expected = {"web": "thewine-web", "migrate": "thewine-migrate", "db": "thewine-db"}
+          for name, container_name in expected.items():
+              service = services.get(name)
+              if not service or service.get("container_name") != container_name:
+                  raise SystemExit(f"ABORT: active stack service {name!r} does not match the expected container.")
+          for name, target in (("web", None), ("migrate", "runner")):
+              service = services[name]
+              service.pop("image", None)
+              build = {"context": source_dir, "dockerfile": "Dockerfile"}
+              if target:
+                  build["target"] = target
+              service["build"] = build
+          temp_path = compose_path.with_name(compose_path.name + ".deploy-tmp")
+          temp_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          os.chmod(temp_path, compose_path.stat().st_mode & 0o777)
+          os.replace(temp_path, compose_path)
+          print("Configured the active stack to build web and migrations from the CI-tested source release.")
+          PY
+
+          COMPOSE=(docker compose --project-name thewine --file "$STACK_COMPOSE")
+          "${COMPOSE[@]}" config --quiet
+          "${COMPOSE[@]}" build migrate web
+          "${COMPOSE[@]}" up -d --no-deps --force-recreate migrate
+          MIGRATION_STATUS="running"
+          for attempt in $(seq 1 60); do
+            if docker inspect thewine-migrate >/dev/null 2>&1; then
+              MIGRATION_STATE=$(docker inspect -f '{{.State.Status}}' thewine-migrate)
+              if [ "$MIGRATION_STATE" = "exited" ]; then
+                MIGRATION_STATUS=$(docker inspect -f '{{.State.ExitCode}}' thewine-migrate)
+                break
+              fi
+            fi
+            sleep 1
+          done
           if [ "$MIGRATION_STATUS" != "0" ]; then
-            echo "ABORTAR: migrations do The Wine falharam (exit code $MIGRATION_STATUS)." >&2
-            docker compose logs --no-color --tail=100 migrate >&2 || true
+            echo "ABORT: The Wine migrations failed (exit code $MIGRATION_STATUS)." >&2
+            "${COMPOSE[@]}" logs --no-color --tail=100 migrate >&2 || true
             exit 97
           fi
-          docker compose ps
-          
+
+          "${COMPOSE[@]}" up -d --no-deps --force-recreate web
+          for attempt in $(seq 1 30); do
+            if docker exec thewine-web node -e "fetch('http://127.0.0.1:3000/').then(async (response) => { console.log('HTTP ' + response.status); await response.arrayBuffer(); if (!response.ok) process.exitCode = 1; }).catch(() => { process.exitCode = 1; })"; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "ABORT: The Wine did not become healthy after deployment." >&2
+              "${COMPOSE[@]}" logs --no-color --tail=100 web >&2 || true
+              exit 95
+            fi
+            sleep 2
+          done
+          DB_CONTAINER_ID_AFTER=$(docker inspect -f '{{.Id}}' thewine-db)
+          if [ "$DB_CONTAINER_ID" != "$DB_CONTAINER_ID_AFTER" ]; then
+            echo "ABORT: the database container changed during deployment." >&2
+            exit 94
+          fi
+          "${COMPOSE[@]}" ps
           REMOTE

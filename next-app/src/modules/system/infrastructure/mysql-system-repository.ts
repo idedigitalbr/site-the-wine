@@ -1,8 +1,10 @@
 import { createCipheriv, createHash, randomBytes } from 'node:crypto';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getDatabasePool } from '@/server/db';
+import { defaultReservationWhatsappNumber } from '../application/ports';
 import type {
   AdminSystem,
+  PublicReservationSettings,
   SaveSmtpSettingsInput,
   SmtpSecurity,
   SmtpTestStatus,
@@ -37,6 +39,11 @@ type TemplateRow = RowDataPacket & {
   variables: string | string[];
   active: number;
   updatedAt: string | null;
+};
+
+type ReservationSettingsRow = RowDataPacket & {
+  publicReservationEnabled: number | boolean;
+  reservationWhatsappNumber: string | null;
 };
 
 const defaultSmtpRow: SmtpValues = {
@@ -104,7 +111,7 @@ function assertAffectedRows(result: ResultSetHeader, message: string): void {
 export class MysqlSystemRepository implements SystemRepository {
   async getSystem(): Promise<AdminSystem> {
     const pool = getDatabasePool();
-    const [smtpResult, templateResult] = await Promise.all([
+    const [smtpResult, templateResult, reservationSettingsResult] = await Promise.all([
       pool.execute<SmtpRow[]>(`
         SELECT enabled, host, port, security, username,
                password_ciphertext IS NOT NULL AS passwordConfigured,
@@ -120,8 +127,48 @@ export class MysqlSystemRepository implements SystemRepository {
         FROM system_email_templates
         ORDER BY sort_order, id
       `),
+      pool.execute<ReservationSettingsRow[]>(`
+        SELECT public_reservation_enabled AS publicReservationEnabled,
+               reservation_whatsapp_number AS reservationWhatsappNumber
+        FROM system_reservation_settings WHERE id = 1 LIMIT 1
+      `),
     ]);
-    return { smtp: mapSmtp(smtpResult[0][0]), templates: templateResult[0].map(mapTemplate) };
+    return {
+      smtp: mapSmtp(smtpResult[0][0]),
+      templates: templateResult[0].map(mapTemplate),
+      publicReservationEnabled: Boolean(reservationSettingsResult[0][0]?.publicReservationEnabled ?? true),
+      reservationWhatsappNumber: reservationSettingsResult[0][0]?.reservationWhatsappNumber ?? defaultReservationWhatsappNumber,
+    };
+  }
+
+  async getPublicReservationSettings(): Promise<PublicReservationSettings> {
+    const [rows] = await getDatabasePool().execute<ReservationSettingsRow[]>(`
+      SELECT public_reservation_enabled AS publicReservationEnabled,
+             reservation_whatsapp_number AS reservationWhatsappNumber
+      FROM system_reservation_settings WHERE id = 1 LIMIT 1
+    `);
+    return {
+      publicReservationEnabled: Boolean(rows[0]?.publicReservationEnabled ?? true),
+      reservationWhatsappNumber: rows[0]?.reservationWhatsappNumber ?? defaultReservationWhatsappNumber,
+    };
+  }
+
+  async savePublicReservationEnabled(enabled: boolean): Promise<void> {
+    await getDatabasePool().execute(
+      `INSERT INTO system_reservation_settings (id, public_reservation_enabled)
+       VALUES (1, ?)
+       ON DUPLICATE KEY UPDATE public_reservation_enabled = VALUES(public_reservation_enabled)`,
+      [enabled],
+    );
+  }
+
+  async saveReservationWhatsappNumber(number: string): Promise<void> {
+    await getDatabasePool().execute(
+      `INSERT INTO system_reservation_settings (id, reservation_whatsapp_number)
+       VALUES (1, ?)
+       ON DUPLICATE KEY UPDATE reservation_whatsapp_number = VALUES(reservation_whatsapp_number)`,
+      [number],
+    );
   }
 
   async saveSmtpSettings(input: SaveSmtpSettingsInput): Promise<void> {

@@ -115,6 +115,34 @@ export const publicReservationSchema = z.object({
   }
 });
 
+export const authenticatedPublicReservationSchema = z.object({
+  flowId: z.string().regex(/^[A-Za-z0-9_-]{43}$/, 'Esta reserva expirou. Inicie novamente.'),
+  date: reservationDate,
+  time: reservationTime,
+  guests: guestCount,
+  duration: reservationDuration,
+  tableIds,
+  specialNeeds: z.array(z.enum(specialNeedCodes, { error: 'Selecione uma necessidade válida.' }), { error: 'Selecione as necessidades válidas.' }).max(10, 'Selecione no máximo 10 necessidades.'),
+  notes: reservationNotes,
+}).strict().superRefine((input, context) => {
+  if (input.specialNeeds.includes('none') && input.specialNeeds.length > 1) {
+    context.addIssue({
+      code: 'custom',
+      path: ['specialNeeds'],
+      message: 'Selecione nenhuma necessidade ou uma necessidade específica.',
+    });
+  }
+
+  if (input.specialNeeds.includes('other') && !input.notes) {
+    context.addIssue({
+      code: 'custom',
+      path: ['notes'],
+      message: 'Descreva a outra necessidade nas observações.',
+    });
+  }
+});
+
 export type PublicReservationInput = z.infer<typeof publicReservationSchema>;
+export type AuthenticatedPublicReservationInput = z.infer<typeof authenticatedPublicReservationSchema>;
 export type ReservationHoldInput = z.infer<typeof reservationHoldSchema>;
 export type PublicWaitlistInput = z.infer<typeof publicWaitlistSchema>;

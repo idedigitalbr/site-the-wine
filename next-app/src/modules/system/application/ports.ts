@@ -32,6 +32,15 @@ export type SystemEmailTemplate = {
 export type AdminSystem = {
   smtp: SystemSmtpSettings;
   templates: SystemEmailTemplate[];
+  publicReservationEnabled: boolean;
+  reservationWhatsappNumber: string;
+};
+
+export const defaultReservationWhatsappNumber = '5591984040710';
+
+export type PublicReservationSettings = {
+  publicReservationEnabled: boolean;
+  reservationWhatsappNumber: string;
 };
 
 export type SaveSmtpSettingsInput = {
@@ -54,6 +63,9 @@ export type UpdateEmailTemplateInput = {
 
 export interface SystemRepository {
   getSystem(): Promise<AdminSystem>;
+  getPublicReservationSettings(): Promise<PublicReservationSettings>;
+  savePublicReservationEnabled(enabled: boolean): Promise<void>;
+  saveReservationWhatsappNumber(number: string): Promise<void>;
   saveSmtpSettings(input: SaveSmtpSettingsInput): Promise<void>;
   recordSmtpTest(status: Exclude<SmtpTestStatus, 'not_tested'>): Promise<void>;
   updateEmailTemplate(input: UpdateEmailTemplateInput): Promise<void>;

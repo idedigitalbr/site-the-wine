@@ -16,7 +16,6 @@ import { SiteBehaviorController } from '@/components/behaviors/SiteBehaviorContr
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { LegalBackToTop, PrintDocumentButton } from '@/components/legal/LegalControls';
-import { whatsappLinks } from '@/config/social';
 
 export const metadata: Metadata = {
   title: 'Termos & Privacidade | The Wine Experience',
@@ -392,7 +391,7 @@ export default function TermosEPrivacidadePage() {
                 </div>
                 <div className="legal-support-actions">
                   <a
-                    href={whatsappLinks.reservation}
+                    href="/whatsapp-reservas"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn-legal-action btn-legal-primary"

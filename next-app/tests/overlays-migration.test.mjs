@@ -14,11 +14,14 @@ test('page overlays use native JSX instead of LegacyModals', () => {
   assert.match(page, /<ReservationToast/);
 });
 
-test('booking modal preserves legacy ids and reservation CTA', () => {
+test('booking modal preserves legacy ids and offers website and WhatsApp booking', () => {
   const source = read('src/components/reservation/BookingModal.tsx');
   assert.equal(source.includes('LegacyFragment'), false);
   assert.match(source, /id="bookingModal"/);
   assert.match(source, /id="modalCloseBtn"/);
+  assert.match(source, /href="\/reservas"/);
+  assert.match(source, /Reservar pelo site/);
+  assert.match(source, /whatsappLinks\.reservation/);
   assert.match(source, /Reservar no WhatsApp/);
 });
 
