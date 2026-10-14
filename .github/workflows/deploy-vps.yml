@@ -165,25 +165,48 @@ jobs:
           fi
           install -m 600 "$MATCHED_HOSTS_FILE" ~/.ssh/known_hosts
 
+          ARCHIVE_PATH="$RUNNER_TEMP/thewine-source-$DEPLOY_SHA.tar.gz"
+          git archive --format=tar "$DEPLOY_SHA" | gzip -1 > "$ARCHIVE_PATH"
+          test -s "$ARCHIVE_PATH" || { echo "ABORT: verified source archive is empty." >&2; exit 96; }
+
           eval "$(ssh-agent -s)"
-          trap 'ssh-agent -k >/dev/null' EXIT
+          trap 'rm -f "$ARCHIVE_PATH"; ssh-agent -k >/dev/null' EXIT
           ssh-add - <<< "$VPS_SSH_KEY"
 
-          ssh -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            -o "UserKnownHostsFile=$MATCHED_HOSTS_FILE" -o GlobalKnownHostsFile=/dev/null \
-            -o "HostKeyAlgorithms=$PINNED_HOST_KEY_ALGORITHMS" \
+          SSH_OPTIONS=(
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=yes
+            -o "UserKnownHostsFile=$MATCHED_HOSTS_FILE"
+            -o GlobalKnownHostsFile=/dev/null
+            -o "HostKeyAlgorithms=$PINNED_HOST_KEY_ALGORITHMS"
+          )
+          REMOTE_ARCHIVE="/tmp/thewine-deploy-$DEPLOY_SHA.tar.gz"
+          scp -P "$VPS_PORT" "${SSH_OPTIONS[@]}" "$ARCHIVE_PATH" "$VPS_USER@$VPS_HOST:$REMOTE_ARCHIVE"
+          ssh -p "$VPS_PORT" "${SSH_OPTIONS[@]}" \
             "$VPS_USER@$VPS_HOST" "DEPLOY_SHA='$DEPLOY_SHA' bash -s" <<'REMOTE'
           set -euo pipefail
 
           PROJECT_DIR="/opt/thewine-site/app"
+          PROJECT_ROOT="/opt/thewine-site"
+          RELEASES_DIR="$PROJECT_ROOT/releases"
           STACK_COMPOSE="/opt/migrated-stacks/thewine/compose.json"
+          REMOTE_ARCHIVE="/tmp/thewine-deploy-$DEPLOY_SHA.tar.gz"
+          [[ "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "ABORT: invalid deployment commit SHA." >&2; exit 96; }
           RESOLVED_DIR=$(realpath "$PROJECT_DIR")
-          if [ "$RESOLVED_DIR" = "/" ] || [ "$RESOLVED_DIR" = "/opt" ] || [ "$RESOLVED_DIR" = "/var" ] || [ "$RESOLVED_DIR" = "/home" ] || [ "$RESOLVED_DIR" = "/root" ] || [ -z "$RESOLVED_DIR" ]; then
+          if [ "$RESOLVED_DIR" != "$PROJECT_DIR" ]; then
             echo "ABORT: invalid project directory" >&2
+            exit 99
+          fi
+          if [ ! -d "$PROJECT_ROOT" ] || [ "$(realpath "$PROJECT_ROOT")" != "$PROJECT_ROOT" ]; then
+            echo "ABORT: invalid project root." >&2
             exit 99
           fi
           if [ ! -f "$STACK_COMPOSE" ]; then
             echo "ABORT: the active Portainer Compose file was not found." >&2
+            exit 99
+          fi
+          if [ ! -f "$REMOTE_ARCHIVE" ]; then
+            echo "ABORT: the tested source archive was not uploaded." >&2
             exit 99
           fi
 
@@ -203,14 +226,43 @@ jobs:
           if host.lower() != "github.com" or path.strip("/").removesuffix(".git").lower() != "idedigitalbr/site-the-wine":
               raise SystemExit("ABORT: deployment checkout does not match the expected repository.")
           PY
-          git fetch origin main:refs/remotes/origin/main
-          git cat-file -e "$DEPLOY_SHA^{commit}"
-          git merge-base --is-ancestor "$DEPLOY_SHA" origin/main
-          git reset --hard "$DEPLOY_SHA"
-          git clean -fd
+
+          mkdir -p "$RELEASES_DIR"
+          if [ "$(realpath "$RELEASES_DIR")" != "$RELEASES_DIR" ]; then
+            echo "ABORT: release directory resolves outside the expected project root." >&2
+            exit 99
+          fi
+          STAGING_DIR=$(mktemp -d "$RELEASES_DIR/.$DEPLOY_SHA.staging.XXXXXX")
+          STAGING_REAL_DIR=$(realpath "$STAGING_DIR")
+          case "$STAGING_REAL_DIR" in
+            "$RELEASES_DIR"/.*) ;;
+            *) echo "ABORT: staging directory escaped the release directory." >&2; exit 99 ;;
+          esac
+          trap 'if [ -n "${STAGING_DIR:-}" ] && [ -d "$STAGING_DIR" ]; then rm -rf -- "$STAGING_DIR"; fi; rm -f -- "$REMOTE_ARCHIVE"' EXIT
+          tar --no-same-owner -xzf "$REMOTE_ARCHIVE" -C "$STAGING_DIR"
+          if [ ! -f "$STAGING_DIR/Dockerfile" ] || [ ! -f "$STAGING_DIR/next-app/package.json" ]; then
+            echo "ABORT: tested source archive is incomplete." >&2
+            exit 99
+          fi
+          printf '%s\n' "$DEPLOY_SHA" > "$STAGING_DIR/.thewine-deploy-sha"
+
+          RELEASE_DIR="$RELEASES_DIR/$DEPLOY_SHA"
+          if [ -L "$RELEASE_DIR" ]; then
+            echo "ABORT: release path is a symbolic link." >&2
+            exit 99
+          elif [ -e "$RELEASE_DIR" ]; then
+            if [ ! -d "$RELEASE_DIR" ] || [ ! -f "$RELEASE_DIR/.thewine-deploy-sha" ] || [ "$(cat "$RELEASE_DIR/.thewine-deploy-sha")" != "$DEPLOY_SHA" ]; then
+              echo "ABORT: existing release path does not match the tested commit." >&2
+              exit 99
+            fi
+          else
+            mv -- "$STAGING_DIR" "$RELEASE_DIR"
+            STAGING_DIR=""
+          fi
+          echo "Prepared source release $DEPLOY_SHA from the CI-tested archive."
 
           DB_CONTAINER_ID=$(docker inspect -f '{{.Id}}' thewine-db)
-          python3 - "$STACK_COMPOSE" "$RESOLVED_DIR" <<'PY'
+          python3 - "$STACK_COMPOSE" "$RELEASE_DIR" <<'PY'
           import json
           import os
           import sys
@@ -236,7 +288,7 @@ jobs:
           temp_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           os.chmod(temp_path, compose_path.stat().st_mode & 0o777)
           os.replace(temp_path, compose_path)
-          print("Configured the active stack to build web and migrations from the verified checkout.")
+          print("Configured the active stack to build web and migrations from the CI-tested source release.")
           PY
 
           COMPOSE=(docker compose --project-name thewine --file "$STACK_COMPOSE")
