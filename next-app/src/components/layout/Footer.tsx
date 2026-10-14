@@ -113,11 +113,11 @@ export function Footer() {
             <WhatsAppIcon />
           </div>
 
-          <a href={whatsappLinks.reservation} target="_blank" rel="noopener noreferrer" className="footer-whatsapp-number">
+          <a href={whatsappLinks.contact} target="_blank" rel="noopener noreferrer" className="footer-whatsapp-number">
             (91) 98404-0710
           </a>
 
-          <a href={whatsappLinks.reservation} target="_blank" rel="noopener noreferrer" className="footer-whatsapp-btn">
+          <a href={whatsappLinks.contact} target="_blank" rel="noopener noreferrer" className="footer-whatsapp-btn">
             Chamar no WhatsApp
           </a>
         </div>

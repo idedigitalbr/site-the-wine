@@ -30,19 +30,27 @@ test('production Compose passes protected runtime configuration to the web servi
   }
 });
 
-test('deploy workflow validates the pinned VPS host fingerprint and migration result', () => {
+test('deploy workflow pins the VPS and updates only the web and migration services', () => {
   const workflow = source('../.github/workflows/deploy-vps.yml');
 
   assert.match(workflow, /VPS_SSH_FINGERPRINT/);
+  assert.match(workflow, /VPS_HOST: 179\.236\.75\.128/);
+  assert.match(workflow, /runs-on: \[self-hosted, linux, x64, oracle-vps, docker\]/);
   assert.match(workflow, /ssh-keygen -lf/);
   assert.match(workflow, /MATCHED_HOSTS_FILE/);
   assert.match(workflow, /while IFS= read -r HOST_KEY_LINE/);
   assert.match(workflow, /awk '\{print \$2 " " \$3\}'/);
   assert.match(workflow, /LINE_FINGERPRINT.*VPS_SSH_FINGERPRINT/s);
-  assert.match(workflow, /cp "\$MATCHED_HOSTS_FILE" "\$KNOWN_HOSTS_FILE"/);
-  assert.match(workflow, /docker compose config/);
+  assert.match(workflow, /install -m 600 "\$MATCHED_HOSTS_FILE" ~\/\.ssh\/known_hosts/);
+  assert.match(workflow, /HostKeyAlgorithms=\$PINNED_HOST_KEY_ALGORITHMS/);
+  assert.match(workflow, /docker compose --project-name thewine --file "\$STACK_COMPOSE"/);
+  assert.match(workflow, /build migrate web/);
+  assert.match(workflow, /up -d --no-deps --force-recreate migrate/);
+  assert.match(workflow, /up -d --no-deps --force-recreate web/);
   assert.match(workflow, /thewine-migrate/);
   assert.match(workflow, /MIGRATION_STATUS/);
+  assert.match(workflow, /DB_CONTAINER_ID_AFTER/);
+  assert.doesNotMatch(workflow, /--remove-orphans/);
 });
 
 test('operational migrations tolerate databases initialized by the legacy Compose flow', () => {

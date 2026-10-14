@@ -51,9 +51,9 @@ function PortalHeader() {
           <span className="font-display text-2xl tracking-normal">THE WINE</span>
           <span className="hidden text-[10px] uppercase text-muted sm:inline">Experience</span>
         </Link>
-        <Link href="/reservas" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-muted transition hover:text-primary">
+        <a href="/reservar" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-muted transition hover:text-primary">
           <ArrowLeft aria-hidden="true" size={15} /> Nova reserva
-        </Link>
+        </a>
       </div>
     </header>
   );
@@ -138,9 +138,9 @@ function PortalIntro({ invalidToken, onFound }: { invalidToken: boolean; onFound
       </p>
       {!invalidToken && <p className="mt-3 text-xs text-muted">Você também pode informar o código da reserva recebido na confirmação.</p>}
       <ReservationCodeLookup onFound={onFound} />
-      <Link href="/reservas" className="mt-8 inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover">
+      <a href="/reservar" className="mt-8 inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover">
         Fazer uma reserva <ArrowRight aria-hidden="true" size={16} />
-      </Link>
+      </a>
     </div>
   );
 }
@@ -256,7 +256,7 @@ function ReservationCard({ reservation, secureToken }: { reservation: PortalRese
       {secureToken && canCancel(currentReservation.status) && cancellationState !== 'success' && <CancellationAction state={cancellationState} message={message} onConfirm={cancel} onStart={() => setCancellationState('confirming')} onCancel={() => setCancellationState('idle')} />}
       {!secureToken && <p className="mt-5 text-xs leading-relaxed text-muted">Para cancelar ou alterar a reserva, use o link privado recebido na confirmação.</p>}
       <div className="mt-8 flex flex-wrap gap-3">
-        <Link href="/reservas" className="reservation-primary-button">Nova reserva <ArrowRight aria-hidden="true" size={16} /></Link>
+        <a href="/reservar" className="reservation-primary-button">Nova reserva <ArrowRight aria-hidden="true" size={16} /></a>
         <a href="https://wa.me/5591984040710" target="_blank" rel="noreferrer" className="reservation-secondary-button">Falar com a equipe <ExternalLink aria-hidden="true" size={15} /></a>
       </div>
     </article>

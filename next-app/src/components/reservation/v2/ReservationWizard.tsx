@@ -18,7 +18,6 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useForm, useWatch, type FieldErrors, type FieldPath, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
-import { whatsappLinks } from '@/config/social';
 import { formatPhoneInput } from '@/lib/phone';
 import { MockPaymentDemo } from './MockPaymentDemo';
 import { WaitlistForm } from './WaitlistForm';
@@ -271,7 +270,7 @@ function EmptyAvailability({ label, date, guests }: { label: string; date: strin
     <div className="rounded-[var(--radius-md)] border border-border bg-surface-muted/40 p-6">
       <div className="flex items-start gap-3 text-sm text-muted">
         <CircleAlert aria-hidden="true" className="mt-0.5 shrink-0 text-primary" size={19} />
-        <span>{label} <a className="text-primary underline underline-offset-4" href={whatsappLinks.reservation}>Fale com nossa equipe pelo WhatsApp.</a></span>
+        <span>{label} <a className="text-primary underline underline-offset-4" href="/whatsapp-reservas">Fale com nossa equipe pelo WhatsApp.</a></span>
       </div>
       <WaitlistForm date={date} guests={guests} />
     </div>

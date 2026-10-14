@@ -17,7 +17,7 @@ import Image from 'next/image';
 import { useState, type FormEvent } from 'react';
 import type { AdminSystem, SystemEmailTemplate, SystemSmtpSettings } from '@/modules/system/application/ports';
 
-type SystemTab = 'smtp' | 'templates';
+type SystemTab = 'smtp' | 'templates' | 'reservations';
 type TemplateDraft = Pick<SystemEmailTemplate, 'subject' | 'body' | 'active'>;
 
 const securityLabels = {
@@ -253,6 +253,157 @@ function TemplatesPanel({ templates, onSaved }: { templates: SystemEmailTemplate
   return <section className="mt-6 grid gap-5 xl:grid-cols-[minmax(18rem,0.8fr)_minmax(0,1.5fr)]"><div className="rounded-[var(--radius-md)] border border-border bg-surface p-5 shadow-sm sm:p-6"><div className="mb-5 flex items-start gap-3"><span className="rounded-full bg-primary/10 p-2 text-primary"><Mail aria-hidden="true" size={20} /></span><div><h2 className="font-display text-2xl text-foreground">Templates de e-mail</h2><p className="mt-1 text-sm text-muted">Escolha um modelo para editar o texto enviado ao cliente.</p></div></div><TemplateList templates={templates} selectedId={selected?.id ?? null} onSelect={setSelectedId} /></div><TemplateWorkspace selected={selected} save={save} restore={restore} isSaving={isSaving} message={message} error={error} onCancel={() => setSelectedId(null)} /></section>;
 }
 
+function formatReservationWhatsappNumber(number: string): string {
+  const digits = number.replace(/\D/g, '');
+  if (!/^55\d{10,11}$/.test(digits)) return number;
+  const areaCode = digits.slice(2, 4);
+  const nationalNumber = digits.slice(4);
+  const split = nationalNumber.length === 11 ? 5 : 4;
+  return `+55 (${areaCode}) ${nationalNumber.slice(0, split)}-${nationalNumber.slice(split)}`;
+}
+
+async function persistReservationWhatsappNumber(number: string): Promise<string> {
+  const response = await fetch('/api/admin/system/reservation-channel', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reservationWhatsappNumber: number }),
+  });
+  const result = await response.json().catch(() => ({})) as { reservationWhatsappNumber?: unknown };
+  if (!response.ok) {
+    throw new Error(response.status === 400
+      ? 'Informe o número com código do país, DDD e telefone. Ex.: +55 91 98404-0710.'
+      : 'Não foi possível salvar o número do WhatsApp.');
+  }
+  if (typeof result.reservationWhatsappNumber !== 'string') {
+    throw new Error('Não foi possível confirmar o número salvo.');
+  }
+  return result.reservationWhatsappNumber;
+}
+
+function ReservationWhatsappNumberForm({ initialNumber, onSaved }: {
+  initialNumber: string;
+  onSaved: (number: string) => void;
+}) {
+  const [isSaving, setIsSaving] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState(formatReservationWhatsappNumber(initialNumber));
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSaving(true);
+    setMessage('');
+    setError('');
+
+    try {
+      const savedNumber = await persistReservationWhatsappNumber(whatsappNumber);
+      setWhatsappNumber(formatReservationWhatsappNumber(savedNumber));
+      onSaved(savedNumber);
+      setMessage('Número do WhatsApp atualizado.');
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Não foi possível salvar o número do WhatsApp.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={(event) => { void submit(event); }} className="mt-5 border-t border-border pt-5">
+      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <label className="block">
+          <span className="admin-label">Número do WhatsApp para reservas</span>
+          <input
+            name="reservationWhatsappNumber"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            maxLength={30}
+            required
+            value={whatsappNumber}
+            onChange={(event) => setWhatsappNumber(event.target.value)}
+            placeholder="+55 (91) 98404-0710"
+            className="admin-input"
+          />
+          <span className="mt-1 block text-xs text-muted">Inclua o código do país, DDD e telefone. Esse número será usado nos botões de reserva encaminhados ao WhatsApp.</span>
+        </label>
+        <button type="submit" disabled={isSaving} className="admin-primary-button">
+          {isSaving ? <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> : <Save aria-hidden="true" size={16} />}
+          Salvar número
+        </button>
+      </div>
+      {message && <p className="mt-4 text-xs text-status-success" role="status">{message}</p>}
+      {error && <p className="mt-4 text-xs text-status-danger" role="alert">{error}</p>}
+    </form>
+  );
+}
+
+function ReservationChannelPanel({ enabled, reservationWhatsappNumber, onSaved, onWhatsappNumberSaved }: {
+  enabled: boolean;
+  reservationWhatsappNumber: string;
+  onSaved: (enabled: boolean) => void;
+  onWhatsappNumberSaved: (number: string) => void;
+}) {
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const toggle = async () => {
+    setIsSaving(true);
+    setMessage('');
+    setError('');
+
+    try {
+      const response = await fetch('/api/admin/system/reservation-channel', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !enabled }),
+      });
+      if (!response.ok) {
+        setError('Não foi possível salvar o canal de reservas.');
+        return;
+      }
+      const result = await response.json() as { publicReservationEnabled: boolean };
+      onSaved(result.publicReservationEnabled);
+      setMessage('Canal de reservas atualizado.');
+    } catch {
+      setError('Não foi possível salvar o canal de reservas.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <section className="mt-6 max-w-3xl rounded-[var(--radius-md)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+      <div className="flex items-start gap-3">
+        <span className="rounded-full bg-primary/10 p-2 text-primary"><Server aria-hidden="true" size={20} /></span>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-2xl text-foreground">Canal de reservas do site</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted">Escolha para onde os botões públicos de reserva devem encaminhar os clientes.</p>
+          <p className="mt-4 text-sm text-foreground">
+            <strong>{enabled ? 'Ativado:' : 'Desativado:'}</strong>{' '}
+            {enabled ? 'abre a página normal de reservas.' : 'abre uma conversa no WhatsApp de reservas.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          aria-label="Reservas pelo site"
+          disabled={isSaving}
+          onClick={() => { void toggle(); }}
+          className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full p-1 transition-colors disabled:cursor-wait disabled:opacity-60 ${enabled ? 'bg-primary' : 'bg-border'}`}
+        >
+          <span aria-hidden="true" className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+        </button>
+      </div>
+      <ReservationWhatsappNumberForm initialNumber={reservationWhatsappNumber} onSaved={onWhatsappNumberSaved} />
+      {isSaving && <p className="mt-4 text-xs text-muted" role="status">Salvando configuração…</p>}
+      {message && <p className="mt-4 text-xs text-status-success" role="status">{message}</p>}
+      {error && <p className="mt-4 text-xs text-status-danger" role="alert">{error}</p>}
+    </section>
+  );
+}
+
 export function AdminSystemView({ initialSystem }: { initialSystem: AdminSystem }) {
   const [system, setSystem] = useState(initialSystem);
   const [activeTab, setActiveTab] = useState<SystemTab>('smtp');
@@ -262,5 +413,23 @@ export function AdminSystemView({ initialSystem }: { initialSystem: AdminSystem 
     if (response.ok) setSystem(await response.json() as AdminSystem);
   };
 
-  return <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10 lg:py-10"><header><p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Sistema</p><h1 className="mt-2 font-display text-4xl text-foreground">Configurações do sistema</h1><p className="mt-2 max-w-2xl text-sm text-muted">Organize as comunicações automáticas e os modelos usados para acompanhar cada reserva.</p></header><section className="mt-6 flex items-start gap-3 rounded-[var(--radius-md)] border border-primary/30 bg-primary/5 p-4 text-sm text-foreground"><Info aria-hidden="true" className="mt-0.5 shrink-0 text-primary" size={18} /><p><strong>Modo demonstrativo.</strong> O SMTP e os templates estão prontos para configuração, mas nenhum e-mail real será enviado nesta etapa. O botão de teste apenas registra uma simulação.</p></section><div className="mt-8 flex gap-2 border-b border-border" role="tablist" aria-label="Configurações do sistema"><button type="button" role="tab" aria-selected={activeTab === 'smtp'} onClick={() => setActiveTab('smtp')} className={`border-b-2 px-3 py-3 text-sm font-semibold ${activeTab === 'smtp' ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-foreground'}`}><Server aria-hidden="true" className="mr-2 inline" size={16} />SMTP</button><button type="button" role="tab" aria-selected={activeTab === 'templates'} onClick={() => setActiveTab('templates')} className={`border-b-2 px-3 py-3 text-sm font-semibold ${activeTab === 'templates' ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-foreground'}`}><FileText aria-hidden="true" className="mr-2 inline" size={16} />Templates de e-mail <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs">{system.templates.length}</span></button></div>{activeTab === 'smtp' ? <SmtpPanel smtp={system.smtp} onSaved={refresh} /> : <TemplatesPanel templates={system.templates} onSaved={refresh} />}</div>;
+  return (
+    <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+      <header>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Sistema</p>
+        <h1 className="mt-2 font-display text-4xl text-foreground">Configurações do sistema</h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted">Organize as comunicações automáticas, os modelos de e-mail e o canal de reservas.</p>
+      </header>
+      <section className="mt-6 flex items-start gap-3 rounded-[var(--radius-md)] border border-primary/30 bg-primary/5 p-4 text-sm text-foreground">
+        <Info aria-hidden="true" className="mt-0.5 shrink-0 text-primary" size={18} />
+        <p><strong>Modo demonstrativo.</strong> O SMTP e os templates estão prontos para configuração, mas nenhum e-mail real será enviado nesta etapa. O botão de teste apenas registra uma simulação.</p>
+      </section>
+      <div className="mt-8 flex flex-wrap gap-2 border-b border-border" role="tablist" aria-label="Configurações do sistema">
+        <button type="button" role="tab" aria-selected={activeTab === 'smtp'} onClick={() => setActiveTab('smtp')} className={`border-b-2 px-3 py-3 text-sm font-semibold ${activeTab === 'smtp' ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-foreground'}`}><Server aria-hidden="true" className="mr-2 inline" size={16} />SMTP</button>
+        <button type="button" role="tab" aria-selected={activeTab === 'templates'} onClick={() => setActiveTab('templates')} className={`border-b-2 px-3 py-3 text-sm font-semibold ${activeTab === 'templates' ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-foreground'}`}><FileText aria-hidden="true" className="mr-2 inline" size={16} />Templates de e-mail <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs">{system.templates.length}</span></button>
+        <button type="button" role="tab" aria-selected={activeTab === 'reservations'} onClick={() => setActiveTab('reservations')} className={`border-b-2 px-3 py-3 text-sm font-semibold ${activeTab === 'reservations' ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-foreground'}`}><Server aria-hidden="true" className="mr-2 inline" size={16} />Reservas</button>
+      </div>
+      {activeTab === 'smtp' ? <SmtpPanel smtp={system.smtp} onSaved={refresh} /> : activeTab === 'templates' ? <TemplatesPanel templates={system.templates} onSaved={refresh} /> : <ReservationChannelPanel enabled={system.publicReservationEnabled} reservationWhatsappNumber={system.reservationWhatsappNumber} onSaved={(enabled) => setSystem((current) => ({ ...current, publicReservationEnabled: enabled }))} onWhatsappNumberSaved={(number) => setSystem((current) => ({ ...current, reservationWhatsappNumber: number }))} />}
+    </div>
+  );
 }

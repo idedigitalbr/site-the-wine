@@ -25,6 +25,16 @@ export const testSmtpSettingsSchema = z.object({
   recipientEmail: email,
 });
 
+export const savePublicReservationEnabledSchema = z.object({
+  enabled: z.boolean(),
+});
+
+export const saveReservationWhatsappNumberSchema = z.object({
+  reservationWhatsappNumber: z.string().trim().min(1).max(30)
+    .transform((value) => value.replace(/\D/g, ''))
+    .refine((value) => /^55\d{10,11}$/.test(value), 'Informe o código do país, DDD e telefone.'),
+});
+
 export const updateEmailTemplateSchema = z.object({
   subject: z.string().trim().min(2).max(255),
   body: z.string().trim().min(10).max(20000),

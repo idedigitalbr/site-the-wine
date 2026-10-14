@@ -49,3 +49,6 @@ yarn-error.log*
 *.tar.gz
 *.7z
 *.rar
+
+# Local VPS migration notes
+/MIGRACAO-VPS-2026-10-13.md
