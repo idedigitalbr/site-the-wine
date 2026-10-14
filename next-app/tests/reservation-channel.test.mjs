@@ -80,7 +80,7 @@ test('footer contact links open generic WhatsApp contact instead of reservation 
   assert.doesNotMatch(footer, /href=\{whatsappLinks\.reservation\}/);
 });
 
-test('public reservation calls to action use the centralized redirect', () => {
+test('public reservation calls to action open the website reservation flow', () => {
   const publicComponents = [
     'src/components/layout/Header.tsx',
     'src/components/layout/MobileNavigation.tsx',
@@ -92,6 +92,6 @@ test('public reservation calls to action use the centralized redirect', () => {
   ];
 
   for (const component of publicComponents) {
-    assert.match(source(component), /\/reservar/, `${component} should use the centralized reservation redirect`);
+    assert.match(source(component), /\/reservas/, `${component} should open the website reservation flow`);
   }
 });
