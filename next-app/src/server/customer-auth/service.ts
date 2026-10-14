@@ -6,7 +6,7 @@ import { assessPassword } from '@/modules/customer-auth/domain/password-strength
 import { hashCustomerCpf } from './crypto';
 import { CustomerAuthError, isDuplicateKey } from './errors';
 import { ensureCustomerForAuthUser, findCustomerAccountByCpf } from './repository';
-import { customerAuth } from './provider';
+import { getCustomerAuth } from './provider';
 
 type AuthApiResult<T> = { response: T; headers: Headers };
 
@@ -18,7 +18,7 @@ export async function signInCustomer(request: Request, cpf: string, password: st
   const account = await findCustomerAccountByCpf(cpf);
   if (!account) throw new CustomerAuthError('CPF ou senha incorretos.', 401, 'INVALID_CREDENTIALS');
   try {
-    const result = await customerAuth.api.signInEmail({
+    const result = await getCustomerAuth().api.signInEmail({
       body: { email: account.email, password, rememberMe: true },
       headers: request.headers,
       returnHeaders: true,
@@ -54,7 +54,7 @@ export async function signUpCustomer(
   }
 
   try {
-    const created = await customerAuth.api.signUpEmail({
+    const created = await getCustomerAuth().api.signUpEmail({
       body: {
         name: input.name,
         email: input.recoveryEmail.trim().toLowerCase(),
@@ -70,7 +70,7 @@ export async function signUpCustomer(
     });
 
     const profile = await ensureCustomerForAuthUser(created.response.user.id);
-    const session = await customerAuth.api.signInEmail({
+    const session = await getCustomerAuth().api.signInEmail({
       body: { email: created.response.user.email, password: input.password, rememberMe: true },
       headers: request.headers,
       returnHeaders: true,
@@ -97,7 +97,7 @@ export async function signUpCustomer(
 export async function getCustomerSession(request: Request) {
   if (!getSessionCookie(request)) return null;
 
-  const result = await customerAuth.api.getSession({
+  const result = await getCustomerAuth().api.getSession({
     headers: request.headers,
     query: { disableCookieCache: true },
   });
@@ -109,6 +109,6 @@ export async function getCustomerSession(request: Request) {
 }
 
 export async function signOutCustomer(request: Request): Promise<Headers> {
-  const result = await customerAuth.api.signOut({ headers: request.headers, returnHeaders: true });
+  const result = await getCustomerAuth().api.signOut({ headers: request.headers, returnHeaders: true });
   return result.headers;
 }
