@@ -170,6 +170,7 @@ jobs:
           ssh-add - <<< "$VPS_SSH_KEY"
 
           ssh -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$MATCHED_HOSTS_FILE" -o GlobalKnownHostsFile=/dev/null \
             -o "HostKeyAlgorithms=$PINNED_HOST_KEY_ALGORITHMS" \
             "$VPS_USER@$VPS_HOST" "DEPLOY_SHA='$DEPLOY_SHA' bash -s" <<'REMOTE'
           set -euo pipefail
