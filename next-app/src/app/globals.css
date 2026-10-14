@@ -191,6 +191,35 @@ main.reservation-page-wrapper {
   text-align: center !important;
 }
 
+.reservation-theme .reservation-date-fields {
+  padding: var(--space-4);
+}
+
+.reservation-theme .reservation-date-fields .reservation-input {
+  box-sizing: border-box;
+  height: 2.875rem;
+}
+
+.reservation-theme .reservation-date-fields > label > span:first-child {
+  margin-bottom: var(--space-2);
+}
+
+@media (min-width: 640px) {
+  .reservation-theme .reservation-date-fields {
+    row-gap: 0;
+  }
+
+  .reservation-theme .reservation-date-fields > label {
+    display: grid;
+    grid-row: span 3;
+    grid-template-rows: subgrid;
+  }
+
+  .reservation-theme .reservation-date-fields .reservation-input {
+    align-self: center;
+  }
+}
+
 .reservation-theme .reservation-input {
   width: 100%;
   border: 1px solid var(--border);

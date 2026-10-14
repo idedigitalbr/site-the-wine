@@ -5,11 +5,9 @@ import {
   type AvailabilityQuery,
 } from '../domain/availability';
 import { confirmDraftReservation, createDraftReservation } from '../domain/reservation';
-import { normalizePhone } from '../../customers/domain/customer';
 import type {
   AvailabilityRepository,
   ConfirmReservationWithHoldInput,
-  CustomerRepository,
   ReservationRepository,
 } from './ports';
 
@@ -17,19 +15,14 @@ export type CreatePublicReservationInput = AvailabilityQuery & {
   publicCode: string;
   confirmationTokenHash: string;
   sessionTokenHash: string;
-  name: string;
-  phone: string;
-  email: string;
+  customerId: number;
   tableIds: number[];
   specialNeeds: string[];
-  specialNeedsOther: string;
   notes: string;
-  marketingConsent: boolean;
 };
 
 export type CreatePublicReservationDependencies = {
   availability: AvailabilityRepository;
-  customers: CustomerRepository;
   reservations: ReservationRepository;
 };
 
@@ -69,17 +62,10 @@ export async function createPublicReservation(
     throw new Error('Reservation unavailable: selected tables are no longer available');
   }
 
-  const customerId = await dependencies.customers.upsert({
-    name: input.name,
-    phone: input.phone,
-    normalizedPhone: normalizePhone(input.phone),
-    email: input.email,
-    marketingConsent: input.marketingConsent,
-  });
   const draft = createDraftReservation({
     publicCode: input.publicCode,
     confirmationTokenHash: input.confirmationTokenHash,
-    customerId,
+    customerId: input.customerId,
     reservationDate: input.reservationDate,
     startTime: input.startTime,
     endTime: calculateEndTime(input.startTime, input.durationMinutes),
@@ -92,7 +78,7 @@ export async function createPublicReservation(
     tableIds: selectedOption.tableIds,
     sessionTokenHash: input.sessionTokenHash,
     specialNeeds: input.specialNeeds,
-    specialNeedsOther: input.specialNeedsOther,
+    specialNeedsOther: input.specialNeeds.includes('other') ? input.notes : '',
   };
   const reservationId = await dependencies.reservations.confirmWithHold(confirmation);
 

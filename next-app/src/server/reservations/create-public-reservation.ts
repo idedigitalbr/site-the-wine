@@ -4,14 +4,12 @@ import { createPublicReservation } from '@/modules/reservations/application/crea
 import { createReservationHold } from '@/modules/reservations/application/create-reservation-hold';
 import type { CreatedPublicReservation } from '@/modules/reservations/application/create-public-reservation';
 import type { CreatedReservationHold } from '@/modules/reservations/application/ports';
-import type { PublicReservationInput, ReservationHoldInput } from '@/modules/reservations/schemas/public-reservation-schema';
+import type { AuthenticatedPublicReservationInput, ReservationHoldInput } from '@/modules/reservations/schemas/public-reservation-schema';
 import { MysqlAvailabilityRepository } from '@/modules/reservations/infrastructure/mysql-availability-repository';
-import { MysqlCustomerRepository } from '@/modules/reservations/infrastructure/mysql-customer-repository';
 import { MysqlReservationRepository } from '@/modules/reservations/infrastructure/mysql-reservation-repository';
 import { queueReservationNotification } from '@/server/notifications/composition';
 
 const availabilityRepository = new MysqlAvailabilityRepository();
-const customerRepository = new MysqlCustomerRepository();
 const reservationRepository = new MysqlReservationRepository();
 
 type PublicReservationConfirmation = CreatedPublicReservation & { secureToken: string };
@@ -26,8 +24,9 @@ function createConfirmationToken(): { raw: string; hash: string } {
 }
 
 export function submitPublicReservation(
-  input: PublicReservationInput,
+  input: AuthenticatedPublicReservationInput,
   sessionTokenHash: string,
+  customer: { id: number; email: string },
 ): Promise<PublicReservationConfirmation> {
   const confirmationToken = createConfirmationToken();
   return createPublicReservation({
@@ -38,22 +37,17 @@ export function submitPublicReservation(
     startTime: input.time,
     guestCount: input.guests,
     durationMinutes: input.duration,
-    name: input.name,
-    phone: input.phone,
-    email: input.email,
+    customerId: customer.id,
     tableIds: input.tableIds,
     specialNeeds: input.specialNeeds,
-    specialNeedsOther: input.specialNeedsOther,
     notes: input.notes,
-    marketingConsent: input.marketingConsent,
   }, {
     availability: availabilityRepository,
-    customers: customerRepository,
     reservations: reservationRepository,
   }).then(async (result): Promise<PublicReservationConfirmation> => {
     try {
       await queueReservationNotification({
-        email: input.email,
+        email: customer.email,
         template: 'reservation_confirmation',
         publicCode: result.publicCode,
         reservationDate: input.date,

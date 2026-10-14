@@ -175,15 +175,14 @@ test('reservation page uses a route-specific canonical and app-managed styleshee
   assert.doesNotMatch(page, /<link\b[^>]*rel=["']stylesheet["']/);
 });
 
-test('public reservation forms expose sanitized contact and field-level validation', () => {
+test('public waitlist form exposes sanitized contact and field-level validation', () => {
   const phone = source('src/lib/phone.ts');
-  const wizard = source('src/components/reservation/v2/ReservationWizard.tsx');
   const waitlist = source('src/components/reservation/v2/WaitlistForm.tsx');
   const styles = source('src/app/globals.css');
 
   assert.match(phone, /replace\(\/\\D\/g, ''\)/);
-  assert.match(wizard, /formatPhoneInput\(event\.target\.value\)/);
-  assert.match(wizard, /autoComplete="tel"/);
+  assert.match(waitlist, /formatPhoneInput\(event\.target\.value\)/);
+  assert.match(waitlist, /autoComplete="tel"/);
   assert.match(waitlist, /publicWaitlistSchema\.safeParse/);
   assert.match(waitlist, /waitlist-phone-error/);
   assert.match(waitlist, /Corrija os campos destacados/);

@@ -26,6 +26,8 @@ npm run build
 npm run start:laragon
 ```
 
+Autenticação de clientes e configuração da migração: [`docs/customer-auth.md`](docs/customer-auth.md).
+
 ## Verificações de código
 
 ```bash
