@@ -21,7 +21,7 @@ export function PairingsSection() {
 
         <div style={{ alignSelf: 'flex-start' }}>
           <a
-            href="/reservas"
+          href="/reservar"
             className="btn-gold-outline"
           >
             FAÇA SUA RESERVA

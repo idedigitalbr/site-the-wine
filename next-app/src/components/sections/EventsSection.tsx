@@ -18,7 +18,7 @@ export function EventsSection() {
                 <span className="tw-acc__cap-sub">Uma vez ao mês</span>
                 <span className="tw-acc__extra">
                   <span className="tw-acc__desc">Menus exclusivos criados pelo chef, onde cada prato encontra seu vinho perfeito em uma experiência enogastronômica completa.</span>
-                  <a className="tw-acc__btn" href="/reservas">
+                  <a className="tw-acc__btn" href="/reservar">
                     Fazer reserva
                     <ArrowRight aria-hidden="true" strokeWidth={2} />
                   </a>
@@ -36,7 +36,7 @@ export function EventsSection() {
                 <span className="tw-acc__cap-sub">Sob consulta</span>
                 <span className="tw-acc__extra">
                   <span className="tw-acc__desc">Celebrações íntimas, encontros corporativos e ocasiões especiais com ambientação personalizada e serviço impecável.</span>
-                  <a className="tw-acc__btn" href="/reservas">
+                  <a className="tw-acc__btn" href="/reservar">
                     Fazer reserva
                     <ArrowRight aria-hidden="true" strokeWidth={2} />
                   </a>
