@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loadAvailability, loadAvailabilitySlots } from '@/server/reservations/availability';
+import { loadAvailability, loadAvailabilitySlots, loadGeneralAvailability } from '@/server/reservations/availability';
 import { availabilityQuerySchema } from '@/modules/reservations/schemas/availability-schema';
 import { getReservationSessionTokenHash } from '@/server/reservations/session';
 
 async function loadAvailabilityResult(parsed: ReturnType<typeof availabilityQuerySchema.parse>, sessionTokenHash: string | null) {
+  if (parsed.mode === 'general') {
+    return loadGeneralAvailability({
+      reservationDate: parsed.date,
+      durationMinutes: parsed.duration,
+    }, sessionTokenHash);
+  }
+
   if (!parsed.time) {
     return loadAvailabilitySlots({
       reservationDate: parsed.date,
@@ -20,7 +27,8 @@ async function loadAvailabilityResult(parsed: ReturnType<typeof availabilityQuer
   }, sessionTokenHash);
 }
 
-async function loadDevelopmentFallback(request: NextRequest): Promise<NextResponse | null> {
+async function loadDevelopmentFallback(request: NextRequest, allowFallback: boolean): Promise<NextResponse | null> {
+  if (!allowFallback) return null;
   if (process.env.NODE_ENV === 'production') return null;
   try {
     const fallbackUrl = new URL('https://thewineexperience.com.br/api/reservations/availability');
@@ -57,7 +65,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'invalid_query' }, { status: 400 });
     }
 
-    const fallback = await loadDevelopmentFallback(request);
+    const fallback = await loadDevelopmentFallback(request, parsed.data.mode !== 'general');
     if (fallback) return fallback;
 
     console.error('Availability query failed', error);

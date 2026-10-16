@@ -28,6 +28,15 @@ export const specialNeedCodes = [
   'none',
 ] as const;
 
+export const newReservationSpecialNeedCodes = [
+  'accessibility',
+  'reduced_mobility',
+  'high_chair',
+  'dietary_restriction',
+  'food_allergy',
+  'other',
+] as const;
+
 const guestCount = z
   .number({ error: 'Informe a quantidade de pessoas.' })
   .int('Informe uma quantidade inteira de pessoas.')
@@ -67,12 +76,29 @@ const reservationNotes = z
   .max(500, 'As observações devem ter no máximo 500 caracteres.');
 
 export const reservationHoldSchema = z.object({
+  allocationMode: z.literal('legacy').default('legacy'),
   date: reservationDate,
   time: reservationTime,
   guests: guestCount,
   duration: reservationDuration,
   tableIds,
 });
+
+export const automaticReservationHoldSchema = z.object({
+  allocationMode: z.literal('automatic'),
+  attemptId: z.string().regex(/^[A-Za-z0-9_-]{43}$/, 'Esta tentativa expirou. Inicie novamente.'),
+  expectedRevision: z.number().int().nonnegative(),
+  operationKey: z.string().trim().min(16).max(160),
+  date: reservationDate,
+  time: reservationTime,
+  guests: guestCount,
+  duration: reservationDuration,
+}).strict();
+
+export const reservationHoldRequestSchema = z.union([
+  reservationHoldSchema,
+  automaticReservationHoldSchema,
+]);
 
 export const publicWaitlistSchema = z.object({
   date: reservationDate,
@@ -93,19 +119,11 @@ export const publicReservationSchema = z.object({
   name: reservationName,
   phone: reservationPhone,
   email: reservationEmail,
-  specialNeeds: z.array(z.enum(specialNeedCodes, { error: 'Selecione uma necessidade válida.' }), { error: 'Selecione as necessidades válidas.' }).max(10, 'Selecione no máximo 10 necessidades.'),
+  specialNeeds: z.array(z.enum(newReservationSpecialNeedCodes, { error: 'Selecione uma necessidade válida.' }), { error: 'Selecione as necessidades válidas.' }).max(10, 'Selecione no máximo 10 necessidades.'),
   specialNeedsOther: z.string({ error: 'Descreva a outra necessidade.' }).trim().max(500, 'A descrição deve ter no máximo 500 caracteres.'),
   notes: reservationNotes,
   marketingConsent: z.boolean({ error: 'Informe sua preferência de comunicação.' }),
 }).superRefine((input, context) => {
-  if (input.specialNeeds.includes('none') && input.specialNeeds.length > 1) {
-    context.addIssue({
-      code: 'custom',
-      path: ['specialNeeds'],
-      message: 'Selecione nenhuma necessidade ou uma necessidade específica.',
-    });
-  }
-
   if (input.specialNeeds.includes('other') && !input.specialNeedsOther) {
     context.addIssue({
       code: 'custom',
@@ -117,22 +135,23 @@ export const publicReservationSchema = z.object({
 
 export const authenticatedPublicReservationSchema = z.object({
   flowId: z.string().regex(/^[A-Za-z0-9_-]{43}$/, 'Esta reserva expirou. Inicie novamente.'),
+  allocationMode: z.enum(['legacy', 'automatic']).default('legacy'),
+  attemptId: z.string().regex(/^[A-Za-z0-9_-]{43}$/, 'Esta tentativa expirou. Inicie novamente.').optional(),
+  expectedRevision: z.number().int().nonnegative().optional(),
+  submissionId: z.string().trim().min(16).max(160).optional(),
   date: reservationDate,
   time: reservationTime,
   guests: guestCount,
   duration: reservationDuration,
   tableIds,
-  specialNeeds: z.array(z.enum(specialNeedCodes, { error: 'Selecione uma necessidade válida.' }), { error: 'Selecione as necessidades válidas.' }).max(10, 'Selecione no máximo 10 necessidades.'),
+  specialNeeds: z.array(z.enum(newReservationSpecialNeedCodes, { error: 'Selecione uma necessidade válida.' }), { error: 'Selecione as necessidades válidas.' }).max(10, 'Selecione no máximo 10 necessidades.'),
   notes: reservationNotes,
 }).strict().superRefine((input, context) => {
-  if (input.specialNeeds.includes('none') && input.specialNeeds.length > 1) {
-    context.addIssue({
-      code: 'custom',
-      path: ['specialNeeds'],
-      message: 'Selecione nenhuma necessidade ou uma necessidade específica.',
-    });
+  if (input.allocationMode === 'automatic') {
+    if (!input.attemptId) context.addIssue({ code: 'custom', path: ['attemptId'], message: 'Esta tentativa expirou. Inicie novamente.' });
+    if (input.expectedRevision === undefined) context.addIssue({ code: 'custom', path: ['expectedRevision'], message: 'A seleção ficou desatualizada.' });
+    if (!input.submissionId) context.addIssue({ code: 'custom', path: ['submissionId'], message: 'Envie a confirmação novamente.' });
   }
-
   if (input.specialNeeds.includes('other') && !input.notes) {
     context.addIssue({
       code: 'custom',
@@ -145,4 +164,6 @@ export const authenticatedPublicReservationSchema = z.object({
 export type PublicReservationInput = z.infer<typeof publicReservationSchema>;
 export type AuthenticatedPublicReservationInput = z.infer<typeof authenticatedPublicReservationSchema>;
 export type ReservationHoldInput = z.infer<typeof reservationHoldSchema>;
+export type AutomaticReservationHoldInput = z.infer<typeof automaticReservationHoldSchema>;
+export type ReservationHoldRequestInput = z.infer<typeof reservationHoldRequestSchema>;
 export type PublicWaitlistInput = z.infer<typeof publicWaitlistSchema>;

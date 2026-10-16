@@ -19,6 +19,7 @@ type QueueReservationNotificationInput = {
   startTime: string;
   endTime: string;
   guestCount: number;
+  dedupeKey?: string;
 };
 
 export function queueReservationNotification(input: QueueReservationNotificationInput): Promise<number> {
@@ -33,6 +34,7 @@ export function queueReservationNotification(input: QueueReservationNotification
     channel: 'email',
     template: input.template,
     recipient: input.email,
+    dedupeKey: input.dedupeKey,
     payload,
   }, { notifications: notificationRepository });
 }

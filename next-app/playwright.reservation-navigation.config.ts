@@ -4,7 +4,7 @@ const baseURL = process.env.RESERVATION_TEST_BASE_URL ?? 'http://127.0.0.1:3001'
 
 export default defineConfig({
   testDir: './tests/browser',
-  testMatch: 'reservation-auth-navigation.spec.ts',
+  testMatch: ['reservation-auth-navigation.spec.ts', 'reservation-v2-visual.spec.ts'],
   fullyParallel: false,
   workers: 1,
   timeout: 45_000,

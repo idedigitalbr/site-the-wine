@@ -25,9 +25,11 @@ test('production Compose passes protected runtime configuration to the web servi
     'ADMIN_PASSWORD',
     'ADMIN_SESSION_SECRET',
     'NOTIFICATION_JOB_SECRET',
+    'RESERVATION_REPLAY_ENCRYPTION_KEY',
   ]) {
     assert.match(compose, new RegExp(`${variable}: \\$\\{${variable}:\\?`));
   }
+  assert.match(compose, /RESERVATION_REPLAY_KEY_VERSION: \$\{RESERVATION_REPLAY_KEY_VERSION:-v1\}/);
 });
 
 test('deploy workflow pins the VPS and updates only the web and migration services', () => {

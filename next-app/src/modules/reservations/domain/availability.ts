@@ -86,6 +86,31 @@ export type AvailabilitySlotsResult = AvailabilitySearchQuery & {
   slots: AvailabilitySlot[];
 };
 
+export type GeneralAvailabilityQuery = {
+  reservationDate: string;
+  durationMinutes: number;
+};
+
+export type GeneralAvailabilitySlot = {
+  startTime: string;
+  endTime: string;
+  availableTableCount: number;
+  eligibleGuestCounts: number[];
+};
+
+export type GeneralAvailabilityResult = GeneralAvailabilityQuery & {
+  timezone: string;
+  slots: GeneralAvailabilitySlot[];
+  updatedAt: string;
+};
+
+export type AvailabilityTimeValidator = (input: {
+  reservationDate: string;
+  startTime: string;
+  durationMinutes: number;
+  serviceWindows: AvailabilityServiceWindow[];
+}) => void;
+
 const availabilitySlotMinutes = 30;
 
 function isCalendarDate(value: string): boolean {
@@ -255,8 +280,11 @@ export function assertValidAvailabilityQuery(query: AvailabilityQuery): void {
 export function calculateAvailability(
   query: AvailabilityQuery,
   inventory: AvailabilityInventory,
+  validateTime?: AvailabilityTimeValidator,
 ): AvailabilityResult {
   assertValidAvailabilityQuery(query);
+
+  validateTime?.({ ...query, serviceWindows: inventory.serviceWindows });
 
   const activeTables = inventory.tables.filter((table) => table.active);
   const tablesById = new Map(activeTables.map((table) => [table.id, table]));
@@ -296,6 +324,7 @@ export function assertValidAvailabilitySearchQuery(query: AvailabilitySearchQuer
 export function calculateAvailabilitySlots(
   query: AvailabilitySearchQuery,
   inventory: AvailabilityInventory,
+  validateTime?: AvailabilityTimeValidator,
 ): AvailabilitySlotsResult {
   assertValidAvailabilitySearchQuery(query);
   const slots: AvailabilitySlot[] = [];
@@ -303,20 +332,78 @@ export function calculateAvailabilitySlots(
 
   for (const serviceWindow of inventory.serviceWindows) {
     for (const start of slotStartsForWindow(serviceWindow, query.durationMinutes)) {
-      const startTime = formatTime(start);
-      if (knownStarts.has(startTime)) continue;
-
-      const availability = calculateAvailability({ ...query, startTime }, inventory);
-      if (availability.options.length === 0) continue;
-
-      knownStarts.add(startTime);
-      slots.push({
-        startTime: availability.startTime,
-        endTime: availability.endTime,
-        options: availability.options,
-      });
+      const slot = buildAvailabilitySlot(query, inventory, validateTime, formatTime(start), knownStarts);
+      if (slot) slots.push(slot);
     }
   }
 
   return { ...query, slots };
+}
+
+function buildAvailabilitySlot(
+  query: AvailabilitySearchQuery,
+  inventory: AvailabilityInventory,
+  validateTime: AvailabilityTimeValidator | undefined,
+  startTime: string,
+  knownStarts: Set<string>,
+): AvailabilitySlot | null {
+  if (knownStarts.has(startTime)) return null;
+  try {
+    const availability = calculateAvailability({ ...query, startTime }, inventory, validateTime);
+    if (availability.options.length === 0) return null;
+    knownStarts.add(startTime);
+    return { startTime: availability.startTime, endTime: availability.endTime, options: availability.options };
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Invalid reservation time')) return null;
+    throw error;
+  }
+}
+
+export function calculateGeneralAvailability(
+  query: GeneralAvailabilityQuery,
+  inventory: AvailabilityInventory,
+  context: { timezone: string; validateTime?: AvailabilityTimeValidator },
+): GeneralAvailabilityResult {
+  assertValidAvailabilitySearchQuery({ ...query, guestCount: 1 });
+  const slots: GeneralAvailabilitySlot[] = [];
+  const knownStarts = new Set<string>();
+
+  for (const serviceWindow of inventory.serviceWindows) {
+    for (const start of slotStartsForWindow(serviceWindow, query.durationMinutes)) {
+      const slot = buildGeneralAvailabilitySlot(query, inventory, context, formatTime(start), knownStarts);
+      if (slot) slots.push(slot);
+    }
+  }
+
+  return {
+    ...query,
+    timezone: context.timezone,
+    slots,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function buildGeneralAvailabilitySlot(
+  query: GeneralAvailabilityQuery,
+  inventory: AvailabilityInventory,
+  context: { timezone: string; validateTime?: AvailabilityTimeValidator },
+  startTime: string,
+  knownStarts: Set<string>,
+): GeneralAvailabilitySlot | null {
+  if (knownStarts.has(startTime)) return null;
+  try {
+    context.validateTime?.({ reservationDate: query.reservationDate, startTime, durationMinutes: query.durationMinutes, serviceWindows: inventory.serviceWindows });
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Invalid reservation time')) return null;
+    throw error;
+  }
+  const availabilityQuery = { reservationDate: query.reservationDate, startTime, durationMinutes: query.durationMinutes };
+  const window = queryWindow({ ...availabilityQuery, guestCount: 1 });
+  const activeTables = inventory.tables.filter((table) => table.active);
+  const availableTableCount = activeTables.filter((table) => tableIsAvailable(table, inventory, window)).length;
+  const eligibleGuestCounts = Array.from({ length: 20 }, (_, index) => index + 1)
+    .filter((guestCount) => calculateAvailability({ ...availabilityQuery, guestCount }, inventory).options.length > 0);
+  if (availableTableCount === 0 || eligibleGuestCounts.length === 0) return null;
+  knownStarts.add(startTime);
+  return { startTime, endTime: calculateEndTime(startTime, query.durationMinutes), availableTableCount, eligibleGuestCounts };
 }

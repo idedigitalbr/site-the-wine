@@ -6,6 +6,7 @@ import { MenuModal } from '@/components/menu/MenuModal';
 import { BookingModal } from '@/components/reservation/BookingModal';
 import { ReservationToast } from '@/components/reservation/ReservationToast';
 import { ReservationAuthNotice } from '@/components/reservation/ReservationAuthNotice';
+import { FloatingAccountMenu } from '@/components/account/FloatingAccountMenu';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { EventsSection } from '@/components/sections/EventsSection';
 import { ExperiencePillarsSection } from '@/components/sections/ExperiencePillarsSection';
@@ -36,6 +37,7 @@ export default function HomePage() {
       <ReservationToast />
       <SiteBehaviorController />
       <MenuFlipbookController />
+      <FloatingAccountMenu />
     </>
   );
 }

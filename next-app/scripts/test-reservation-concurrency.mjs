@@ -11,19 +11,29 @@ function readEnvFile(path) {
     .map((match) => [match[1], match[2].replace(/^['"]|['"]$/g, '')]));
 }
 
+function requiredEnvironment(name) {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`${name} is required for isolated concurrency tests`);
+  return value;
+}
+
 function databaseConfig() {
-  const fileEnvironment = readEnvFile(resolve('.env.local'));
-  const value = (name, fallback = '') => process.env[name] ?? fileEnvironment[name] ?? fallback;
+  const database = requiredEnvironment('RESERVATION_TEST_DATABASE_NAME');
+  const configuredPersonalDatabase = process.env.DATABASE_NAME?.trim();
+  if (configuredPersonalDatabase && database === configuredPersonalDatabase) {
+    throw new Error('RESERVATION_TEST_DATABASE_NAME must differ from DATABASE_NAME');
+  }
   return {
-    host: value('DATABASE_HOST', '127.0.0.1'),
-    port: Number(value('DATABASE_PORT', '3306')),
-    database: value('DATABASE_NAME', 'thewine'),
-    user: value('DATABASE_USER', 'root'),
-    password: value('DATABASE_PASSWORD'),
+    host: requiredEnvironment('RESERVATION_TEST_DATABASE_HOST'),
+    port: Number(requiredEnvironment('RESERVATION_TEST_DATABASE_PORT')),
+    database,
+    user: requiredEnvironment('RESERVATION_TEST_DATABASE_USER'),
+    password: process.env.RESERVATION_TEST_DATABASE_PASSWORD ?? '',
   };
 }
 
 async function run() {
+  const baseUrl = requiredEnvironment('RESERVATION_TEST_BASE_URL').replace(/\/$/, '');
   const connection = await mysql.createConnection(databaseConfig());
   let areaId;
   let tableTypeId;
@@ -60,9 +70,9 @@ async function run() {
       duration: 120,
       tableIds: [tableId],
     });
-    const responses = await Promise.all([1, 2].map(() => fetch('http://127.0.0.1:3000/api/reservations/hold', {
+    const responses = await Promise.all([1, 2].map(() => fetch(`${baseUrl}/api/reservations/hold`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Origin: baseUrl },
       body: payload,
     })));
     const statuses = responses.map((response) => response.status).sort((first, second) => first - second);

@@ -5,9 +5,10 @@ import { ensureCustomerForAuthUser, findReservationFlow } from '@/server/custome
 import { getCustomerSession, signOutCustomer } from '@/server/customer-auth/service';
 import { getReservationSessionTokenHash } from '@/server/reservations/session';
 import { submitPublicReservation } from '@/server/reservations/create-public-reservation';
+import { classifyReservationError } from '@/server/reservations/reservation-http-error';
 
 type CustomerProfile = Awaited<ReturnType<typeof ensureCustomerForAuthUser>>;
-type IdentityResult = { customer: CustomerProfile } | { response: Response };
+type IdentityResult = { customer: CustomerProfile; userId: string } | { response: Response };
 
 async function resolveReservationCustomer(request: Request, flowId: string): Promise<IdentityResult> {
   const session = await getCustomerSession(request);
@@ -26,18 +27,24 @@ async function resolveReservationCustomer(request: Request, flowId: string): Pro
 
   const customer = await ensureCustomerForAuthUser(session.user.id);
   if (customer.id !== flow.customer_id) return { response: authJson({ error: 'flow_invalid' }, 409) };
-  return { customer };
+  return { customer, userId: session.user.id };
 }
 
 function reservationFailure(error: unknown) {
-  if (error instanceof Error && error.message.startsWith('Reservation unavailable')) {
-    return authJson({ error: 'reservation_unavailable' }, 409);
+  const classified = classifyReservationError(error);
+  if (classified.status === 503) console.error('Public reservation creation failed', error);
+  if (classified.status === 503) {
+    return authJson({
+      error: 'reservation_service_unavailable',
+      message: 'Não foi possível concluir agora. Tente novamente.',
+    }, 503);
   }
-  if (error instanceof Error && error.message.startsWith('Invalid')) {
-    return authJson({ error: 'invalid_input' }, 400);
-  }
-  console.error('Public reservation creation failed');
-  return authJson({ error: 'reservation_unavailable' }, 503);
+  return authJson({ error: classified.code }, classified.status);
+}
+
+function parseReservationRequest(body: unknown) {
+  const rawBody = body as Record<string, unknown>;
+  return authenticatedPublicReservationSchema.safeParse({ ...rawBody, allocationMode: rawBody.allocationMode ?? 'legacy' });
 }
 
 export async function POST(request: Request) {
@@ -45,7 +52,7 @@ export async function POST(request: Request) {
   const body = await readJsonBody(request);
   if (!body) return authJson({ error: 'invalid_json' }, 400);
 
-  const parsed = authenticatedPublicReservationSchema.safeParse(body);
+  const parsed = parseReservationRequest(body);
   if (!parsed.success) return authJson({
     error: 'invalid_input',
     fields: parsed.error.issues.map((issue) => issue.path.join('.')),
@@ -56,7 +63,7 @@ export async function POST(request: Request) {
     if ('response' in identity) return identity.response;
     const sessionTokenHash = await getReservationSessionTokenHash();
     if (!sessionTokenHash) return authJson({ error: 'hold_required' }, 409);
-    const result = await submitPublicReservation(parsed.data, sessionTokenHash, identity.customer);
+    const result = await submitPublicReservation(parsed.data, sessionTokenHash, { ...identity.customer, userId: identity.userId });
     return authJson(result, 201);
   } catch (error) {
     return reservationFailure(error);

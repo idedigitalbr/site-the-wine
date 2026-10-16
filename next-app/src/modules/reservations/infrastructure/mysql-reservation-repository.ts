@@ -1,9 +1,13 @@
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import type { PoolConnection } from 'mysql2/promise';
+import { createHash } from 'node:crypto';
 import { getDatabasePool } from '@/server/db';
 import type {
   ConfirmReservationWithHoldInput,
+  ConfirmReservationAttemptInput,
+  ConfirmReservationAttemptResult,
   CreatedReservationHold,
+  ReservationAttemptHoldInput,
   PortalReservation,
   ReservationNotificationContact,
   ReservationId,
@@ -28,6 +32,26 @@ type PortalReservationRow = RowDataPacket & {
   tableLabel: string | null;
 };
 type NotificationContactRow = RowDataPacket & { email: string | null };
+type AttemptLockRow = RowDataPacket & {
+  ownerUserId: string;
+  ownerCustomerId: number;
+  ownerSessionTokenHash: string;
+  revision: number;
+  state: string;
+  selectedTableIds: string | null;
+  reservationId: number | null;
+};
+type OperationRow = RowDataPacket & {
+  contentFingerprint: string;
+  status: 'pending' | 'completed' | 'conflict' | 'failed';
+  reservationId: number | null;
+  resultPublicCode: string | null;
+  replayCiphertext: string | null;
+  replayNonce: string | null;
+  replayAuthTag: string | null;
+  replayKeyVersion: string | null;
+  replayExpiresAt: string | null;
+};
 
 async function insertReservationEvent(
   connection: PoolConnection,
@@ -181,6 +205,7 @@ async function assertNoHoldConflict(
   startsAt: string,
   endsAt: string,
   sessionTokenHash: string,
+  attemptIdHash?: string,
 ): Promise<void> {
   const ids = orderedTableIds(tableIds);
   const [rows] = await connection.execute<RowDataPacket[]>(
@@ -191,9 +216,9 @@ async function assertNoHoldConflict(
        AND h.reservation_starts_at IS NOT NULL
        AND h.reservation_ends_at IS NOT NULL
        AND h.reservation_starts_at < ? AND h.reservation_ends_at > ?
-       AND h.session_token_hash <> ?
+       AND ${attemptIdHash ? '(h.attempt_id_hash IS NULL OR h.attempt_id_hash <> ?)' : 'h.session_token_hash <> ?'}
      LIMIT 1 FOR UPDATE`,
-    [...ids, endsAt, startsAt, sessionTokenHash],
+    [...ids, endsAt, startsAt, attemptIdHash ?? sessionTokenHash],
   );
   if (rows.length > 0) throw new Error('Reservation unavailable: selected tables are temporarily held');
 }
@@ -201,11 +226,12 @@ async function assertNoHoldConflict(
 async function assertNoConflicts(
   connection: PoolConnection,
   input: ConfirmReservationWithHoldInput,
+  attemptIdHash?: string,
 ): Promise<void> {
   const window = reservationWindow(input.reservation);
   await assertNoReservationConflict(connection, input);
   await assertNoBlockedConflict(connection, input.tableIds, window.startsAt, window.endsAt);
-  await assertNoHoldConflict(connection, input.tableIds, window.startsAt, window.endsAt, input.sessionTokenHash);
+  await assertNoHoldConflict(connection, input.tableIds, window.startsAt, window.endsAt, input.sessionTokenHash, attemptIdHash);
 }
 
 async function insertReservation(connection: PoolConnection, input: ReservationDraft): Promise<number> {
@@ -267,18 +293,89 @@ async function readCreatedHold(
   connection: PoolConnection,
   sessionTokenHash: string,
   tableIds: number[],
+  attemptIdHash?: string,
 ): Promise<CreatedReservationHold> {
   const ids = orderedTableIds(tableIds);
   const [rows] = await connection.execute<HoldResultRow[]>(
     `SELECT MIN(id) AS holdId, UNIX_TIMESTAMP(MAX(expires_at)) * 1000 AS expiresAt
      FROM reservation_holds
-     WHERE session_token_hash = ? AND restaurant_table_id IN (${placeholders(ids)})
+     WHERE session_token_hash = ? ${attemptIdHash ? 'AND attempt_id_hash = ?' : ''} AND restaurant_table_id IN (${placeholders(ids)})
        AND expires_at > CURRENT_TIMESTAMP`,
-    [sessionTokenHash, ...ids],
+    attemptIdHash ? [sessionTokenHash, attemptIdHash, ...ids] : [sessionTokenHash, ...ids],
   );
   const row = rows[0];
   if (!row || !row.holdId || !row.expiresAt) throw new Error('Reservation hold could not be created');
   return { holdId: Number(row.holdId), tableIds: ids, expiresAt: Number(row.expiresAt) };
+}
+
+async function lockReservationAttempt(connection: PoolConnection, attemptIdHash: string): Promise<AttemptLockRow | null> {
+  const [attempts] = await connection.execute<AttemptLockRow[]>(
+    `SELECT owner_user_id AS ownerUserId, owner_customer_id AS ownerCustomerId,
+            owner_session_token_hash AS ownerSessionTokenHash, revision, state,
+            selected_table_ids AS selectedTableIds, reservation_id AS reservationId
+     FROM reservation_attempts WHERE attempt_id_hash = ? LIMIT 1 FOR UPDATE`,
+    [attemptIdHash],
+  );
+  return attempts[0] ?? null;
+}
+
+function assertAttemptOwnerMatches(attempt: AttemptLockRow | null, input: { ownerUserId: string; ownerCustomerId: number; sessionTokenHash: string }): asserts attempt is AttemptLockRow {
+  if (!attempt) throw new Error('attempt_not_found');
+  if (attempt.ownerUserId !== input.ownerUserId || Number(attempt.ownerCustomerId) !== input.ownerCustomerId || attempt.ownerSessionTokenHash !== input.sessionTokenHash) {
+    throw new Error('attempt_owner_mismatch');
+  }
+}
+
+function assertAttemptActiveRevision(attempt: AttemptLockRow, expectedRevision: number): void {
+  if (attempt.state !== 'active') throw new Error(`attempt_${attempt.state}`);
+  if (Number(attempt.revision) !== expectedRevision) throw new Error('selection_outdated');
+}
+
+async function readOperation(
+  connection: PoolConnection,
+  attemptIdHash: string,
+  operationKey: string,
+): Promise<OperationRow | null> {
+  const [operations] = await connection.execute<OperationRow[]>(
+    `SELECT content_fingerprint AS contentFingerprint, status,
+            reservation_id AS reservationId, result_public_code AS resultPublicCode,
+            replay_ciphertext AS replayCiphertext, replay_nonce AS replayNonce,
+            replay_auth_tag AS replayAuthTag, replay_key_version AS replayKeyVersion,
+            replay_expires_at AS replayExpiresAt
+     FROM reservation_operations
+     WHERE attempt_id_hash = ? AND operation_key = ? LIMIT 1 FOR UPDATE`,
+    [attemptIdHash, operationKey],
+  );
+  return operations[0] ?? null;
+}
+
+function assertOperationFingerprint(operation: OperationRow, fingerprint: string): void {
+  if (operation.contentFingerprint !== fingerprint) throw new Error('idempotency_conflict');
+}
+
+function assertReplayComplete(operation: OperationRow): asserts operation is OperationRow & {
+  status: 'completed'; reservationId: number; resultPublicCode: string; replayCiphertext: string; replayNonce: string; replayAuthTag: string; replayKeyVersion: string; replayExpiresAt: string;
+} {
+  if (operation.status !== 'completed' || !hasReplayPayload(operation)) throw new Error('reservation_confirmation_in_progress');
+}
+
+function hasReplayPayload(operation: OperationRow): boolean {
+  return [operation.replayCiphertext, operation.replayNonce, operation.replayAuthTag, operation.replayKeyVersion, operation.replayExpiresAt, operation.reservationId, operation.resultPublicCode].every(Boolean);
+}
+
+function mapReplayResult(operation: OperationRow & { reservationId: number; resultPublicCode: string; replayCiphertext: string; replayNonce: string; replayAuthTag: string; replayKeyVersion: string; replayExpiresAt: string }): ConfirmReservationAttemptResult {
+  return {
+    kind: 'replay',
+    reservationId: Number(operation.reservationId),
+    publicCode: operation.resultPublicCode,
+    replay: {
+      ciphertext: Buffer.from(operation.replayCiphertext, 'binary').toString('base64'),
+      nonce: Buffer.from(operation.replayNonce, 'binary').toString('base64'),
+      authTag: Buffer.from(operation.replayAuthTag, 'binary').toString('base64'),
+      keyVersion: operation.replayKeyVersion,
+      expiresAt: new Date(operation.replayExpiresAt).toISOString(),
+    },
+  };
 }
 
 export class MysqlReservationRepository implements ReservationRepository, ReservationPortalRepository {
@@ -422,6 +519,82 @@ export class MysqlReservationRepository implements ReservationRepository, Reserv
     });
   }
 
+  async createHoldForAttempt(input: ReservationAttemptHoldInput): Promise<CreatedReservationHold> {
+    return withTransaction(async (connection) => {
+      const attemptIdHash = requireHash(input.attemptId);
+      const attempt = await lockReservationAttempt(connection, attemptIdHash);
+      assertAttemptOwnerMatches(attempt, input);
+      if (attempt.state !== 'active') throw new Error(`attempt_${attempt.state}`);
+      const existingOperation = await readOperation(connection, attemptIdHash, input.operationKey);
+      if (existingOperation?.status === 'completed') {
+        return readCreatedHold(connection, input.sessionTokenHash, input.tableIds, attemptIdHash);
+      }
+      if (existingOperation) throw new Error('reservation_hold_in_progress');
+      if (Number(attempt.revision) !== input.expectedRevision) throw new Error('selection_outdated');
+      await connection.execute(
+        `INSERT INTO reservation_operations (attempt_id_hash, operation_key, content_fingerprint, status)
+         VALUES (?, ?, ?, 'pending')`,
+        [attemptIdHash, input.operationKey, createHash('sha256').update(JSON.stringify({
+          date: input.reservationDate,
+          time: input.startTime,
+          guests: input.guestCount,
+          duration: input.durationMinutes,
+          tableIds: orderedTableIds(input.tableIds),
+        })).digest('hex')],
+      );
+
+      await removeExpiredHolds(connection);
+      await lockActiveTables(connection, input.tableIds);
+      const validationInput: ConfirmReservationWithHoldInput = {
+        reservation: {
+          publicCode: 'hold-validation',
+          customerId: input.ownerCustomerId,
+          reservationDate: input.reservationDate,
+          startTime: input.startTime,
+          endTime: input.endTime,
+          guestCount: input.guestCount,
+          status: 'draft',
+        },
+        tableIds: input.tableIds,
+        sessionTokenHash: input.sessionTokenHash,
+        specialNeeds: [],
+        specialNeedsOther: '',
+      };
+      await assertNoConflicts(connection, validationInput);
+      await connection.execute('DELETE FROM reservation_holds WHERE attempt_id_hash = ?', [attemptIdHash]);
+      const window = reservationWindow(input);
+      for (const tableId of orderedTableIds(input.tableIds)) {
+        await connection.execute(
+          `INSERT INTO reservation_holds
+            (session_token_hash, attempt_id_hash, restaurant_table_id, starts_at, expires_at,
+             reservation_starts_at, reservation_ends_at, guest_count)
+           VALUES (?, ?, ?, CURRENT_TIMESTAMP,
+             DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ${reservationHoldDurationMinutes} MINUTE), ?, ?, ?)`,
+          [input.sessionTokenHash, attemptIdHash, tableId, window.startsAt, window.endsAt, input.guestCount],
+        );
+      }
+      const result = await readCreatedHold(connection, input.sessionTokenHash, input.tableIds, attemptIdHash);
+      await connection.execute(
+        `UPDATE reservation_attempts
+         SET revision = ?, selected_table_ids = ?, hold_expires_at = FROM_UNIXTIME(? / 1000)
+         WHERE attempt_id_hash = ? AND revision = ?`,
+        [input.expectedRevision + 1, JSON.stringify({
+          date: input.reservationDate,
+          time: input.startTime,
+          guests: input.guestCount,
+          duration: input.durationMinutes,
+          tableIds: orderedTableIds(input.tableIds),
+        }), result.expiresAt, attemptIdHash, input.expectedRevision],
+      );
+      await connection.execute(
+        `UPDATE reservation_operations SET status = 'completed', result_public_code = ?
+         WHERE attempt_id_hash = ? AND operation_key = ?`,
+        [String(result.holdId), attemptIdHash, input.operationKey],
+      );
+      return result;
+    });
+  }
+
   async confirmWithHold(input: ConfirmReservationWithHoldInput): Promise<ReservationId> {
     return withTransaction(async (connection) => {
       await removeExpiredHolds(connection);
@@ -454,4 +627,77 @@ export class MysqlReservationRepository implements ReservationRepository, Reserv
       return reservationId;
     });
   }
+
+  async confirmReservationAttempt(input: ConfirmReservationAttemptInput): Promise<ConfirmReservationAttemptResult> {
+    return withTransaction(async (connection) => {
+      const attemptIdHash = requireHash(input.attemptId);
+      const attempt = await lockReservationAttempt(connection, attemptIdHash);
+      assertAttemptOwnerMatches(attempt, input);
+      const existing = await readOperation(connection, attemptIdHash, input.operationKey);
+      if (existing) {
+        assertOperationFingerprint(existing, input.contentFingerprint);
+        assertReplayComplete(existing);
+        return mapReplayResult(existing);
+      }
+      assertAttemptActiveRevision(attempt, input.expectedRevision);
+
+      await connection.execute(
+        `INSERT INTO reservation_operations
+          (attempt_id_hash, operation_key, content_fingerprint, status, notification_dedupe_key)
+         VALUES (?, ?, ?, 'pending', ?)`,
+        [attemptIdHash, input.operationKey, input.contentFingerprint, input.notificationDedupeKey],
+      );
+      await removeExpiredHolds(connection);
+      await lockActiveTables(connection, input.tableIds);
+      const ids = orderedTableIds(input.tableIds);
+      const window = reservationWindow(input.reservation);
+      const [holds] = await connection.execute<RowDataPacket[]>(
+        `SELECT restaurant_table_id
+         FROM reservation_holds
+         WHERE attempt_id_hash = ? AND session_token_hash = ?
+           AND restaurant_table_id IN (${placeholders(ids)})
+           AND reservation_starts_at = ? AND reservation_ends_at = ?
+           AND guest_count = ? AND expires_at > CURRENT_TIMESTAMP
+         FOR UPDATE`,
+        [attemptIdHash, input.sessionTokenHash, ...ids, window.startsAt, window.endsAt, input.reservation.guestCount],
+      );
+      if (holds.length !== ids.length) throw new Error('Reservation unavailable: reservation hold expired');
+      await assertNoConflicts(connection, input, attemptIdHash);
+      const reservationId = await insertReservation(connection, input.reservation);
+      await insertTableAssignments(connection, reservationId, ids);
+      await insertSpecialNeeds(connection, reservationId, input.specialNeeds, input.specialNeedsOther);
+      await insertReservationEvent(connection, reservationId, 'created', null, 'confirmed', 'customer', `reservation:${reservationId}:created`);
+      await connection.execute(
+        `DELETE FROM reservation_holds
+         WHERE attempt_id_hash = ? AND session_token_hash = ? AND restaurant_table_id IN (${placeholders(ids)})`,
+        [attemptIdHash, input.sessionTokenHash, ...ids],
+      );
+      await connection.execute(
+        `UPDATE reservation_attempts
+         SET state = 'confirmed', revision = ?, reservation_id = ?, hold_expires_at = NULL
+         WHERE attempt_id_hash = ? AND revision = ?`,
+        [input.expectedRevision + 1, reservationId, attemptIdHash, input.expectedRevision],
+      );
+      await connection.execute(
+        `UPDATE reservation_operations
+         SET status = 'completed', reservation_id = ?, result_public_code = ?,
+             replay_ciphertext = FROM_BASE64(?), replay_nonce = FROM_BASE64(?),
+             replay_auth_tag = FROM_BASE64(?), replay_key_version = ?, replay_expires_at = ?
+         WHERE attempt_id_hash = ? AND operation_key = ?`,
+        [reservationId, input.reservation.publicCode, input.replay.ciphertext, input.replay.nonce, input.replay.authTag, input.replay.keyVersion, new Date(input.replay.expiresAt), attemptIdHash, input.operationKey],
+      );
+      return {
+        kind: 'created',
+        reservationId,
+        publicCode: input.reservation.publicCode,
+        replay: input.replay,
+      };
+    });
+  }
+}
+
+function requireHash(attemptId: string): string {
+  const value = attemptId.trim();
+  if (!value) throw new Error('attempt_not_found');
+  return createHash('sha256').update(value).digest('hex');
 }
