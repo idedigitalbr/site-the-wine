@@ -19,6 +19,18 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, linux, x64, oracle-vps, docker]
     timeout-minutes: 45
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: thewine-ci-root-password
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pthewine-ci-root-password --silent"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     concurrency:
       group: thewine-ci-${{ github.ref }}
       cancel-in-progress: true
@@ -66,6 +78,15 @@ jobs:
       - name: Unit and migration tests
         run: npm test
         working-directory: next-app
+
+      - name: Reservation persistence integration tests
+        run: node scripts/test-reservation-persistence-fixes.mjs
+        working-directory: next-app
+        env:
+          DATABASE_HOST: 127.0.0.1
+          DATABASE_PORT: ${{ job.services.mysql.ports[3306] }}
+          DATABASE_ADMIN_USER: root
+          DATABASE_ADMIN_PASSWORD: thewine-ci-root-password
 
       - name: Verify lockfile
         run: npm run verify:lockfile

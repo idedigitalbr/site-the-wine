@@ -42,8 +42,13 @@ export function encryptReplayPayload(
 export function decryptReplayPayload<T extends Record<string, unknown>>(
   encrypted: EncryptedReplayPayload,
   key: Buffer,
+  now = new Date(),
 ): T {
   assertKey(key);
+  const expiresAt = Date.parse(encrypted.expiresAt);
+  if (!Number.isFinite(expiresAt) || expiresAt <= now.getTime()) {
+    throw new Error('Reservation replay expired');
+  }
   try {
     const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(encrypted.nonce, 'base64'));
     decipher.setAuthTag(Buffer.from(encrypted.authTag, 'base64'));

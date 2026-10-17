@@ -2,6 +2,7 @@ import 'server-only';
 import { betterAuth } from 'better-auth';
 import { randomUUID } from 'node:crypto';
 import { getDatabasePool } from '@/server/db';
+import { getTrustedCustomerAuthOrigins } from './origin';
 
 function requiredSecret(name: string): string {
   const value = process.env[name];
@@ -16,7 +17,7 @@ function createCustomerAuth() {
   return betterAuth({
     appName: 'The Wine',
     baseURL,
-    trustedOrigins: [baseURL],
+    trustedOrigins: getTrustedCustomerAuthOrigins(baseURL),
     secret: requiredSecret('BETTER_AUTH_SECRET'),
     database: getDatabasePool(),
     emailAndPassword: {

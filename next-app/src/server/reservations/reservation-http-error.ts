@@ -16,6 +16,7 @@ const conflictErrors = new Set([
 export function classifyReservationError(error: unknown): ReservationHttpError {
   const message = error instanceof Error ? error.message : '';
 
+  if (message === 'reservation_replay_expired') return { code: message, status: 410 };
   if (message.startsWith('Reservation unavailable')) return { code: 'reservation_unavailable', status: 409 };
   if (message.startsWith('Invalid')) return { code: 'invalid_input', status: 400 };
   if (conflictErrors.has(message)) {
