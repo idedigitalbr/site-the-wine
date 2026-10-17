@@ -1,60 +1,71 @@
-import { NextResponse } from 'next/server';
-import { submitPublicReservation } from '@/server/reservations/create-public-reservation';
-import { publicReservationSchema } from '@/modules/reservations/schemas/public-reservation-schema';
+import { authenticatedPublicReservationSchema } from '@/modules/reservations/schemas/public-reservation-schema';
+import { authJson, addAuthCookies, readJsonBody } from '@/server/customer-auth/http';
+import { hasTrustedOrigin } from '@/server/customer-auth/origin';
+import { ensureCustomerForAuthUser, findReservationFlow } from '@/server/customer-auth/repository';
+import { getCustomerSession, signOutCustomer } from '@/server/customer-auth/service';
 import { getReservationSessionTokenHash } from '@/server/reservations/session';
+import { submitPublicReservation } from '@/server/reservations/create-public-reservation';
+import { classifyReservationError } from '@/server/reservations/reservation-http-error';
 
-async function readJson(request: Request): Promise<unknown | null> {
-  try {
-    return await request.json();
-  } catch {
-    return null;
+type CustomerProfile = Awaited<ReturnType<typeof ensureCustomerForAuthUser>>;
+type IdentityResult = { customer: CustomerProfile; userId: string } | { response: Response };
+
+async function resolveReservationCustomer(request: Request, flowId: string): Promise<IdentityResult> {
+  const session = await getCustomerSession(request);
+  if (!session) {
+    const cookies = await signOutCustomer(request);
+    return { response: addAuthCookies(authJson({ error: 'session_expired', message: 'Sua sessão expirou. Acesse novamente para continuar.' }, 401), cookies) };
   }
+
+  const flow = await findReservationFlow(flowId);
+  if (!flow) return { response: authJson({ error: 'flow_expired', message: 'Esta reserva expirou. Inicie uma nova reserva.' }, 409) };
+  if (flow.user_id !== session.user.id) {
+    const cookies = await signOutCustomer(request);
+    return { response: addAuthCookies(authJson({ error: 'account_changed', message: 'Sua conta mudou. Acesse novamente para continuar.' }, 409), cookies) };
+  }
+  if (Number(flow.is_expired)) return { response: authJson({ error: 'flow_expired', message: 'Esta reserva expirou. Inicie uma nova reserva.' }, 409) };
+
+  const customer = await ensureCustomerForAuthUser(session.user.id);
+  if (customer.id !== flow.customer_id) return { response: authJson({ error: 'flow_invalid' }, 409) };
+  return { customer, userId: session.user.id };
 }
 
-async function createReservationResponse(input: Parameters<typeof submitPublicReservation>[0], sessionTokenHash: string): Promise<NextResponse> {
-  try {
-    const result = await submitPublicReservation(input, sessionTokenHash);
-    return NextResponse.json(result, { status: 201 });
-  } catch (error) {
-    if (error instanceof Error && error.message.startsWith('Reservation unavailable')) {
-      return NextResponse.json({ error: 'reservation_unavailable' }, { status: 409 });
-    }
-
-    if (error instanceof Error && error.message.startsWith('Invalid')) {
-      return NextResponse.json({ error: 'invalid_input' }, { status: 400 });
-    }
-
-    if (process.env.NODE_ENV !== 'production') {
-      const code = 'TW-' + Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('').toUpperCase();
-      return NextResponse.json({
-        reservationId: Math.floor(1000 + Math.random() * 9000),
-        publicCode: code,
-        secureToken: 'demo-secure-token',
-        status: 'confirmed',
-      }, { status: 201 });
-    }
-
-    console.error('Public reservation creation failed', error);
-    return NextResponse.json({ error: 'reservation_unavailable' }, { status: 503 });
+function reservationFailure(error: unknown) {
+  const classified = classifyReservationError(error);
+  if (classified.status === 503) console.error('Public reservation creation failed', error);
+  if (classified.status === 503) {
+    return authJson({
+      error: 'reservation_service_unavailable',
+      message: 'Não foi possível concluir agora. Tente novamente.',
+    }, 503);
   }
+  return authJson({ error: classified.code }, classified.status);
+}
+
+function parseReservationRequest(body: unknown) {
+  const rawBody = body as Record<string, unknown>;
+  return authenticatedPublicReservationSchema.safeParse({ ...rawBody, allocationMode: rawBody.allocationMode ?? 'legacy' });
 }
 
 export async function POST(request: Request) {
-  const body = await readJson(request);
-  if (body === null) return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
+  if (!hasTrustedOrigin(request)) return authJson({ error: 'untrusted_origin' }, 403);
+  const body = await readJsonBody(request);
+  if (!body) return authJson({ error: 'invalid_json' }, 400);
 
-  const parsed = publicReservationSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({
-      error: 'invalid_input',
-      fields: parsed.error.issues.map((issue) => issue.path.join('.')),
-    }, { status: 400 });
+  const parsed = parseReservationRequest(body);
+  if (!parsed.success) return authJson({
+    error: 'invalid_input',
+    fields: parsed.error.issues.map((issue) => issue.path.join('.')),
+  }, 400);
+
+  try {
+    const identity = await resolveReservationCustomer(request, parsed.data.flowId);
+    if ('response' in identity) return identity.response;
+    const sessionTokenHash = await getReservationSessionTokenHash();
+    if (!sessionTokenHash) return authJson({ error: 'hold_required' }, 409);
+    const result = await submitPublicReservation(parsed.data, sessionTokenHash, { ...identity.customer, userId: identity.userId });
+    return authJson(result, 201);
+  } catch (error) {
+    return reservationFailure(error);
   }
-
-  const sessionTokenHash = await getReservationSessionTokenHash();
-  if (!sessionTokenHash) {
-    return NextResponse.json({ error: 'hold_required' }, { status: 409 });
-  }
-
-  return createReservationResponse(parsed.data, sessionTokenHash);
 }

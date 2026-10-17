@@ -88,6 +88,10 @@ export function WaitlistForm({ date, guests }: { date: string; guests: number })
   const [errors, setErrors] = useState<WaitlistErrors>({});
   const hasErrors = Object.keys(errors).length > 0;
 
+  if (!Number.isInteger(guests) || guests < 1 || guests > 20) {
+    return <p role="status" className="mt-5 rounded-[var(--radius-md)] border border-primary/30 bg-primary/5 p-4 text-sm text-muted">Selecione primeiro a quantidade de pessoas para entrar na lista de espera.</p>;
+  }
+
   const setField = (field: WaitlistField, value: string) => {
     setFields((current) => ({ ...current, [field]: value }));
     setErrors((current) => {

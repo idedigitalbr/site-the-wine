@@ -143,7 +143,7 @@ test('phase nine exposes a protected customer directory with operational history
   assert.match(shell, /\/admin\/clientes/);
 });
 
-test('public reservation entry points use the configured reservation channel', () => {
+test('public reservation entry points open the website flow and keep WhatsApp as an alternative', () => {
   const header = source('src/components/layout/Header.tsx');
   const mobileNavigation = source('src/components/layout/MobileNavigation.tsx');
   const events = source('src/components/sections/EventsSection.tsx');
@@ -153,17 +153,17 @@ test('public reservation entry points use the configured reservation channel', (
   const reservationPortal = source('src/components/reservation/portal/ReservationPortal.tsx');
 
   for (const component of [header, mobileNavigation, events, pairings, reservationSection, bookingModal, reservationPortal]) {
-    assert.match(component, /href="\/reservar"/);
+    assert.match(component, /href="\/reservas"/);
   }
 
   assert.doesNotMatch(header, /href=\{whatsappLinks\.reservation\}/);
   assert.doesNotMatch(mobileNavigation, /href=\{whatsappLinks\.reservation\}/);
   assert.doesNotMatch(events, /href=\{whatsappLinks\.(?:dinner|corporate)\}/);
-  assert.equal((events.match(/href="\/reservar"/g) ?? []).length, 2);
+  assert.equal((events.match(/href="\/reservas"/g) ?? []).length, 2);
   assert.doesNotMatch(pairings, /href=\{whatsappLinks\.reservation\}/);
   assert.doesNotMatch(reservationSection, /href=\{whatsappLinks\.experience\}/);
-  assert.match(bookingModal, /Fazer reserva/);
-  assert.doesNotMatch(bookingModal, /Reservar no WhatsApp/);
+  assert.match(bookingModal, /Reservar pelo site/);
+  assert.match(bookingModal, /Reservar no WhatsApp/);
   assert.match(reservationPortal, /Falar com a equipe/);
 });
 
@@ -175,15 +175,14 @@ test('reservation page uses a route-specific canonical and app-managed styleshee
   assert.doesNotMatch(page, /<link\b[^>]*rel=["']stylesheet["']/);
 });
 
-test('public reservation forms expose sanitized contact and field-level validation', () => {
+test('public waitlist form exposes sanitized contact and field-level validation', () => {
   const phone = source('src/lib/phone.ts');
-  const wizard = source('src/components/reservation/v2/ReservationWizard.tsx');
   const waitlist = source('src/components/reservation/v2/WaitlistForm.tsx');
   const styles = source('src/app/globals.css');
 
   assert.match(phone, /replace\(\/\\D\/g, ''\)/);
-  assert.match(wizard, /formatPhoneInput\(event\.target\.value\)/);
-  assert.match(wizard, /autoComplete="tel"/);
+  assert.match(waitlist, /formatPhoneInput\(event\.target\.value\)/);
+  assert.match(waitlist, /autoComplete="tel"/);
   assert.match(waitlist, /publicWaitlistSchema\.safeParse/);
   assert.match(waitlist, /waitlist-phone-error/);
   assert.match(waitlist, /Corrija os campos destacados/);

@@ -1,4 +1,5 @@
 import { Wine, X } from 'lucide-react';
+import { whatsappLinks } from '@/config/social';
 
 export function BookingModal() {
   return (
@@ -38,8 +39,17 @@ export function BookingModal() {
           Fale diretamente com nossa equipe e reserve a sua mesa:
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-          <a href="/reservar" className="btn-gold-outline" style={{ display: 'inline-block', padding: '0.9rem 2rem', fontSize: '0.8rem' }}>
-            Fazer reserva
+          <a href="/reservas" className="btn-gold-outline" style={{ display: 'inline-block', padding: '0.9rem 2rem', fontSize: '0.8rem' }}>
+            Reservar pelo site
+          </a>
+          <a
+            href={whatsappLinks.reservation}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-gold-outline"
+            style={{ display: 'inline-block', padding: '0.9rem 2rem', fontSize: '0.8rem' }}
+          >
+            Reservar no WhatsApp
           </a>
         </div>
       </div>

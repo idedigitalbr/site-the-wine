@@ -26,6 +26,25 @@ npm run build
 npm run start:laragon
 ```
 
+Autenticação de clientes e configuração da migração: [`docs/customer-auth.md`](docs/customer-auth.md).
+
+### Confirmação pública de reservas
+
+A confirmação pública usa uma chave de replay para proteger os dados temporários da tentativa. Configure a chave no ambiente que executa o Next antes de iniciar ou reiniciar o servidor:
+
+```text
+RESERVATION_REPLAY_ENCRYPTION_KEY=<valor-base64-aleatório-de-32-bytes>
+RESERVATION_REPLAY_KEY_VERSION=v1
+```
+
+No PowerShell, um valor pode ser gerado com:
+
+```powershell
+[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+```
+
+Depois de alterar a variável, reinicie o processo Next. A chave deve permanecer estável entre reinícios e réplicas do serviço; não gere uma nova chave a cada inicialização e não a versione no repositório. Em produção, o `docker-compose.yml` exige `RESERVATION_REPLAY_ENCRYPTION_KEY` no serviço web; ela não é necessária no serviço de migração.
+
 ## Verificações de código
 
 ```bash

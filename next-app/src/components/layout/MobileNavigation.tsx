@@ -15,7 +15,7 @@ export function MobileNavigation() {
           <a href={item.href} className="mobile-nav-link" key={item.href}>{item.label}</a>
         ))}
         <a
-          href="/reservar"
+          href="/reservas"
           className="mobile-nav-link"
           style={{
             color: 'var(--wine-gold)',

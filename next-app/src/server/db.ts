@@ -19,6 +19,7 @@ export function getDatabasePool(): Pool {
       user: requiredEnv('DATABASE_USER'),
       password: requiredEnv('DATABASE_PASSWORD'),
       charset: 'utf8mb4',
+      timezone: 'Z',
       waitForConnections: true,
       connectionLimit: 10,
       enableKeepAlive: true,

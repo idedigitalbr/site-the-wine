@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -11,22 +11,22 @@ import {
   CircleAlert,
   Clock3,
   LoaderCircle,
-  Mail,
-  Phone,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm, useWatch, type FieldErrors, type FieldPath, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
-import { formatPhoneInput } from '@/lib/phone';
+import { whatsappLinks } from '@/config/social';
 import { MockPaymentDemo } from './MockPaymentDemo';
 import { WaitlistForm } from './WaitlistForm';
-import {
-  publicReservationSchema,
-  specialNeedCodes,
-  type PublicReservationInput,
-} from '@/modules/reservations/schemas/public-reservation-schema';
-import { useReservationWizardStore } from './useReservationWizardStore';
+import { authenticatedPublicReservationSchema, type AuthenticatedPublicReservationInput } from '@/modules/reservations/schemas/public-reservation-schema';
+import { CustomerAuthStep } from './CustomerAuthStep';
+import { ReservationPreferencesStep } from './ReservationPreferencesStep';
+import { StepDateAndTime } from './StepDateAndTime';
+import { StepGuests } from './StepGuests';
+import { ReservationReview } from './ReservationReview';
+import { useReservationWizardStore, type ReservationCheckpoint } from './useReservationWizardStore';
 
 type AvailabilityOption = {
   tableIds: number[];
@@ -38,6 +38,8 @@ type AvailabilityOption = {
 type AvailabilitySlot = {
   startTime: string;
   endTime: string;
+  availableTableCount: number;
+  eligibleGuestCounts: number[];
   options: AvailabilityOption[];
 };
 
@@ -58,19 +60,36 @@ type CreatedReservationHold = {
   expiresAt: number;
 };
 
-type FormValues = PublicReservationInput;
+type FormValues = AuthenticatedPublicReservationInput;
 
-const specialNeedOptions = [
-  ['accessibility', 'Acessibilidade'],
-  ['reduced_mobility', 'Mobilidade reduzida'],
-  ['high_chair', 'Cadeira infantil'],
-  ['dietary_restriction', 'Restrição alimentar'],
-  ['food_allergy', 'Alergia alimentar'],
-  ['other', 'Outra necessidade'],
-  ['none', 'Nenhuma'],
-] as const;
+type ReservationUser = { id: string; name: string };
+type SessionResponse = { status?: string; user?: ReservationUser };
+type ApiErrorResponse = { error?: string; message?: string; parseFailed?: boolean };
 
-const steps = ['Data', 'Horário', 'Seus dados', 'Confirmação'];
+const steps = ['Seus dados', 'Data', 'Pessoas', 'Preferências', 'Confirmação'];
+const defaultReservationValues: FormValues = {
+  flowId: '',
+  allocationMode: 'legacy',
+  date: '',
+  time: '',
+  guests: 0,
+  duration: 120,
+  tableIds: [],
+  specialNeeds: [],
+  notes: '',
+};
+
+function reservationContentKey(input: Pick<FormValues, 'date' | 'time' | 'guests' | 'duration' | 'tableIds' | 'specialNeeds' | 'notes'>): string {
+  return JSON.stringify({
+    date: input.date,
+    time: input.time,
+    guests: input.guests,
+    duration: input.duration,
+    tableIds: [...input.tableIds].sort((a, b) => a - b),
+    specialNeeds: [...input.specialNeeds].sort(),
+    notes: input.notes.trim(),
+  });
+}
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -85,13 +104,257 @@ function formatHoldExpiry(timestamp: number): string {
 
 async function fetchAvailability(
   date: string,
-  guests: number,
   duration: number,
 ): Promise<AvailabilityResponse> {
-  const params = new URLSearchParams({ date, guests: String(guests), duration: String(duration) });
+  const params = new URLSearchParams({ mode: 'general', date, duration: String(duration) });
   const response = await fetch(`/api/reservations/availability?${params}`);
   if (!response.ok) throw new Error('availability_unavailable');
   return response.json();
+}
+
+type SessionFlowResult =
+  | { kind: 'anonymous' }
+  | { kind: 'authenticated'; user: ReservationUser; flowId: string; attemptId: string; revision: number }
+  | { kind: 'error'; error: string; message: string };
+
+type FlowCreationResult = { kind: 'created'; flowId: string; attemptId: string; revision: number } | { kind: 'error'; error: string; message: string };
+type CheckpointResult = { kind: 'valid'; flowId: string; attemptId?: string; revision?: number } | { kind: 'session-lost'; reason: 'expired' | 'changed' } | { kind: 'error'; message: string };
+type ReservationSubmitResult =
+  | { kind: 'created'; reservation: CreatedReservation }
+  | { kind: 'flow-renewed'; flowId: string; attemptId: string; revision: number }
+  | { kind: 'session-lost'; reason: 'expired' | 'changed' }
+  | { kind: 'error'; error: string; message: string; status: number };
+
+function sessionLossReason(error: string): 'expired' | 'changed' | null {
+  if (error === 'session_expired') return 'expired';
+  if (error === 'account_changed') return 'changed';
+  return null;
+}
+
+async function readApiError(response: Response): Promise<ApiErrorResponse> {
+  return response.json().catch(() => ({ parseFailed: true })) as Promise<ApiErrorResponse>;
+}
+
+async function createReservationFlow(): Promise<FlowCreationResult> {
+  try {
+    const response = await fetch('/api/reservations/flow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) {
+      const error = await readApiError(response);
+      return { kind: 'error', error: error.error ?? 'flow_unavailable', message: error.message ?? 'Não foi possível preparar sua reserva.' };
+    }
+    const flow = await response.json() as { flowId?: unknown; attemptId?: unknown; revision?: unknown };
+    return typeof flow.flowId === 'string' && typeof flow.attemptId === 'string' && typeof flow.revision === 'number'
+      ? { kind: 'created', flowId: flow.flowId, attemptId: flow.attemptId, revision: flow.revision }
+      : { kind: 'error', error: 'invalid_flow', message: 'Não foi possível preparar sua reserva.' };
+  } catch {
+    return { kind: 'error', error: 'network_unavailable', message: 'Não foi possível verificar sua conexão. Tente novamente.' };
+  }
+}
+
+async function requestSessionFlow(): Promise<SessionFlowResult> {
+  try {
+    const response = await fetch('/api/customer-auth/session', { cache: 'no-store' });
+    if (!response.ok) {
+      const error = await readApiError(response);
+      return { kind: 'error', error: error.error ?? 'session_unavailable', message: error.message ?? 'Não foi possível verificar seu acesso.' };
+    }
+    const session = await response.json() as SessionResponse;
+    if (session.status !== 'authenticated' || !session.user) return { kind: 'anonymous' };
+    const flow = await createReservationFlow();
+    if (flow.kind === 'error') return flow;
+    return { kind: 'authenticated', user: session.user, flowId: flow.flowId, attemptId: flow.attemptId, revision: flow.revision };
+  } catch {
+    return { kind: 'error', error: 'network_unavailable', message: 'Não foi possível verificar sua conexão. Tente novamente.' };
+  }
+}
+
+async function postCheckpoint(flowId: string, checkpoint: ReservationCheckpoint) {
+  try {
+    const response = await fetch('/api/customer-auth/check-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ flowId, stage: checkpoint }),
+    });
+    const error = response.ok ? {} : await readApiError(response);
+    return { ok: response.ok, error: error.error ?? '', message: error.message ?? '' };
+  } catch {
+    return { ok: false, error: 'network_unavailable', message: 'Não foi possível verificar sua conexão. Tente novamente.' };
+  }
+}
+
+type CheckpointRecoveryResult =
+  | { kind: 'retry'; flowId: string; attempt: Extract<FlowCreationResult, { kind: 'created' }>; result: Awaited<ReturnType<typeof postCheckpoint>> }
+  | Exclude<CheckpointResult, { kind: 'valid' }>;
+
+async function recoverExpiredCheckpoint(checkpoint: ReservationCheckpoint): Promise<CheckpointRecoveryResult> {
+  const renewed = await createReservationFlow();
+  if (renewed.kind === 'error') {
+    const reason = sessionLossReason(renewed.error);
+    if (reason) return { kind: 'session-lost', reason };
+    return { kind: 'error', message: renewed.message };
+  }
+  return {
+    kind: 'retry',
+    flowId: renewed.flowId,
+    attempt: renewed,
+    result: await postCheckpoint(renewed.flowId, checkpoint),
+  };
+}
+
+async function checkReservationCheckpoint(flowId: string, checkpoint: ReservationCheckpoint): Promise<CheckpointResult> {
+  let activeFlowId = flowId;
+  let renewedAttempt: Extract<FlowCreationResult, { kind: 'created' }> | null = null;
+  let result = await postCheckpoint(activeFlowId, checkpoint);
+  if (result.error === 'flow_expired') {
+    const recovery = await recoverExpiredCheckpoint(checkpoint);
+    if (recovery.kind !== 'retry') return recovery;
+    renewedAttempt = recovery.attempt;
+    activeFlowId = recovery.flowId;
+    result = recovery.result;
+  }
+  if (result.ok) return { kind: 'valid', flowId: activeFlowId, attemptId: renewedAttempt?.attemptId, revision: renewedAttempt?.revision };
+  const reason = sessionLossReason(result.error);
+  if (reason) return { kind: 'session-lost', reason };
+  return { kind: 'error', message: result.message || 'Não foi possível verificar seu acesso. Tente novamente.' };
+}
+
+async function renewFlowAfterExpiration(status: number): Promise<ReservationSubmitResult> {
+  const renewed = await createReservationFlow();
+  if (renewed.kind === 'created') return { kind: 'flow-renewed', flowId: renewed.flowId, attemptId: renewed.attemptId, revision: renewed.revision };
+  const reason = sessionLossReason(renewed.error);
+  if (reason) return { kind: 'session-lost', reason };
+  return { kind: 'error', error: renewed.error, message: renewed.message, status };
+}
+
+async function handleReservationResponse(response: Response): Promise<ReservationSubmitResult> {
+  if (response.ok) return { kind: 'created', reservation: await response.json() as CreatedReservation };
+  const error = await readApiError(response);
+  const reason = sessionLossReason(error.error ?? '');
+  if (reason) return { kind: 'session-lost', reason };
+  if (error.error === 'flow_expired') return renewFlowAfterExpiration(response.status);
+  return {
+    kind: 'error',
+    error: error.error ?? 'reservation_service_unavailable',
+    message: reservationResponseMessage(error, response.status),
+    status: response.status,
+  };
+}
+
+function reservationResponseMessage(error: ApiErrorResponse, status: number): string {
+  if (error.parseFailed || status >= 500) return 'Não foi possível concluir agora. Tente novamente.';
+  return error.message ?? '';
+}
+
+async function submitAuthenticatedReservation(input: FormValues): Promise<ReservationSubmitResult> {
+  try {
+    const response = await fetch('/api/reservations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    return await handleReservationResponse(response);
+  } catch {
+    return { kind: 'error', error: 'network_unavailable', message: 'Não foi possível concluir agora. Tente novamente.', status: 503 };
+  }
+}
+
+function hasHoldSelection(date: string, time: string, guests: number, attemptId: string): boolean {
+  return Boolean(date && time && attemptId && Number.isInteger(guests) && guests > 0);
+}
+
+async function requestAutomaticHold(input: { date: string; time: string; guests: number; duration: number; attemptId: string; revision: number }): Promise<CreatedReservationHold & { attemptId: string; revision: number }> {
+  const response = await fetch('/api/reservations/hold', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ allocationMode: 'automatic', attemptId: input.attemptId, expectedRevision: input.revision, operationKey: `hold-${input.attemptId}-${input.revision}`, date: input.date, time: input.time, guests: input.guests, duration: input.duration }),
+  });
+  if (!response.ok) throw new Error(response.status === 409 ? 'hold_conflict' : 'hold_unavailable');
+  return response.json() as Promise<CreatedReservationHold & { attemptId: string; revision: number }>;
+}
+
+const fieldsByStep: Partial<Record<number, FieldPath<FormValues>[]>> = {
+  2: ['date', 'time'],
+  3: ['guests'],
+  4: ['specialNeeds', 'notes'],
+};
+const hoverFieldsByStep: Partial<Record<number, FieldPath<FormValues>[]>> = {
+  ...fieldsByStep,
+  3: ['date', 'time', 'guests'],
+};
+
+function isStepReadyForHover(step: number, values: FormValues): boolean {
+  const result = authenticatedPublicReservationSchema.safeParse(values);
+  if (step === 5) return result.success;
+  const fields: FieldPath<FormValues>[] | undefined = hoverFieldsByStep[step];
+  if (!fields) return false;
+  return result.success || result.error.issues.every((issue) => !fields.includes(issue.path[0] as FieldPath<FormValues>));
+}
+
+function hasAvailableSelection(values: FormValues, { slots, isLoading, hasError }: Pick<WizardContentProps, 'slots' | 'isLoading' | 'hasError'>): boolean {
+  if (isLoading || hasError) return false;
+  return slots.some((slot) => slot.startTime === values.time && slot.eligibleGuestCounts.includes(values.guests));
+}
+
+function canAdvanceReservation(step: number, values: FormValues, contentProps: Pick<WizardContentProps, 'slots' | 'isLoading' | 'hasError'>, hasActiveHold: boolean): boolean {
+  if (!isStepReadyForHover(step, values)) return false;
+  if (step === 3 && !hasAvailableSelection(values, contentProps)) return false;
+  return step !== 5 || hasActiveHold;
+}
+
+function useActiveHold(expiresAt: number | null): boolean {
+  const [expiredHoldAt, setExpiredHoldAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (expiresAt === null) return;
+    const timer = window.setTimeout(() => setExpiredHoldAt(expiresAt), Math.max(0, expiresAt - Date.now()));
+    return () => window.clearTimeout(timer);
+  }, [expiresAt]);
+  return expiresAt !== null && expiredHoldAt !== expiresAt;
+}
+
+const checkpointByStep: Partial<Record<number, ReservationCheckpoint>> = {
+  2: 'data',
+  3: 'time',
+  4: 'preferences',
+};
+
+type AdvanceReservationStepParams = {
+  step: number;
+  completedCheckpoints: ReservationCheckpoint[];
+  trigger: (fields: FieldPath<FormValues>[]) => Promise<boolean>;
+  createHold: () => Promise<boolean>;
+  checkCheckpoint: (checkpoint: ReservationCheckpoint) => Promise<boolean>;
+  markCheckpointCompleted: (checkpoint: ReservationCheckpoint) => void;
+  setStep: (step: number) => void;
+};
+
+async function advanceReservationStep({
+  step,
+  completedCheckpoints,
+  trigger,
+  createHold,
+  checkCheckpoint,
+  markCheckpointCompleted,
+  setStep,
+}: AdvanceReservationStepParams): Promise<void> {
+  const fields = fieldsByStep[step];
+  const checkpoint = checkpointByStep[step];
+  if (!fields || !checkpoint) return;
+  if (!(await trigger(fields))) return;
+  if (step === 3 && !(await createHold())) return;
+  if (!completedCheckpoints.includes(checkpoint) && !(await checkCheckpoint(checkpoint))) return;
+  markCheckpointCompleted(checkpoint);
+  setStep(step + 1);
+}
+
+function reservationErrorMessage(error: string, message: string, status: number): string {
+  if (status >= 500) return 'Não foi possível concluir agora. Tente novamente.';
+  if (error === 'hold_required') return 'A manutenção da mesa expirou. Volte ao horário para escolher novamente.';
+  if (status === 409 && error === 'reservation_unavailable') return 'Esse horário acabou de ser ocupado. Escolha outro horário, por favor.';
+  return message || 'Não foi possível concluir agora. Tente novamente.';
 }
 
 function FieldError({ message }: { message?: string }) {
@@ -129,7 +392,7 @@ function StepDate({
   errorGuests?: string;
 }) {
   return (
-    <div className="grid gap-5 sm:grid-cols-2">
+    <div className="reservation-date-fields grid gap-5 sm:grid-cols-2">
       <FormField label="Quando você deseja vir?" icon={CalendarDays}>
         <input
           {...register('date')}
@@ -138,7 +401,7 @@ function StepDate({
           className="reservation-input"
           aria-invalid={Boolean(errorDate)}
         />
-        <FieldError message={errorDate} />
+        <div><FieldError message={errorDate} /></div>
       </FormField>
       <FormField label="Quantas pessoas?" icon={Users}>
         <select
@@ -151,8 +414,10 @@ function StepDate({
             <option key={count} value={count}>{count} {count === 1 ? 'pessoa' : 'pessoas'}</option>
           ))}
         </select>
-        <FieldError message={errorGuests} />
-        <span className="mt-2 block text-xs text-muted">Para grupos acima de 20 pessoas, fale com nossa equipe.</span>
+        <div>
+          <FieldError message={errorGuests} />
+          <span className="mt-2 block text-xs text-muted">Para grupos acima de 20 pessoas, fale com nossa equipe.</span>
+        </div>
       </FormField>
     </div>
   );
@@ -277,101 +542,6 @@ function EmptyAvailability({ label, date, guests }: { label: string; date: strin
   );
 }
 
-function StepCustomer({
-  register,
-  setValue,
-  selectedNeeds,
-  errors,
-}: {
-  register: UseFormRegister<FormValues>;
-  setValue: UseFormSetValue<FormValues>;
-  selectedNeeds: string[];
-  errors: Record<string, { message?: string } | undefined>;
-}) {
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-5 sm:grid-cols-2">
-        <FormField label="Nome completo" icon={Users}>
-          <input {...register('name')} className="reservation-input" placeholder="Como podemos chamar você?" />
-          <FieldError message={errors.name?.message} />
-        </FormField>
-        <FormField label="Telefone" icon={Phone}>
-          <input
-            {...register('phone')}
-            onChange={(event) => setValue('phone', formatPhoneInput(event.target.value), {
-              shouldDirty: true,
-              shouldTouch: true,
-              shouldValidate: true,
-            })}
-            className="reservation-input"
-            placeholder="(91) 99999-9999"
-            inputMode="tel"
-            autoComplete="tel"
-            maxLength={18}
-            aria-invalid={Boolean(errors.phone)}
-          />
-          <FieldError message={errors.phone?.message} />
-        </FormField>
-      </div>
-      <FormField label="E-mail" icon={Mail}>
-        <input {...register('email')} type="email" className="reservation-input" placeholder="voce@email.com" />
-        <FieldError message={errors.email?.message} />
-      </FormField>
-      <div>
-        <p className="mb-3 text-sm font-semibold tracking-wide text-foreground">Necessidades especiais</p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {specialNeedOptions.map(([code, label]) => (
-            <label key={code} className="flex cursor-pointer items-center gap-3 rounded-[var(--radius-sm)] border border-border bg-surface px-3 py-3 text-sm text-muted transition hover:border-primary">
-              <input {...register('specialNeeds')} type="checkbox" value={code} className="reservation-checkbox" />
-              <span>{label}</span>
-            </label>
-          ))}
-        </div>
-        {selectedNeeds.includes('other') && (
-          <textarea {...register('specialNeedsOther')} className="reservation-input mt-3 min-h-24" placeholder="Conte um pouco mais para prepararmos tudo com carinho." />
-        )}
-        <FieldError message={errors.specialNeedsOther?.message} />
-      </div>
-      <label className="block">
-        <span className="mb-2 block text-sm font-semibold tracking-wide text-foreground">Observações</span>
-        <textarea {...register('notes')} className="reservation-input min-h-28" placeholder="Aniversário, comemoração ou algum pedido especial?" />
-        <FieldError message={errors.notes?.message} />
-      </label>
-      <label className="flex items-start gap-3 text-sm text-muted">
-        <input {...register('marketingConsent')} type="checkbox" className="reservation-checkbox mt-0.5" />
-        <span>Quero receber novidades e experiências do The Wine.</span>
-      </label>
-    </div>
-  );
-}
-
-function SummaryItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-border py-3 last:border-0">
-      <span className="text-sm text-muted">{label}</span>
-      <strong className="text-right text-sm text-foreground">{value}</strong>
-    </div>
-  );
-}
-
-function StepReview({ values, holdExpiresAt }: { values: FormValues; holdExpiresAt: number | null }) {
-  return (
-    <div className="rounded-[var(--radius-md)] border border-border bg-surface-muted/50 p-4 sm:p-6">
-      <div className="mb-4 flex items-center gap-2 text-primary">
-        <Check aria-hidden="true" size={18} />
-        <span className="text-sm font-semibold tracking-wide">Confira os detalhes</span>
-      </div>
-      <SummaryItem label="Data" value={values.date.split('-').reverse().join('/')} />
-      <SummaryItem label="Horário" value={`${values.time} · ${values.duration} minutos`} />
-      <SummaryItem label="Pessoas" value={String(values.guests)} />
-      <SummaryItem label="Mesa" value={values.tableIds.length ? values.tableIds.join(' + ') : 'A definir pela equipe'} />
-      <SummaryItem label="Contato" value={`${values.name} · ${values.phone}`} />
-      {holdExpiresAt && <p role="status" className="mt-5 rounded-[var(--radius-sm)] border border-primary/30 bg-primary/10 p-3 text-xs leading-relaxed text-primary">Mesa mantida até {formatHoldExpiry(holdExpiresAt)}. A confirmação precisa ser concluída antes desse horário.</p>}
-      <p className="mt-5 text-xs leading-relaxed text-muted">A reserva será criada sem cobrança real. Na confirmação, você poderá visualizar o checkout demonstrativo e seus estados.</p>
-    </div>
-  );
-}
-
 function Confirmation({ reservation }: { reservation: CreatedReservation }) {
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="reservation-confirmation-container mx-auto max-w-xl rounded-[var(--radius-lg)] border border-border bg-surface p-8 text-center shadow-sm sm:p-12">
@@ -397,24 +567,22 @@ function Confirmation({ reservation }: { reservation: CreatedReservation }) {
 }
 
 function StepIndicators({ currentStep }: { currentStep: number }) {
-  return (
-    <div className="reservation-stepper-container mx-auto mt-10 flex max-w-3xl items-center justify-between">
-      {steps.map((label, index) => {
-        const number = index + 1;
-        const active = currentStep >= number;
-        return (
-          <div key={label} className="flex flex-1 items-center last:flex-none">
-            <div className="flex flex-col items-center gap-2">
-              <span className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold ${active ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted'}`}>{number}</span>
-              <span className={`hidden text-[10px] uppercase tracking-[0.16em] sm:block ${active ? 'text-primary' : 'text-muted'}`}>{label}</span>
-            </div>
-            {number < steps.length && <span className={`mx-1.5 h-px flex-1 sm:mx-4 sm:w-20 sm:flex-none ${currentStep > number ? 'bg-primary' : 'bg-border'}`} />}
-          </div>
-        );
-      })}
-    </div>
-  );
+  return <div className="reservation-stepper-container" aria-label="Etapas da reserva">{steps.map((label, index) => <StepIndicatorItem key={label} label={label} number={index + 1} currentStep={currentStep} />)}</div>;
 }
+
+function StepIndicatorItem({ label, number, currentStep }: { label: string; number: number; currentStep: number }) {
+  const state = getStepState(currentStep, number);
+  const completed = state === 'completed';
+  const active = state === 'current';
+  return <div className="reservation-stepper-item"><div className="reservation-stepper-marker-wrap"><span aria-current={active ? 'step' : undefined} aria-label={getStepStateLabel(label, state)} className={`reservation-stepper-marker ${stepMarkerClass[state]}`}>{renderStepMarker(state, number)}</span><span className={`reservation-stepper-label ${stepLabelClass[state]}`}>{label}</span></div>{number < steps.length && <span className={`reservation-stepper-connector ${completed ? 'reservation-stepper-connector-completed' : ''}`} aria-hidden="true" />}</div>;
+}
+
+type StepState = 'completed' | 'current' | 'future';
+const stepMarkerClass: Record<StepState, string> = { completed: 'reservation-stepper-marker-completed', current: 'reservation-stepper-marker-current', future: '' };
+const stepLabelClass: Record<StepState, string> = { completed: 'reservation-stepper-label-active', current: 'reservation-stepper-label-active', future: '' };
+function getStepState(currentStep: number, number: number): StepState { if (currentStep > number) return 'completed'; if (currentStep === number) return 'current'; return 'future'; }
+function getStepStateLabel(label: string, state: StepState): string { if (state === 'completed') return `${label}, concluída`; if (state === 'current') return `${label}, etapa atual`; return `${label}, etapa futura`; }
+function renderStepMarker(state: StepState, number: number) { return state === 'completed' ? <Check aria-hidden="true" size={16} strokeWidth={2.4} /> : number; }
 
 type WizardContentProps = {
   step: number;
@@ -427,9 +595,12 @@ type WizardContentProps = {
   hasError: boolean;
   selectedTime: string;
   selectedTableIds: number[];
+  hasActiveHold?: boolean;
   setValue: UseFormSetValue<FormValues>;
   specialNeeds: string[];
+  notes?: string;
   holdExpiresAt: number | null;
+  onAuthenticated: () => Promise<boolean>;
 };
 
 function WizardContent({
@@ -443,51 +614,79 @@ function WizardContent({
   hasError,
   selectedTime,
   selectedTableIds,
+  hasActiveHold = false,
   setValue,
   specialNeeds,
+  notes = '',
   holdExpiresAt,
+  onAuthenticated,
 }: WizardContentProps) {
-  return (
-    <AnimatePresence mode="wait">
-      <motion.div key={step} initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.18 }}>
-        {step === 1 && <StepDate register={register} errorDate={errors.date?.message} errorGuests={errors.guests?.message} />}
-        {step === 2 && <StepAvailability date={date} guests={guests} slots={slots} isLoading={isLoading} hasError={hasError} selectedTime={selectedTime} selectedTableIds={selectedTableIds} setValue={setValue} errorTime={errors.time?.message} holdExpiresAt={holdExpiresAt} />}
-        {step === 3 && <StepCustomer register={register} setValue={setValue} selectedNeeds={specialNeeds} errors={errors as Record<string, { message?: string } | undefined>} />}
-      </motion.div>
-    </AnimatePresence>
-  );
+  return <div className="reservation-wizard-step"><WizardStepContent step={step} date={date} guests={guests} register={register} errors={errors} slots={slots} isLoading={isLoading} hasError={hasError} selectedTime={selectedTime} selectedTableIds={selectedTableIds} hasActiveHold={hasActiveHold} setValue={setValue} specialNeeds={specialNeeds} notes={notes} holdExpiresAt={holdExpiresAt} onAuthenticated={onAuthenticated} /></div>;
 }
 
-function WizardActions({
-  step,
-  isSubmitting,
-  isHolding,
-  onBack,
-  onNext,
-}: {
+function WizardStepContent({ step, date, guests, register, errors, slots, isLoading, hasError, selectedTime, selectedTableIds, hasActiveHold = false, setValue, specialNeeds, notes = '', onAuthenticated }: WizardContentProps) {
+  const selectedSlot = slots.find((candidate) => candidate.startTime === selectedTime);
+  const contentByStep = {
+    1: <CustomerAuthStep onAuthenticated={onAuthenticated} />,
+    2: <StepDateAndTime register={register as never} selectedDate={date} dateError={errors.date?.message} timeError={errors.time?.message} slots={slots} isLoading={isLoading} hasError={hasError} selectedTime={selectedTime} setValue={setValue as never} />,
+    3: <StepGuests register={register as never} setValue={setValue as never} selectedGuests={guests} selectedTime={selectedTime} slot={selectedSlot} selectedTableIds={selectedTableIds} hasActiveHold={hasActiveHold} error={errors.guests?.message} />,
+    4: <ReservationPreferencesStep register={register} setValue={setValue} selectedNeeds={specialNeeds} notes={notes} errors={errors} />,
+  };
+  return contentByStep[step as keyof typeof contentByStep] ?? null;
+}
+
+type WizardActionProps = {
   step: number;
+  canGoBack: boolean;
+  canAdvance: boolean;
   isSubmitting: boolean;
+  isAdvancing: boolean;
   isHolding: boolean;
   onBack: () => void;
   onNext: () => void;
-}) {
-  const isBusy = isSubmitting || isHolding;
+};
+
+function ContinueWizardAction({ canGoBack, canAdvance, isSubmitting, isAdvancing, isHolding, onBack, onNext }: WizardActionProps) {
+  const isBusy = isSubmitting || isHolding || isAdvancing;
+  const icon = isHolding || isAdvancing
+    ? <LoaderCircle aria-hidden="true" className="animate-spin" size={20} />
+    : <ArrowRight aria-hidden="true" size={20} />;
+  const label = isHolding ? 'Reservando...' : isAdvancing ? 'Verificando acesso...' : 'Continuar';
   return (
-    <div className="mt-8 flex items-center justify-between gap-3 border-t border-border pt-5">
-      {step > 1 ? <button type="button" onClick={onBack} className="reservation-secondary-button"><ArrowLeft aria-hidden="true" size={16} /> Voltar</button> : <span />}
-      {step < 4 ? <button type="button" onClick={onNext} disabled={isBusy} className="reservation-primary-button disabled:cursor-wait disabled:opacity-70">{isHolding ? <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> : <ArrowRight aria-hidden="true" size={16} />} {isHolding ? 'Reservando...' : 'Continuar'}</button> : <button type="submit" disabled={isBusy} className="reservation-primary-button">{isSubmitting ? <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> : <Check aria-hidden="true" size={16} />} {isSubmitting ? 'Enviando...' : 'Confirmar reserva'}</button>}
+    <div className="reservation-wizard-actions">
+      {canGoBack && <button type="button" onClick={onBack} disabled={isBusy} data-hover-enabled="true" className="reservation-wizard-action reservation-wizard-action--back"><ArrowLeft aria-hidden="true" size={20} /><span>Voltar</span></button>}
+      <button type="button" onClick={onNext} disabled={isBusy} data-hover-enabled={canAdvance} className="reservation-wizard-action reservation-wizard-action--forward"><span>{label}</span>{icon}</button>
     </div>
   );
 }
 
+function ConfirmWizardAction({ isSubmitting, isHolding, isAdvancing, canGoBack, canAdvance, onBack }: WizardActionProps) {
+  const isBusy = isSubmitting || isHolding || isAdvancing;
+  return (
+    <div className="reservation-wizard-actions">
+      {canGoBack && <button type="button" onClick={onBack} disabled={isBusy} data-hover-enabled="true" className="reservation-wizard-action reservation-wizard-action--back"><ArrowLeft aria-hidden="true" size={20} /><span>Voltar</span></button>}
+      <button type="submit" disabled={isBusy} data-hover-enabled={canAdvance} className="reservation-wizard-action reservation-wizard-action--forward"><span>{isSubmitting ? 'Enviando...' : 'Confirmar reserva'}</span>{isSubmitting ? <LoaderCircle aria-hidden="true" className="animate-spin" size={20} /> : <Check aria-hidden="true" size={20} />}</button>
+    </div>
+  );
+}
+
+function WizardActions(props: WizardActionProps) {
+  return props.step < 5 ? <ContinueWizardAction {...props} /> : <ConfirmWizardAction {...props} />;
+}
+
 type ReservationFormProps = Omit<WizardContentProps, 'step'> & {
   step: number;
+  canGoBack: boolean;
   values: FormValues;
   holdExpiresAt: number | null;
   submitError: string;
   isHolding: boolean;
   isSubmitting: boolean;
+  isAdvancing: boolean;
   onSubmit: (values: FormValues) => Promise<void>;
+  onInvalid: (errors: FieldErrors<FormValues>) => void;
+  onEdit: (step: number) => void;
+  user: ReservationUser | null;
   onBack: () => void;
   onNext: () => void;
   handleSubmit: ReturnType<typeof useForm<FormValues>>['handleSubmit'];
@@ -495,29 +694,42 @@ type ReservationFormProps = Omit<WizardContentProps, 'step'> & {
 
 function ReservationForm({
   step,
+  canGoBack,
   values,
   holdExpiresAt,
   submitError,
   isHolding,
   isSubmitting,
+  isAdvancing,
   onSubmit,
+  onInvalid,
+  onEdit,
+  user,
   onBack,
   onNext,
   handleSubmit,
   ...contentProps
 }: ReservationFormProps) {
+  const hasActiveHold = useActiveHold(holdExpiresAt);
+  const canAdvance = canAdvanceReservation(step, values, contentProps, hasActiveHold);
+  const content = <WizardContent step={step} holdExpiresAt={holdExpiresAt} hasActiveHold={hasActiveHold} notes={values.notes} {...contentProps} />;
+  if (step === 1) {
+    return <div className="reservation-panel">{content}</div>;
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="rounded-[var(--radius-lg)] border border-border bg-surface p-5 shadow-sm sm:p-8">
-      <WizardContent step={step} holdExpiresAt={holdExpiresAt} {...contentProps} />
-      {step === 4 && <StepReview values={values} holdExpiresAt={holdExpiresAt} />}
+    <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className={`reservation-panel ${step === 5 ? 'reservation-panel-review' : ''}`}>
+      {content}
+      {step === 5 && <ReservationReview values={values} holdExpiresAt={holdExpiresAt} user={user} onEdit={onEdit} />}
       {submitError && <p className="mt-5 rounded-[var(--radius-sm)] border border-status-danger/30 bg-status-danger/10 p-3 text-sm text-status-danger">{submitError}</p>}
-      <WizardActions step={step} isSubmitting={isSubmitting} isHolding={isHolding} onBack={onBack} onNext={onNext} />
+      <WizardActions step={step} canGoBack={canGoBack} canAdvance={canAdvance} isSubmitting={isSubmitting} isHolding={isHolding} isAdvancing={isAdvancing} onBack={onBack} onNext={onNext} />
     </form>
   );
 }
 
 type ReservationShellProps = {
   step: number;
+  canGoBack: boolean;
   date: string;
   guests: number;
   register: UseFormRegister<FormValues>;
@@ -534,14 +746,20 @@ type ReservationShellProps = {
   submitError: string;
   isHolding: boolean;
   isSubmitting: boolean;
+  isAdvancing: boolean;
   onSubmit: (values: FormValues) => Promise<void>;
+  onInvalid: (errors: FieldErrors<FormValues>) => void;
+  onEdit: (step: number) => void;
   onBack: () => void;
   onNext: () => void;
   handleSubmit: ReturnType<typeof useForm<FormValues>>['handleSubmit'];
+  user: ReservationUser | null;
+  onAuthenticated: () => Promise<boolean>;
 };
 
 function ReservationShell({
   step,
+  canGoBack,
   date,
   guests,
   register,
@@ -558,10 +776,15 @@ function ReservationShell({
   submitError,
   isHolding,
   isSubmitting,
+  isAdvancing,
   onSubmit,
+  onInvalid,
+  onEdit,
   onBack,
   onNext,
   handleSubmit,
+  user,
+  onAuthenticated,
 }: ReservationShellProps) {
   return (
     <>
@@ -570,9 +793,10 @@ function ReservationShell({
         <h1 className="mt-4 font-display text-5xl leading-none text-foreground sm:text-6xl">Reserve sua experiência</h1>
       </div>
       <StepIndicators currentStep={step} />
-      <div className="reservation-card-grid mx-auto mt-10">
+      <div className="reservation-card-grid">
         <ReservationForm
           step={step}
+          canGoBack={canGoBack}
           date={date}
           guests={guests}
           register={register}
@@ -589,47 +813,101 @@ function ReservationShell({
           submitError={submitError}
           isHolding={isHolding}
           isSubmitting={isSubmitting}
+          isAdvancing={isAdvancing}
           onSubmit={onSubmit}
+          onInvalid={onInvalid}
+          onEdit={onEdit}
           onBack={onBack}
           onNext={onNext}
           handleSubmit={handleSubmit}
+          user={user}
+          onAuthenticated={onAuthenticated}
         />
       </div>
     </>
   );
 }
 
+function ReservationInitialization({
+  authState,
+  message,
+  onRetry,
+}: {
+  authState: 'checking' | 'error';
+  message: string;
+  onRetry: () => void;
+}) {
+  if (authState === 'checking') {
+    return <main className="reservation-theme min-h-screen bg-background px-5 py-24 text-foreground"><p className="mx-auto flex max-w-md items-center justify-center gap-3 text-sm text-muted" role="status"><LoaderCircle aria-hidden="true" className="animate-spin text-primary" size={18} /> Verificando seu acesso…</p></main>;
+  }
+  return <main className="reservation-theme min-h-screen bg-background px-5 py-24 text-foreground"><section className="mx-auto max-w-lg rounded-[var(--radius-lg)] border border-border bg-surface p-6 text-center sm:p-9"><CircleAlert aria-hidden="true" className="mx-auto text-primary" size={28} /><h1 className="mt-4 font-display text-3xl">Não conseguimos iniciar sua reserva</h1><p className="mt-3 text-sm leading-relaxed text-muted">{message}</p><button type="button" onClick={onRetry} className="reservation-primary-button mt-6 justify-center"><ArrowRight aria-hidden="true" size={16} /> Tentar novamente</button><Link href="/" className="mt-5 block text-sm text-muted underline underline-offset-4">Voltar ao site</Link></section></main>;
+}
+
+function ReservationWizardContent({
+  authState,
+  authError,
+  onRetry,
+  confirmation,
+  shellProps,
+}: {
+  authState: 'checking' | 'error' | 'ready';
+  authError: string;
+  onRetry: () => void;
+  confirmation: CreatedReservation | null;
+  shellProps: ReservationShellProps;
+}) {
+  if (authState !== 'ready') {
+    return <ReservationInitialization authState={authState} message={authError} onRetry={onRetry} />;
+  }
+
+  return (
+    <main className="reservation-theme reservation-page-wrapper font-sans text-foreground">
+      <div className="reservation-page-content">
+        {confirmation ? <Confirmation reservation={confirmation} /> : <ReservationShell {...shellProps} />}
+      </div>
+    </main>
+  );
+}
+
 export function ReservationWizard() {
-  const step = useReservationWizardStore((state) => state.step);
+  const router = useRouter();
+  const storedStep = useReservationWizardStore((state) => state.step);
+  const minimumStep = useReservationWizardStore((state) => state.minimumStep);
   const setStep = useReservationWizardStore((state) => state.setStep);
-  const resetStep = useReservationWizardStore((state) => state.reset);
+  const flowId = useReservationWizardStore((state) => state.flowId);
+  const completedCheckpoints = useReservationWizardStore((state) => state.completedCheckpoints);
+  const setFlowId = useReservationWizardStore((state) => state.setFlowId);
+  const startAuthenticatedFlow = useReservationWizardStore((state) => state.startAuthenticatedFlow);
+  const markCheckpointCompleted = useReservationWizardStore((state) => state.markCheckpointCompleted);
+  const resetWizard = useReservationWizardStore((state) => state.reset);
   const [confirmation, setConfirmation] = useState<CreatedReservation | null>(null);
   const [submitError, setSubmitError] = useState('');
   const [hold, setHold] = useState<{ selectionKey: string; expiresAt: number } | null>(null);
+  const [attemptId, setAttemptId] = useState('');
+  const [attemptRevision, setAttemptRevision] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
+  const [isAdvancing, setIsAdvancing] = useState(false);
+  const [authState, setAuthState] = useState<'checking' | 'ready' | 'error'>('checking');
+  const [authError, setAuthError] = useState('');
+  const [user, setUser] = useState<ReservationUser | null>(null);
+  const navigationBoundary = user ? 2 : minimumStep;
+  const step = Math.max(storedStep, navigationBoundary);
+  const canGoBack = step > navigationBoundary;
+  const navigationLock = useRef(false);
+  const holdLock = useRef(false);
+  const submitLock = useRef(false);
+  const submissionKeys = useRef(new Map<string, string>());
   const {
     register,
     handleSubmit,
     trigger,
     control,
     setValue,
+    reset: resetForm,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(publicReservationSchema),
-    defaultValues: {
-      date: '',
-      time: '',
-      guests: 0,
-      duration: 120,
-      tableIds: [],
-      name: '',
-      phone: '',
-      email: '',
-      specialNeeds: [],
-      specialNeedsOther: '',
-      notes: '',
-      marketingConsent: false,
-    },
+    resolver: zodResolver(authenticatedPublicReservationSchema) as never,
+    defaultValues: defaultReservationValues,
     mode: 'onTouched',
   });
   const date = useWatch({ control, name: 'date' });
@@ -639,102 +917,276 @@ export function ReservationWizard() {
   const tableIds = useWatch({ control, name: 'tableIds' });
   const specialNeeds = useWatch({ control, name: 'specialNeeds' });
   const values = useWatch({ control }) as FormValues;
-  const selectionKey = [date, guests, duration, time, tableIds.join(',')].join('|');
+  const selectionKey = [date, guests, duration, time].join('|');
   const holdExpiresAt = hold?.selectionKey === selectionKey ? hold.expiresAt : null;
   const availabilityQuery = useQuery({
-    queryKey: ['reservation-availability', date, guests, duration],
-    queryFn: () => fetchAvailability(date, guests, duration),
-    enabled: Boolean(date) && Number.isInteger(guests) && guests > 0,
+    queryKey: ['reservation-availability', date, duration],
+    queryFn: () => fetchAvailability(date, duration),
+    enabled: Boolean(date),
   });
-  useEffect(() => () => resetStep(), [resetStep]);
+  const acceptAuthenticatedFlow = useCallback((nextUser: ReservationUser, nextFlowId: string, nextAttemptId: string, nextRevision: number) => {
+    setUser(nextUser);
+    setAttemptId(nextAttemptId);
+    setAttemptRevision(nextRevision);
+    startAuthenticatedFlow(nextFlowId);
+    setValue('flowId', nextFlowId, { shouldDirty: false, shouldValidate: false });
+    setValue('attemptId', nextAttemptId, { shouldDirty: false, shouldValidate: false });
+    setValue('expectedRevision', nextRevision, { shouldDirty: false, shouldValidate: false });
+    setSubmitError('');
+    setAuthError('');
+    setAuthState('ready');
+  }, [setValue, startAuthenticatedFlow]);
+
+  const redirectAfterSessionLoss = useCallback((reason: 'expired' | 'changed') => {
+    resetWizard();
+    resetForm(defaultReservationValues);
+    setUser(null);
+    setAttemptId('');
+    setAttemptRevision(0);
+    setHold(null);
+    router.replace(`/?auth=${reason}`);
+  }, [resetForm, resetWizard, router]);
+
+  const onAuthenticated = useCallback(async () => {
+    const result = await requestSessionFlow();
+    if (result.kind === 'authenticated') {
+      acceptAuthenticatedFlow(result.user, result.flowId, result.attemptId, result.revision);
+      return true;
+    }
+    if (result.kind === 'error' && (result.error === 'session_expired' || result.error === 'account_changed')) {
+      redirectAfterSessionLoss(result.error === 'account_changed' ? 'changed' : 'expired');
+    }
+    return false;
+  }, [acceptAuthenticatedFlow, redirectAfterSessionLoss]);
+
+  useEffect(() => {
+    let active = true;
+    resetWizard();
+    resetForm(defaultReservationValues);
+
+    void requestSessionFlow().then((result) => {
+      if (!active) return;
+      if (result.kind === 'anonymous') {
+        setUser(null);
+        setStep(1);
+        setAuthState('ready');
+        return;
+      }
+      if (result.kind === 'error') {
+        if (result.error === 'session_expired' || result.error === 'account_changed') {
+          redirectAfterSessionLoss(result.error === 'account_changed' ? 'changed' : 'expired');
+          return;
+        }
+        setAuthError(result.message);
+        setAuthState('error');
+        return;
+      }
+      acceptAuthenticatedFlow(result.user, result.flowId, result.attemptId, result.revision);
+    });
+
+    return () => {
+      active = false;
+      resetWizard();
+    };
+  }, [acceptAuthenticatedFlow, redirectAfterSessionLoss, resetForm, resetWizard, setStep]);
+
+  const invalidateSession = (reason: 'expired' | 'changed') => {
+    redirectAfterSessionLoss(reason);
+  };
 
   const createHold = async (): Promise<boolean> => {
-    if (!date || !time || tableIds.length === 0) {
-      setSubmitError('Escolha um horário e uma mesa antes de continuar.');
+    if (holdLock.current) return false;
+    if (!hasHoldSelection(date, time, guests, attemptId)) {
+      setSubmitError('Escolha a data, o horário e a quantidade de pessoas antes de continuar.');
       return false;
     }
 
+    holdLock.current = true;
     setSubmitError('');
     setIsHolding(true);
     try {
-      const response = await fetch('/api/reservations/hold', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, time, guests, duration, tableIds }),
-      });
-      if (!response.ok) {
-        setSubmitError(response.status === 409
-          ? 'Esse horário acabou de ser ocupado. Escolha outro horário, por favor.'
-          : 'Não foi possível reservar a mesa agora. Tente novamente em instantes.');
-        return false;
-      }
-      const hold = await response.json() as CreatedReservationHold;
+      const hold = await requestAutomaticHold({ date, time, guests, duration, attemptId, revision: attemptRevision });
+      setAttemptRevision(hold.revision);
+      setValue('allocationMode', 'automatic', { shouldDirty: false, shouldValidate: false });
+      setValue('attemptId', hold.attemptId, { shouldDirty: false, shouldValidate: false });
+      setValue('expectedRevision', hold.revision, { shouldDirty: false, shouldValidate: false });
+      setValue('tableIds', hold.tableIds, { shouldValidate: true });
       setHold({ selectionKey, expiresAt: hold.expiresAt });
       return true;
-    } catch {
-      setSubmitError('Não foi possível reservar a mesa agora. Tente novamente em instantes.');
+    } catch (error) {
+      setSubmitError(error instanceof Error && error.message === 'hold_conflict'
+        ? 'Esse horário acabou de ser ocupado. Escolha outro horário, por favor.'
+        : 'Não foi possível reservar a mesa agora. Tente novamente em instantes.');
       return false;
     } finally {
+      holdLock.current = false;
       setIsHolding(false);
     }
   };
 
-  const goNext = async () => {
-    const fields: FieldPath<FormValues>[] = step === 1
-      ? ['date', 'guests']
-      : step === 2
-        ? ['time']
-        : ['name', 'phone', 'email', 'specialNeedsOther', 'notes'];
-    if (!(await trigger(fields))) return;
-    if (step === 2 && !(await createHold())) return;
-    setStep(Math.min(4, step + 1));
-  };
-  const goBack = () => setStep(Math.max(1, step - 1));
-  const submit = async (input: FormValues) => {
-    setSubmitError('');
-    const response = await fetch('/api/reservations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-    if (!response.ok) {
-      if (response.status === 409) setHold(null);
-      setSubmitError(response.status === 409
-        ? 'Esse horário acabou de ser ocupado. Escolha outro horário, por favor.'
-        : 'Não foi possível concluir agora. Tente novamente em instantes.');
-      return;
+  const checkCheckpoint = async (checkpoint: ReservationCheckpoint): Promise<boolean> => {
+    if (!flowId) {
+      setSubmitError('Não foi possível validar sua sessão. Tente novamente.');
+      return false;
     }
-    setConfirmation(await response.json());
-    setStep(5);
+    const result = await checkReservationCheckpoint(flowId, checkpoint);
+    if (result.kind === 'session-lost') {
+      invalidateSession(result.reason);
+      return false;
+    }
+    if (result.kind === 'error') {
+      setSubmitError(result.message);
+      return false;
+    }
+    if (result.flowId !== flowId) {
+      setFlowId(result.flowId);
+      setValue('flowId', result.flowId, { shouldDirty: false, shouldValidate: false });
+    }
+    if (result.attemptId && result.revision !== undefined) {
+      setAttemptId(result.attemptId);
+      setAttemptRevision(result.revision);
+    }
+    return true;
   };
 
+  const goNext = async () => {
+    if (navigationLock.current || step < 2 || step > 4) return;
+    navigationLock.current = true;
+    setIsAdvancing(true);
+    setSubmitError('');
+    try {
+      await advanceReservationStep({
+        step,
+        completedCheckpoints,
+        trigger,
+        createHold,
+        checkCheckpoint,
+        markCheckpointCompleted,
+        setStep,
+      });
+    } finally {
+      navigationLock.current = false;
+      setIsAdvancing(false);
+    }
+  };
+  const goBack = () => {
+    if (!canGoBack || navigationLock.current || holdLock.current || submitLock.current) return;
+    setStep(step - 1);
+  };
+  const retryInitialization = async () => {
+    setAuthState('checking');
+    const result = await requestSessionFlow();
+    if (result.kind === 'authenticated') {
+      acceptAuthenticatedFlow(result.user, result.flowId, result.attemptId, result.revision);
+      return;
+    }
+    if (result.kind === 'anonymous') {
+      setUser(null);
+      setStep(1);
+      setAuthState('ready');
+      return;
+    }
+    if (result.error === 'session_expired' || result.error === 'account_changed') {
+      redirectAfterSessionLoss(result.error === 'account_changed' ? 'changed' : 'expired');
+      return;
+    }
+    setAuthError(result.message);
+    setAuthState('error');
+  };
+
+  const submit = async (input: FormValues) => {
+    if (submitLock.current) return;
+    submitLock.current = true;
+    setSubmitError('');
+    try {
+      const contentKey = reservationContentKey(input);
+      const submissionId = submissionKeys.current.get(contentKey) ?? crypto.randomUUID();
+      submissionKeys.current.set(contentKey, submissionId);
+      const result = await submitAuthenticatedReservation({
+        ...input,
+        allocationMode: 'automatic',
+        attemptId,
+        expectedRevision: attemptRevision,
+        submissionId,
+      });
+      if (result.kind === 'created') {
+        setConfirmation(result.reservation);
+        setStep(6);
+        return;
+      }
+      if (result.kind === 'session-lost') {
+        invalidateSession(result.reason);
+        return;
+      }
+      if (result.kind === 'flow-renewed') {
+        setFlowId(result.flowId);
+        setAttemptId(result.attemptId);
+        setAttemptRevision(result.revision);
+        setValue('flowId', result.flowId, { shouldDirty: false, shouldValidate: false });
+        setSubmitError('O acesso à reserva foi renovado. Confira os detalhes e confirme novamente.');
+        return;
+      }
+      if (result.status === 409) setHold(null);
+      setSubmitError(reservationErrorMessage(result.error, result.message, result.status));
+    } catch {
+      setSubmitError('Não foi possível concluir agora. Tente novamente.');
+    } finally {
+      submitLock.current = false;
+    }
+  };
+
+  const onInvalidSubmit = (fieldErrors: FieldErrors<FormValues>) => {
+    const firstMessage = Object.values(fieldErrors)
+      .map((error) => error?.message)
+      .find((message): message is string => typeof message === 'string');
+    setSubmitError(firstMessage ?? 'Confira os dados da reserva antes de confirmar.');
+  };
+
+  useEffect(() => {
+    if (step !== 5 || !attemptId || !tableIds.length) return;
+    const contentKey = reservationContentKey({ date, time, guests, duration, tableIds, specialNeeds, notes: values.notes });
+    const submissionId = submissionKeys.current.get(contentKey) ?? crypto.randomUUID();
+    submissionKeys.current.set(contentKey, submissionId);
+    setValue('attemptId', attemptId, { shouldDirty: false, shouldValidate: false });
+    setValue('expectedRevision', attemptRevision, { shouldDirty: false, shouldValidate: false });
+    setValue('submissionId', submissionId, { shouldDirty: false, shouldValidate: false });
+  }, [attemptId, attemptRevision, date, duration, guests, setValue, specialNeeds, step, tableIds, time, values.notes]);
+
   return (
-    <main className="reservation-theme reservation-page-wrapper min-h-screen bg-background font-sans text-foreground">
-      <section className="mx-auto max-w-6xl px-5 pb-20 sm:px-8">
-        {confirmation ? <Confirmation reservation={confirmation} /> : <ReservationShell
-          step={step}
-          date={date}
-          guests={guests}
-          register={register}
-          errors={errors}
-          slots={availabilityQuery.data?.slots ?? []}
-          isLoading={availabilityQuery.isLoading}
-          hasError={availabilityQuery.isError}
-          selectedTime={time}
-          selectedTableIds={tableIds}
-          setValue={setValue}
-          specialNeeds={specialNeeds}
-          holdExpiresAt={holdExpiresAt}
-          values={values}
-          submitError={submitError}
-          isHolding={isHolding}
-          isSubmitting={isSubmitting}
-          onSubmit={submit}
-          onBack={goBack}
-          onNext={goNext}
-          handleSubmit={handleSubmit}
-        />}
-      </section>
-    </main>
+    <ReservationWizardContent
+      authState={authState}
+      authError={authError}
+      onRetry={() => { void retryInitialization(); }}
+      confirmation={confirmation}
+      shellProps={{
+        step,
+        canGoBack,
+        date,
+        guests,
+        register,
+        errors,
+        slots: availabilityQuery.data?.slots ?? [],
+        isLoading: availabilityQuery.isLoading,
+        hasError: availabilityQuery.isError,
+        selectedTime: time,
+        selectedTableIds: tableIds,
+        setValue,
+        specialNeeds,
+        holdExpiresAt,
+        values,
+        submitError,
+        isHolding,
+        isAdvancing,
+        isSubmitting,
+        user,
+        onAuthenticated,
+        onSubmit: submit,
+        onInvalid: onInvalidSubmit,
+        onEdit: (editStep) => setStep(editStep),
+        onBack: goBack,
+        onNext: goNext,
+        handleSubmit,
+      }}
+    />
   );
 }

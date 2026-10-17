@@ -21,7 +21,7 @@ export function Header() {
 
           <div className="header-right-side">
             <a
-              href="/reservar"
+              href="/reservas"
               className="btn-header-reserve"
             >
               FAÇA SUA RESERVA

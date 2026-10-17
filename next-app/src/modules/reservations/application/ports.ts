@@ -45,12 +45,48 @@ export type ConfirmReservationWithHoldInput = {
   specialNeedsOther: string;
 };
 
+export type ReservationAttemptHoldInput = ReservationHoldSelection & {
+  attemptId: string;
+  expectedRevision: number;
+  operationKey: string;
+  ownerUserId: string;
+  ownerCustomerId: number;
+};
+
+export type EncryptedReservationReplay = {
+  ciphertext: string;
+  nonce: string;
+  authTag: string;
+  keyVersion: string;
+  expiresAt: string;
+};
+
+export type ConfirmReservationAttemptInput = ConfirmReservationWithHoldInput & {
+  attemptId: string;
+  expectedRevision: number;
+  ownerUserId: string;
+  ownerCustomerId: number;
+  operationKey: string;
+  contentFingerprint: string;
+  replay: EncryptedReservationReplay;
+  notificationDedupeKey: string;
+};
+
+export type ConfirmReservationAttemptResult = {
+  kind: 'created' | 'replay';
+  reservationId: number;
+  publicCode: string;
+  replay: EncryptedReservationReplay;
+};
+
 export interface ReservationRepository {
   create(input: ReservationDraft): Promise<ReservationId>;
   assignTables(reservationId: ReservationId, tableIds: number[]): Promise<void>;
   addSpecialNeeds(reservationId: ReservationId, needs: string[], details: string): Promise<void>;
   createHold(input: ReservationHoldSelection): Promise<CreatedReservationHold>;
+  createHoldForAttempt(input: ReservationAttemptHoldInput): Promise<CreatedReservationHold>;
   confirmWithHold(input: ConfirmReservationWithHoldInput): Promise<ReservationId>;
+  confirmReservationAttempt(input: ConfirmReservationAttemptInput): Promise<ConfirmReservationAttemptResult>;
 }
 
 export type PortalReservation = {
