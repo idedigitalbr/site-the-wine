@@ -9,6 +9,24 @@ import type { WaitlistStatus } from '../domain/waitlist';
 
 export type ReservationId = number;
 
+export type CustomerReservationRecord = {
+  id: ReservationId;
+  reservationDate: string;
+  startTime: string;
+  endTime: string;
+  guestCount: number;
+  status: ReservationStatus;
+  specialNeeds: string[];
+  notes: string;
+};
+
+export interface CustomerReservationQueryRepository {
+  listByCustomerId(
+    customerId: number,
+    page: { offset: number; limit: number },
+  ): Promise<CustomerReservationRecord[]>;
+}
+
 export type CustomerUpsertInput = {
   name: string;
   phone: string;

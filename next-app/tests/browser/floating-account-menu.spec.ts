@@ -64,9 +64,9 @@ test('shows only authenticated account actions and signs out through the custome
 
   await accountButton.click();
   await expect(panel).toBeVisible();
-  await expect(panel.locator('a, button')).toHaveText(['Conta', 'Reservas', 'Sair']);
-  await expect(panel.getByRole('link', { name: 'Conta' })).toHaveAttribute('href', '/configuracoes');
-  await expect(panel.getByRole('link', { name: 'Reservas' })).toHaveAttribute('href', '/reservas');
+  await expect(panel.locator('a, button')).toHaveText(['Configurações da conta', 'Reservas', 'Sair']);
+  await expect(panel.getByRole('link', { name: 'Configurações da conta' })).toHaveAttribute('href', '/configuracoes?tab=dados');
+  await expect(panel.getByRole('link', { name: 'Reservas' })).toHaveAttribute('href', '/lista-de-reservas');
   await expect.poll(() => sessionCalls).toBe(2);
 
   await panel.getByRole('button', { name: 'Sair' }).click();
@@ -146,7 +146,7 @@ test('moves keyboard focus through the loading panel to the first confirmed acti
   await expect(panel).toBeFocused();
   await expect(panel).toContainText('Verificando acesso…');
   await fulfillJson(pendingRoute, 200, authenticatedSession);
-  await expect(panel.getByRole('link', { name: 'Conta' })).toBeFocused();
+  await expect(panel.getByRole('link', { name: 'Configurações da conta' })).toBeFocused();
 });
 
 test('does not steal focus when a pending session check resolves after focus leaves', async ({ page }) => {
@@ -302,7 +302,7 @@ test('positions the menu above the mobile button and fits 320px with reduced mot
   const panel = page.locator(accountPanel);
 
   await accountButton.click();
-  await expect(panel.getByRole('link', { name: 'Conta' })).toBeVisible();
+  await expect(panel.getByRole('link', { name: 'Configurações da conta' })).toBeVisible();
   await waitForPanelOpen(panel);
   const buttonBounds = await accountButton.boundingBox();
   const panelBounds = await panel.boundingBox();
@@ -342,7 +342,7 @@ test('captures anonymous and authenticated menu states on desktop and mobile', a
 
   sessionStatus = 'authenticated';
   await accountButton.click();
-  await expect(panel.getByRole('link', { name: 'Conta' })).toBeVisible();
+  await expect(panel.getByRole('link', { name: 'Configurações da conta' })).toBeVisible();
   await waitForPanelOpen(panel);
   await page.screenshot({ path: 'test-results/floating-account-menu/authenticated-desktop-open.png' });
   await accountButton.click();
@@ -361,7 +361,7 @@ test('captures anonymous and authenticated menu states on desktop and mobile', a
 
   sessionStatus = 'authenticated';
   await accountButton.click();
-  await expect(panel.getByRole('link', { name: 'Conta' })).toBeVisible();
+  await expect(panel.getByRole('link', { name: 'Configurações da conta' })).toBeVisible();
   await waitForPanelOpen(panel);
   await page.screenshot({ path: 'test-results/floating-account-menu/authenticated-mobile-open.png' });
   await accountButton.click();
