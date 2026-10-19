@@ -46,7 +46,7 @@
   right: calc(100% + 12px);
   bottom: 0;
   display: flex;
-  width: 224px;
+  width: 240px;
   max-height: min(70dvh, 520px);
   flex-direction: column;
   gap: 2px;
@@ -135,7 +135,7 @@
   .panel {
     right: 0;
     bottom: calc(100% + 12px);
-    width: min(224px, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+    width: min(240px, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
     max-height: min(60dvh, 420px);
     transform: translateY(5px);
   }

@@ -4,6 +4,7 @@ import { getDatabasePool } from '@/server/db';
 import { hashCustomerCpf, hashReservationFlowId } from './crypto';
 
 type CustomerAccountRow = RowDataPacket & { id: string; email: string };
+type CustomerIdRow = RowDataPacket & { id: number };
 type CustomerProfileRow = RowDataPacket & {
   id: number;
   name: string;
@@ -19,6 +20,14 @@ export async function findCustomerAccountByCpf(cpf: string): Promise<CustomerAcc
     [hashCustomerCpf(cpf)],
   );
   return rows[0] ?? null;
+}
+
+export async function findCustomerIdByAuthUserId(userId: string): Promise<number | null> {
+  const [rows] = await getDatabasePool().execute<CustomerIdRow[]>(
+    'SELECT id FROM customers WHERE auth_user_id = ? LIMIT 1',
+    [userId],
+  );
+  return rows[0] ? Number(rows[0].id) : null;
 }
 export async function ensureCustomerForAuthUser(userId: string): Promise<CustomerProfileRow> {
   const pool = getDatabasePool();
