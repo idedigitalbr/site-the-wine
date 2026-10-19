@@ -356,7 +356,11 @@ function assertOperationFingerprint(operation: OperationRow, fingerprint: string
 function assertReplayComplete(operation: OperationRow): asserts operation is OperationRow & {
   status: 'completed'; reservationId: number; resultPublicCode: string; replayCiphertext: string; replayNonce: string; replayAuthTag: string; replayKeyVersion: string; replayExpiresAt: string;
 } {
-  if (operation.status !== 'completed' || !hasReplayPayload(operation)) throw new Error('reservation_confirmation_in_progress');
+  if (operation.status !== 'completed') throw new Error('reservation_confirmation_in_progress');
+  const replayExpiresAt = operation.replayExpiresAt ? new Date(operation.replayExpiresAt).getTime() : Number.NaN;
+  if (!Number.isFinite(replayExpiresAt) || replayExpiresAt <= Date.now() || !hasReplayPayload(operation)) {
+    throw new Error('reservation_replay_expired');
+  }
 }
 
 function hasReplayPayload(operation: OperationRow): boolean {
@@ -379,6 +383,24 @@ function mapReplayResult(operation: OperationRow & { reservationId: number; resu
 }
 
 export class MysqlReservationRepository implements ReservationRepository, ReservationPortalRepository {
+  async purgeExpiredReplayPayloads(): Promise<number> {
+    const batchSize = 1000;
+    let totalPurged = 0;
+
+    for (;;) {
+      const [result] = await getDatabasePool().execute<ResultSetHeader>(
+        `UPDATE reservation_operations
+         SET replay_ciphertext = NULL, replay_nonce = NULL,
+             replay_auth_tag = NULL, replay_key_version = NULL
+         WHERE replay_expires_at <= UTC_TIMESTAMP(3)
+           AND replay_ciphertext IS NOT NULL
+         LIMIT ${batchSize}`,
+      );
+      totalPurged += result.affectedRows;
+      if (result.affectedRows < batchSize) return totalPurged;
+    }
+  }
+
   private async findPortalReservationBy(
     column: 'confirmation_token_hash' | 'public_code',
     value: string,
@@ -560,7 +582,7 @@ export class MysqlReservationRepository implements ReservationRepository, Reserv
         specialNeeds: [],
         specialNeedsOther: '',
       };
-      await assertNoConflicts(connection, validationInput);
+      await assertNoConflicts(connection, validationInput, attemptIdHash);
       await connection.execute('DELETE FROM reservation_holds WHERE attempt_id_hash = ?', [attemptIdHash]);
       const window = reservationWindow(input);
       for (const tableId of orderedTableIds(input.tableIds)) {

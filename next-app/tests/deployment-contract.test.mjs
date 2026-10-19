@@ -25,16 +25,24 @@ test('production Compose passes protected runtime configuration to the web servi
     'ADMIN_PASSWORD',
     'ADMIN_SESSION_SECRET',
     'NOTIFICATION_JOB_SECRET',
+    'BETTER_AUTH_SECRET',
+    'CUSTOMER_CPF_LOOKUP_SECRET',
     'RESERVATION_REPLAY_ENCRYPTION_KEY',
   ]) {
     assert.match(compose, new RegExp(`${variable}: \\$\\{${variable}:\\?`));
   }
+  assert.match(compose, /CUSTOMER_AUTH_TRUST_PROXY_HEADERS: \$\{CUSTOMER_AUTH_TRUST_PROXY_HEADERS:-true\}/);
+  assert.match(compose, /CUSTOMER_AUTH_TRUSTED_ORIGINS:/);
+  assert.match(compose, /BETTER_AUTH_URL: \$\{BETTER_AUTH_URL:-https:\/\/thewineexperience\.com\.br\}/);
   assert.match(compose, /RESERVATION_REPLAY_KEY_VERSION: \$\{RESERVATION_REPLAY_KEY_VERSION:-v1\}/);
 });
 
 test('deploy workflow pins the VPS and updates only the web and migration services', () => {
   const workflow = source('../.github/workflows/deploy-vps.yml');
 
+  assert.match(workflow, /services:\s+mysql:\s+image: mysql:8\.0/);
+  assert.match(workflow, /Reservation persistence integration tests/);
+  assert.match(workflow, /job\.services\.mysql\.ports\[3306\]/);
   assert.match(workflow, /VPS_SSH_FINGERPRINT/);
   assert.match(workflow, /VPS_HOST: 179\.236\.75\.128/);
   assert.match(workflow, /runs-on: \[self-hosted, linux, x64, oracle-vps, docker\]/);

@@ -36,4 +36,5 @@ test('known reservation errors preserve their current public contracts', async (
     assert.deepEqual(classifyReservationError(new Error(code)), { code, status: 409 });
   }
   assert.deepEqual(classifyReservationError(new Error('reservation_confirmation_in_progress')), { code: 'confirmation_in_progress', status: 409 });
+  assert.deepEqual(classifyReservationError(new Error('reservation_replay_expired')), { code: 'reservation_replay_expired', status: 410 });
 });
