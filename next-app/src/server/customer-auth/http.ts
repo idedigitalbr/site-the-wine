@@ -6,10 +6,23 @@ export async function readJsonBody(request: Request): Promise<unknown | null> {
   const maxBytes = 16 * 1024;
   const contentLength = request.headers.get('content-length');
   if (contentLength !== null && Number(contentLength) > maxBytes) return null;
-  if (!request.headers.get('content-type')?.toLowerCase().includes('application/json')) return null;
-  if (!request.body) return null;
+  if (!isJsonRequest(request) || !request.body) return null;
 
-  const reader = request.body.getReader();
+  const bytes = await readBodyBytes(request.body, maxBytes);
+  if (!bytes) return null;
+  try {
+    return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function isJsonRequest(request: Request): boolean {
+  return request.headers.get('content-type')?.toLowerCase().includes('application/json') ?? false;
+}
+
+async function readBodyBytes(body: ReadableStream<Uint8Array>, maxBytes: number): Promise<Uint8Array | null> {
+  const reader = body.getReader();
   const chunks: Uint8Array[] = [];
   let totalBytes = 0;
   try {
@@ -29,7 +42,7 @@ export async function readJsonBody(request: Request): Promise<unknown | null> {
       bytes.set(chunk, offset);
       offset += chunk.byteLength;
     }
-    return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)) as unknown;
+    return bytes;
   } catch {
     return null;
   } finally {

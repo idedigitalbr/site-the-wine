@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { customerReservationsResponseSchema } from '@/lib/customer-reservations-schema';
+import { customerAuthHref } from '@/lib/customer-auth-destination';
 import type { CustomerReservationItem, CustomerReservationsResponse } from '@/types/customer-reservations';
 
 type RequestKind = 'first' | 'more';
@@ -75,7 +76,7 @@ export function useCustomerReservations() {
     setMoreError(false);
     setIsLoadingMore(false);
     setPhase('redirecting');
-    router.replace('/reservas');
+    router.replace(customerAuthHref('/lista-de-reservas'));
   }, [router]);
 
   const applyFirstPayload = useCallback((generation: number, payload: CustomerReservationsResponse) => {

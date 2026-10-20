@@ -12,9 +12,9 @@ export default function RecoverPasswordPage() {
           <LockKeyhole aria-hidden="true" className="mx-auto text-primary" size={28} />
           <p className="mt-5 text-xs font-semibold uppercase tracking-[0.22em] text-primary">Acesso à sua conta</p>
           <h1 className="mt-3 font-display text-4xl text-foreground">Recuperação de senha</h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted">A recuperação de senha ainda não está disponível. Nenhum e-mail será enviado por esta página. Você pode voltar à reserva e tentar acessar novamente ou falar com a equipe do The Wine.</p>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted">A recuperação de senha ainda não está disponível. Nenhum e-mail será enviado por esta página. Você pode voltar ao acesso e tentar novamente ou falar com a equipe do The Wine.</p>
           <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/reservas" className="reservation-primary-button justify-center"><ArrowLeft aria-hidden="true" size={16} /> Voltar para a reserva</Link>
+            <Link href="/acesso" className="reservation-primary-button justify-center"><ArrowLeft aria-hidden="true" size={16} /> Voltar para o acesso</Link>
             <Link href="/" className="reservation-secondary-button justify-center">Voltar ao site</Link>
           </div>
         </div>
