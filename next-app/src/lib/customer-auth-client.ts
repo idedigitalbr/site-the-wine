@@ -63,5 +63,5 @@ export async function signUpCustomer(payload: CustomerSignupPayload): Promise<Cu
 }
 
 export function isCustomerAuthDestination(value: string): value is CustomerAuthDestination {
-  return value === '/lista-de-reservas' || value === '/reservas';
+  return value === '/#home' || value === '/lista-de-reservas' || value === '/reservas';
 }

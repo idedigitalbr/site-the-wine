@@ -1,10 +1,10 @@
-export type CustomerAuthDestination = '/lista-de-reservas' | '/reservas';
+export type CustomerAuthDestination = '/#home' | '/lista-de-reservas' | '/reservas';
 
-const DEFAULT_DESTINATION: CustomerAuthDestination = '/lista-de-reservas';
+const DEFAULT_DESTINATION: CustomerAuthDestination = '/#home';
 
 export function resolveCustomerAuthDestination(value: unknown): CustomerAuthDestination {
   if (typeof value !== 'string') return DEFAULT_DESTINATION;
-  if (value !== '/lista-de-reservas' && value !== '/reservas') return DEFAULT_DESTINATION;
+  if (value !== '/#home' && value !== '/lista-de-reservas' && value !== '/reservas') return DEFAULT_DESTINATION;
   return value;
 }
 
