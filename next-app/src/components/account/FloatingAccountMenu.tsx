@@ -4,7 +4,7 @@ import { CalendarDays, LogIn, LogOut, Settings, UserRound } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type MutableRefObject } from 'react';
 import styles from './FloatingAccountMenu.module.css';
 
-const ACCOUNT_SETTINGS_PATH = '/configuracoes?tab=dados';
+const ACCOUNT_SETTINGS_PATH = '/configuracoes';
 const CUSTOMER_ACCESS_PATH = '/acesso';
 const RESERVATIONS_PATH = '/lista-de-reservas';
 const SESSION_ENDPOINT = '/api/customer-auth/session';
@@ -143,7 +143,7 @@ function AccountMenuContents({
         <>
           <a className={styles.action} href={ACCOUNT_SETTINGS_PATH} onClick={onNavigate}>
             <Settings aria-hidden="true" size={18} />
-            <span>Configurações da conta</span>
+            <span>Conta</span>
           </a>
           <a className={styles.action} href={RESERVATIONS_PATH} onClick={onNavigate}>
             <CalendarDays aria-hidden="true" size={18} />
