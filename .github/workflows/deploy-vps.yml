@@ -17,7 +17,7 @@ jobs:
   ci:
     name: Verify
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: [self-hosted, linux, x64, oracle-vps, docker]
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     services:
       mysql:
@@ -110,7 +110,7 @@ jobs:
     name: Deploy production
     needs: ci
     if: github.ref == 'refs/heads/main'
-    runs-on: [self-hosted, linux, x64, oracle-vps, docker]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
       group: deploy-thewine
