@@ -6,7 +6,7 @@ import styles from './FloatingAccountMenu.module.css';
 
 const ACCOUNT_SETTINGS_PATH = '/configuracoes';
 const CUSTOMER_ACCESS_PATH = '/acesso';
-const RESERVATIONS_PATH = '/reservas';
+const RESERVATIONS_PATH = '/lista-de-reservas';
 const SESSION_ENDPOINT = '/api/customer-auth/session';
 const SIGN_OUT_ENDPOINT = '/api/customer-auth/sign-out';
 

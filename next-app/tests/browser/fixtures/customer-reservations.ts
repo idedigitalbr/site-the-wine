@@ -1,0 +1,35 @@
+export const customerReservationsFixture = {
+  reservations: [
+    {
+      id: 101,
+      reservationDate: '2026-10-23',
+      startTime: '20:00',
+      durationMinutes: 120,
+      guestCount: 2,
+      status: 'confirmed',
+      specialNeeds: ['dietary_restriction', 'high_chair', 'other'],
+      notes: 'Frieira no pé',
+    },
+    {
+      id: 102,
+      reservationDate: '2026-10-25',
+      startTime: '19:30',
+      durationMinutes: 120,
+      guestCount: 4,
+      status: 'confirmed',
+      specialNeeds: ['food_allergy'],
+      notes: 'Alergia a castanhas',
+    },
+    {
+      id: 103,
+      reservationDate: '2026-10-31',
+      startTime: '21:00',
+      durationMinutes: 90,
+      guestCount: 2,
+      status: 'pending',
+      specialNeeds: ['accessibility'],
+      notes: 'Acesso com mobilidade reduzida',
+    },
+  ],
+  nextOffset: null,
+} as const;

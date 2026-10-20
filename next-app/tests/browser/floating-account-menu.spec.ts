@@ -66,7 +66,7 @@ test('shows only authenticated account actions and signs out through the custome
   await expect(panel).toBeVisible();
   await expect(panel.locator('a, button')).toHaveText(['Conta', 'Reservas', 'Sair']);
   await expect(panel.getByRole('link', { name: 'Conta' })).toHaveAttribute('href', '/configuracoes');
-  await expect(panel.getByRole('link', { name: 'Reservas' })).toHaveAttribute('href', '/reservas');
+  await expect(panel.getByRole('link', { name: 'Reservas' })).toHaveAttribute('href', '/lista-de-reservas');
   await expect.poll(() => sessionCalls).toBe(2);
 
   await panel.getByRole('button', { name: 'Sair' }).click();

@@ -18,6 +18,7 @@ const managedTargets = [
   'src/providers',
   'src/lib',
   'src/app/reservas',
+  'src/app/lista-de-reservas',
   'src/app/minha-reserva',
   'src/app/admin',
   'src/app/api/reservations',
@@ -25,8 +26,10 @@ const managedTargets = [
   'src/app/api/internal',
   'src/app/api/payments',
   'src/app/api/webhooks',
+  'src/server/reservations',
   'src/components/ui',
   'src/components/admin',
+  'src/components/account/reservations-list',
   'src/components/reservation/v2',
   'src/components/reservation/portal',
 ];
