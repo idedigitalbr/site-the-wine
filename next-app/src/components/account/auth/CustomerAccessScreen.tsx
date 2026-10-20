@@ -10,14 +10,20 @@ import { CustomerSignupForm } from './CustomerSignupForm';
 import styles from './CustomerAccess.module.css';
 
 type Mode = 'login' | 'signup';
-type Props = { initialMode: Mode; destination: CustomerAuthDestination; reason?: 'expired' | 'changed' };
+type Props = { initialMode: Mode; destination: CustomerAuthDestination; reason?: 'expired' | 'changed' | 'password-reset' };
 type AuthUser = { id: string; name: string };
+
+function resolveInitialAuthMessage(reason?: string): string {
+  if (reason === 'expired') return 'Sua sessão expirou. Entre novamente para continuar.';
+  if (reason === 'changed') return 'Sua conta mudou. Entre novamente para continuar.';
+  return '';
+}
 
 export function CustomerAccessScreen({ initialMode, destination, reason }: Props) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [phase, setPhase] = useState<'checking' | 'ready' | 'confirming' | 'error'>('checking');
-  const [message, setMessage] = useState(reason === 'expired' ? 'Sua sessão expirou. Entre novamente para continuar.' : reason === 'changed' ? 'Sua conta mudou. Entre novamente para continuar.' : '');
+  const [message, setMessage] = useState(() => resolveInitialAuthMessage(reason));
   const [generation, setGeneration] = useState(0);
 
   const routeAuthenticated = useCallback(() => { router.replace(destination); }, [destination, router]);
@@ -45,12 +51,87 @@ export function CustomerAccessScreen({ initialMode, destination, reason }: Props
 
   function returnToLogin() { setMode('login'); setMessage('Não foi possível manter seu acesso. Entre novamente.'); setPhase('ready'); setGeneration((value) => value + 1); }
 
+  const loginNotice = reason === 'password-reset' ? 'Senha redefinida com sucesso. Digite seu CPF e sua nova senha para entrar.' : undefined;
+
   return (
     <AuthPageShell mode={mode}>
-      {phase === 'checking' && <div className={styles.statusPanel}><p>Verificando seu acesso…</p></div>}
-      {phase === 'confirming' && <div className={styles.statusPanel}><p>Confirmando seu acesso…</p></div>}
-      {phase === 'error' && <div className={styles.statusPanel}><p role="alert">{message}</p><div className={styles.statusActions}><button type="button" className={styles.submitButton} onClick={() => void checkExistingSession()}>Verificar novamente</button><button type="button" className={styles.textLink} onClick={returnToLogin}>Voltar ao login</button></div></div>}
-      {phase === 'ready' && (mode === 'login' ? <CustomerLoginForm key={`login-${generation}`} onSuccess={handleSuccess} onModeChange={() => { setMode('signup'); setMessage(''); setGeneration((value) => value + 1); }} /> : <CustomerSignupForm key={`signup-${generation}`} onSuccess={handleSuccess} onModeChange={() => { setMode('login'); setMessage(''); setGeneration((value) => value + 1); }} />)}
+      <PhaseDisplay
+        phase={phase}
+        message={message}
+        onRetry={() => void checkExistingSession()}
+        onReturnToLogin={returnToLogin}
+      />
+      {phase === 'ready' && (
+        <AuthFormByMode
+          mode={mode}
+          generation={generation}
+          loginNotice={loginNotice}
+          onSuccess={handleSuccess}
+          onSwitchToSignup={() => { setMode('signup'); setMessage(''); setGeneration((v) => v + 1); }}
+          onSwitchToLogin={() => { setMode('login'); setMessage(''); setGeneration((v) => v + 1); }}
+        />
+      )}
     </AuthPageShell>
+  );
+}
+
+function PhaseDisplay({
+  phase,
+  message,
+  onRetry,
+  onReturnToLogin,
+}: {
+  phase: 'checking' | 'ready' | 'confirming' | 'error';
+  message: string;
+  onRetry: () => void;
+  onReturnToLogin: () => void;
+}) {
+  if (phase === 'checking') return <div className={styles.statusPanel}><p>Verificando seu acesso…</p></div>;
+  if (phase === 'confirming') return <div className={styles.statusPanel}><p>Confirmando seu acesso…</p></div>;
+  if (phase === 'error') {
+    return (
+      <div className={styles.statusPanel}>
+        <p role="alert">{message}</p>
+        <div className={styles.statusActions}>
+          <button type="button" className={styles.submitButton} onClick={onRetry}>Verificar novamente</button>
+          <button type="button" className={styles.textLink} onClick={onReturnToLogin}>Voltar ao login</button>
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
+function AuthFormByMode({
+  mode,
+  generation,
+  loginNotice,
+  onSuccess,
+  onSwitchToSignup,
+  onSwitchToLogin,
+}: {
+  mode: Mode;
+  generation: number;
+  loginNotice: string | undefined;
+  onSuccess: (user: AuthUser) => Promise<void>;
+  onSwitchToSignup: () => void;
+  onSwitchToLogin: () => void;
+}) {
+  if (mode === 'login') {
+    return (
+      <CustomerLoginForm
+        key={`login-${generation}`}
+        notice={loginNotice}
+        onSuccess={onSuccess}
+        onModeChange={onSwitchToSignup}
+      />
+    );
+  }
+  return (
+    <CustomerSignupForm
+      key={`signup-${generation}`}
+      onSuccess={onSuccess}
+      onModeChange={onSwitchToLogin}
+    />
   );
 }

@@ -20,6 +20,6 @@ export default async function AccessPage({ searchParams }: { searchParams: Searc
   const mode = single(params.modo) === 'cadastro' ? 'signup' : 'login';
   const destination = resolveCustomerAuthDestination(single(params.returnTo));
   const auth = single(params.auth);
-  const reason = auth === 'expired' || auth === 'changed' ? auth : undefined;
+  const reason = auth === 'expired' || auth === 'changed' || auth === 'password-reset' ? auth : undefined;
   return <CustomerAccessScreen initialMode={mode} destination={destination} reason={reason} />;
 }

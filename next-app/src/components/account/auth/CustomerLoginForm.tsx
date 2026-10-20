@@ -1,15 +1,37 @@
 'use client';
 
+import Link from 'next/link';
 import { ArrowRight, CreditCard, LockKeyhole } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { isValidCpf, sanitizeCpfInput } from '@/modules/customer-auth/domain/cpf';
+import { RECOVERY_PREFILL_STORAGE_KEY } from '@/modules/customer-auth/domain/password-recovery';
 import { getCustomerSession, signInCustomer } from '@/lib/customer-auth-client';
 import { AuthField } from './AuthField';
 import styles from './CustomerAccess.module.css';
 
 type AuthUser = { id: string; name: string };
 
-export function CustomerLoginForm({ onSuccess, onModeChange }: { onSuccess: (user: AuthUser) => Promise<void>; onModeChange: () => void }) {
+function persistCpfPrefillForRecovery(cpf: string) {
+  try {
+    if (cpf.trim()) {
+      window.sessionStorage.setItem(RECOVERY_PREFILL_STORAGE_KEY, cpf.trim());
+    } else {
+      window.sessionStorage.removeItem(RECOVERY_PREFILL_STORAGE_KEY);
+    }
+  } catch {
+    // Ignorar bloqueio de storage do navegador
+  }
+}
+
+export function CustomerLoginForm({
+  onSuccess,
+  onModeChange,
+  notice,
+}: {
+  onSuccess: (user: AuthUser) => Promise<void>;
+  onModeChange: () => void;
+  notice?: string;
+}) {
   const [cpf, setCpf] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -41,10 +63,11 @@ export function CustomerLoginForm({ onSuccess, onModeChange }: { onSuccess: (use
   return (
     <form className={styles.authForm} onSubmit={submit} noValidate>
       <div className={styles.headingBlock}><p className={styles.eyebrow}>BEM-VINDO(A) DE VOLTA</p><h1>Acesse sua conta</h1><p>Entre na sua conta e continue desfrutando de experiências exclusivas no The Wine Experience.</p></div>
+      {notice && !error && <div className={styles.formSuccess} role="status">{notice}</div>}
       {error && <div className={styles.formError} role="alert">{error}</div>}
       <AuthField id="login-cpf" label="CPF" placeholder="Digite seu CPF" inputMode="numeric" autoComplete="username" maxLength={32} value={cpf} onChange={(event) => setCpf(sanitizeCpfInput(event.target.value))} icon={<CreditCard size={20} />} />
       <AuthField id="login-password" label="Senha" placeholder="Digite sua senha" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} togglePassword icon={<LockKeyhole size={20} />} />
-      <div className={styles.formLinks}><button className={styles.textLink} type="button" onClick={onModeChange}>Não tem conta? Cadastre-se</button><a className={styles.textLink} href="/recuperar-senha">Esqueci minha senha</a></div>
+      <div className={styles.formLinks}><button className={styles.textLink} type="button" onClick={onModeChange}>Não tem conta? Cadastre-se</button><Link className={styles.textLink} href="/recuperar-senha" onClick={() => persistCpfPrefillForRecovery(cpf)}>Esqueci minha senha</Link></div>
       <button className={styles.submitButton} type="submit" disabled={pending}>{pending ? 'Entrando…' : <><ArrowRight aria-hidden="true" size={24} /> Entrar</>}</button>
     </form>
   );
