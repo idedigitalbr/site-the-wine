@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   poweredByHeader: false,
+  devIndicators: false,
   serverExternalPackages: ['mysql2'],
   allowedDevOrigins: ['127.0.0.1'],
   turbopack: {
