@@ -3,6 +3,7 @@ export type NotificationChannel = typeof notificationChannels[number];
 
 export const notificationTemplates = [
   'reservation_confirmation',
+  'reservation_payment_pending',
   'reservation_reminder_24h',
   'reservation_reminder_3h',
   'reservation_cancellation',

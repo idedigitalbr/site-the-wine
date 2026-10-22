@@ -6,19 +6,17 @@ const root = new URL('..', import.meta.url);
 const source = (relativePath) => readFileSync(new URL(relativePath, root), 'utf8');
 
 test('public checkout exposes an isolated demonstrative payment flow', () => {
-  const mockPayment = source('src/modules/payments/demo/mock-payment.ts');
-  const demo = source('src/components/reservation/v2/MockPaymentDemo.tsx');
-  const wizard = source('src/components/reservation/v2/ReservationWizard.tsx');
+  const contract = source('src/modules/payments/checkout/checkout-adapter.ts');
+  const adapter = source('src/modules/payments/checkout/demo-checkout-adapter.ts');
+  const checkout = source('src/components/reservation/v2/ReservationCheckout.tsx');
 
-  assert.match(mockPayment, /mockPaymentMethods = \['pix', 'card'\]/);
-  assert.match(mockPayment, /mockPaymentScenarios = \['approved', 'processing', 'failed'\]/);
-  assert.match(mockPayment, /DEMO-/);
-  assert.doesNotMatch(mockPayment, /MERCADOPAGO|fetch\(/i);
-  assert.match(demo, /Nenhuma cobrança, chamada ao Mercado Pago ou webhook real/);
-  assert.match(demo, /Simular aprovação/);
-  assert.match(demo, /Simular recusa/);
-  assert.match(wizard, /MockPaymentDemo/);
-  assert.doesNotMatch(wizard, /fetch\(['"]\/api\/payments/);
+  assert.match(contract, /CheckoutPaymentAdapter/);
+  assert.match(adapter, /DemoCheckoutAdapter/);
+  assert.match(adapter, /confirmDemoPix/);
+  assert.match(adapter, /mode: 'demo'/);
+  assert.doesNotMatch(adapter, /MERCADOPAGO|fetch\(/i);
+  assert.match(checkout, /fetchReservationCheckout/);
+  assert.match(checkout, /nenhuma cobrança/i);
 });
 
 test('admin configuration clearly labels payment mode as mock', () => {

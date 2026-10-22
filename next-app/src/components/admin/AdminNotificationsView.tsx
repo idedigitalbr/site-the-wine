@@ -14,6 +14,7 @@ const statusLabels: Record<NotificationOutboxEntry['status'], string> = {
 
 const templateLabels: Record<NotificationOutboxEntry['template'], string> = {
   reservation_confirmation: 'Confirmação de reserva',
+  reservation_payment_pending: 'Reserva aguardando pagamento',
   reservation_reminder_24h: 'Lembrete de 24 horas',
   reservation_reminder_3h: 'Lembrete de 3 horas',
   reservation_cancellation: 'Cancelamento de reserva',

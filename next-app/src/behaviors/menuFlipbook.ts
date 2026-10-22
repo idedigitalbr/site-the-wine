@@ -37,6 +37,111 @@ function normalizePage(page: string | number, total: number) {
   return Math.min(max, Math.max(1, value));
 }
 
+function isPageControlDisabled(
+  pageFlip: PageFlipInstance | null,
+  currentPage: number,
+  totalPages: number,
+  isAnimating: boolean,
+  direction: 'previous' | 'next',
+): boolean {
+  if (!pageFlip || isAnimating) return true;
+  return direction === 'previous' ? currentPage <= 1 : currentPage >= totalPages;
+}
+
+function getCanvasPixelRatio(mobile: boolean): number {
+  const devicePixelRatio = window.devicePixelRatio || 1;
+  return mobile
+    ? Math.min(devicePixelRatio, 3)
+    : Math.max(2, Math.min(devicePixelRatio, 3));
+}
+
+function updatePageFlipCanvas(pageFlip: PageFlipInstance | null): void {
+  if (!pageFlip) return;
+  const canvas = pageFlip.getUI?.()?.getCanvas?.();
+  const render = pageFlip.getRender?.();
+  const context = render?.getContext?.();
+  if (!canvas || !render || !context) return;
+
+  const bounds = canvas.getBoundingClientRect();
+  const cssWidth = Math.max(1, Math.round(bounds.width));
+  const cssHeight = Math.max(1, Math.round(bounds.height));
+  const mobile = window.matchMedia('(max-width: 820px)').matches;
+  const pixelRatio = getCanvasPixelRatio(mobile);
+  const pixelWidth = Math.round(cssWidth * pixelRatio);
+  const pixelHeight = Math.round(cssHeight * pixelRatio);
+
+  if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
+  }
+
+  context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  render.update();
+}
+
+function registerOptionalEvent(
+  addEvent: (target: EventTarget, type: string, handler: EventListener) => void,
+  target: EventTarget | null,
+  type: string,
+  handler: EventListener,
+): void {
+  if (target) addEvent(target, type, handler);
+}
+
+function registerPageInputEvents(
+  addEvent: (target: EventTarget, type: string, handler: EventListener) => void,
+  pageInput: HTMLInputElement | null,
+  handlePageInput: () => void,
+): void {
+  if (!pageInput) return;
+  addEvent(pageInput, 'change', handlePageInput as EventListener);
+  addEvent(pageInput, 'keydown', ((rawEvent: Event) => {
+    const event = rawEvent as KeyboardEvent;
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    handlePageInput();
+  }) as EventListener);
+}
+
+function handleMenuKeyDown(
+  event: KeyboardEvent,
+  isOpen: boolean,
+  pageInput: HTMLInputElement | null,
+  trapFocus: (event: KeyboardEvent) => void,
+  closeMenuModal: () => void,
+  requestPageFlip: (action: 'flipPrev' | 'flipNext') => void,
+  goToPage: (targetPage: string | number) => void,
+  totalPages: number,
+): void {
+  if (!isOpen) return;
+  trapFocus(event);
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeMenuModal();
+    return;
+  }
+  if (document.activeElement === pageInput) return;
+  if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    requestPageFlip('flipNext');
+    return;
+  }
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    requestPageFlip('flipPrev');
+    return;
+  }
+  if (event.key === 'Home') {
+    event.preventDefault();
+    goToPage(1);
+    return;
+  }
+  if (event.key === 'End') {
+    event.preventDefault();
+    goToPage(totalPages);
+  }
+}
+
 export function setupMenuFlipbook(): Cleanup {
   const modal = document.getElementById('menuModal');
   const stage = document.getElementById('menuFlipbookStage');
@@ -106,8 +211,8 @@ export function setupMenuFlipbook(): Cleanup {
     }
     if (pageTotal) pageTotal.textContent = totalPages ? String(totalPages) : '—';
     pages.classList.toggle('is-cover', currentPage === 1);
-    if (previous) previous.disabled = !pageFlip || currentPage <= 1 || isAnimating;
-    if (next) next.disabled = !pageFlip || currentPage >= totalPages || isAnimating;
+    if (previous) previous.disabled = isPageControlDisabled(pageFlip, currentPage, totalPages, isAnimating, 'previous');
+    if (next) next.disabled = isPageControlDisabled(pageFlip, currentPage, totalPages, isAnimating, 'next');
     stage.setAttribute('aria-label', `Leitor do cardápio, página ${currentPage} de ${totalPages}`);
   };
 
@@ -127,29 +232,7 @@ export function setupMenuFlipbook(): Cleanup {
   };
 
   const updateCanvasResolution = () => {
-    if (!pageFlip) return;
-    const canvas = pageFlip.getUI?.()?.getCanvas?.();
-    const render = pageFlip.getRender?.();
-    const context = render?.getContext?.();
-    if (!canvas || !render || !context) return;
-
-    const bounds = canvas.getBoundingClientRect();
-    const cssWidth = Math.max(1, Math.round(bounds.width));
-    const cssHeight = Math.max(1, Math.round(bounds.height));
-    const mobile = window.matchMedia('(max-width: 820px)').matches;
-    const pixelRatio = mobile
-      ? Math.min(window.devicePixelRatio || 1, 3)
-      : Math.max(2, Math.min(window.devicePixelRatio || 1, 3));
-    const pixelWidth = Math.round(cssWidth * pixelRatio);
-    const pixelHeight = Math.round(cssHeight * pixelRatio);
-
-    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
-      canvas.width = pixelWidth;
-      canvas.height = pixelHeight;
-    }
-
-    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    render.update();
+    updatePageFlipCanvas(pageFlip);
   };
 
   const centerCoverPage = () => {
@@ -448,26 +531,16 @@ export function setupMenuFlipbook(): Cleanup {
   };
 
   const onKeyDown: EventListener = (rawEvent) => {
-    const event = rawEvent as KeyboardEvent;
-    if (!isOpen) return;
-    trapFocus(event);
-
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      closeMenuModal();
-    } else if (event.key === 'ArrowRight' && document.activeElement !== pageInput) {
-      event.preventDefault();
-      requestPageFlip('flipNext');
-    } else if (event.key === 'ArrowLeft' && document.activeElement !== pageInput) {
-      event.preventDefault();
-      requestPageFlip('flipPrev');
-    } else if (event.key === 'Home' && document.activeElement !== pageInput) {
-      event.preventDefault();
-      goToPage(1);
-    } else if (event.key === 'End' && document.activeElement !== pageInput) {
-      event.preventDefault();
-      goToPage(totalPages);
-    }
+    handleMenuKeyDown(
+      rawEvent as KeyboardEvent,
+      isOpen,
+      pageInput,
+      trapFocus,
+      closeMenuModal,
+      requestPageFlip,
+      goToPage,
+      totalPages,
+    );
   };
 
   const onResize: EventListener = () => {
@@ -483,21 +556,12 @@ export function setupMenuFlipbook(): Cleanup {
   };
 
   addEvent(document, 'click', onDocumentClick);
-  if (close) addEvent(close, 'click', closeMenuModal as EventListener);
-  if (previous) addEvent(previous, 'click', (() => requestPageFlip('flipPrev')) as EventListener);
-  if (next) addEvent(next, 'click', (() => requestPageFlip('flipNext')) as EventListener);
-  if (retry) addEvent(retry, 'click', (() => { void initializeReader(); }) as EventListener);
-  if (fullscreen) addEvent(fullscreen, 'click', (() => { void toggleFullscreen(); }) as EventListener);
-  if (pageInput) {
-    addEvent(pageInput, 'change', handlePageInput as EventListener);
-    addEvent(pageInput, 'keydown', ((rawEvent: Event) => {
-      const event = rawEvent as KeyboardEvent;
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        handlePageInput();
-      }
-    }) as EventListener);
-  }
+  registerOptionalEvent(addEvent, close, 'click', closeMenuModal as EventListener);
+  registerOptionalEvent(addEvent, previous, 'click', (() => requestPageFlip('flipPrev')) as EventListener);
+  registerOptionalEvent(addEvent, next, 'click', (() => requestPageFlip('flipNext')) as EventListener);
+  registerOptionalEvent(addEvent, retry, 'click', (() => { void initializeReader(); }) as EventListener);
+  registerOptionalEvent(addEvent, fullscreen, 'click', (() => { void toggleFullscreen(); }) as EventListener);
+  registerPageInputEvents(addEvent, pageInput, handlePageInput);
 
   bindTouchZoom();
   addEvent(modal, 'click', onModalClick);

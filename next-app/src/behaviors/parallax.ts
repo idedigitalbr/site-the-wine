@@ -11,6 +11,31 @@ type ParallaxItem = {
   targetX: number;
 };
 
+function createParallaxItem(target: HTMLElement, intensity: number): ParallaxItem {
+  const container =
+    target.closest<HTMLElement>('.parallax-container') ?? target.parentElement ?? target;
+  const speedAttribute =
+    target.dataset.parallaxSpeed ?? container.dataset.parallaxSpeed ?? null;
+  const baseSpeed = Number.parseFloat(speedAttribute ?? '') || 0.15;
+  const direction = isHorizontalParallax(target) ? 'horizontal' : 'vertical';
+
+  return {
+    container,
+    target,
+    speed: baseSpeed * intensity,
+    direction,
+    currentY: 0,
+    targetY: 0,
+    currentX: 0,
+    targetX: 0,
+  };
+}
+
+function isHorizontalParallax(target: HTMLElement): boolean {
+  return target.dataset.parallaxDirection === 'horizontal'
+    || target.classList.contains('parallax-img-h');
+}
+
 export function setupParallax(intensity = 0.22): Cleanup {
   if (window.innerWidth <= 768) return () => {};
 
@@ -20,29 +45,7 @@ export function setupParallax(intensity = 0.22): Cleanup {
     ),
   );
 
-  const items: ParallaxItem[] = targets.map((target) => {
-    const container =
-      target.closest<HTMLElement>('.parallax-container') ?? target.parentElement ?? target;
-    const speedAttribute =
-      target.dataset.parallaxSpeed ?? container.dataset.parallaxSpeed ?? null;
-    const baseSpeed = Number.parseFloat(speedAttribute ?? '') || 0.15;
-    const direction =
-      target.dataset.parallaxDirection === 'horizontal' ||
-      target.classList.contains('parallax-img-h')
-        ? 'horizontal'
-        : 'vertical';
-
-    return {
-      container,
-      target,
-      speed: baseSpeed * intensity,
-      direction,
-      currentY: 0,
-      targetY: 0,
-      currentX: 0,
-      targetX: 0,
-    };
-  });
+  const items: ParallaxItem[] = targets.map((target) => createParallaxItem(target, intensity));
 
   if (!items.length) return () => {};
 

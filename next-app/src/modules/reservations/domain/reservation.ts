@@ -58,3 +58,8 @@ export function confirmDraftReservation(draft: ReservationDraft): ConfirmedReser
   assertTransition(draft.status, 'confirmed');
   return { ...draft, status: 'confirmed' };
 }
+
+export function startCheckoutReservation(draft: ReservationDraft): ReservationDraft & { status: 'payment_pending' } {
+  assertTransition(draft.status, 'payment_pending');
+  return { ...draft, status: 'payment_pending' };
+}

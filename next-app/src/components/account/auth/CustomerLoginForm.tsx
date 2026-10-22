@@ -65,7 +65,7 @@ export function CustomerLoginForm({
       <div className={styles.headingBlock}><p className={styles.eyebrow}>BEM-VINDO(A) DE VOLTA</p><h1>Acesse sua conta</h1><p>Entre na sua conta e continue desfrutando de experiências exclusivas no The Wine Experience.</p></div>
       {notice && !error && <div className={styles.formSuccess} role="status">{notice}</div>}
       {error && <div className={styles.formError} role="alert">{error}</div>}
-      <AuthField id="login-cpf" label="CPF" placeholder="Digite seu CPF" inputMode="numeric" autoComplete="username" maxLength={32} value={cpf} onChange={(event) => setCpf(sanitizeCpfInput(event.target.value))} icon={<CreditCard size={20} />} />
+      <AuthField id="login-cpf" label="CPF" placeholder="Digite seu CPF" inputMode="numeric" autoComplete="username" maxLength={11} value={cpf} onChange={(event) => setCpf(sanitizeCpfInput(event.target.value))} icon={<CreditCard size={20} />} />
       <AuthField id="login-password" label="Senha" placeholder="Digite sua senha" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} togglePassword icon={<LockKeyhole size={20} />} />
       <div className={styles.formLinks}><button className={styles.textLink} type="button" onClick={onModeChange}>Não tem conta? Cadastre-se</button><Link className={styles.textLink} href="/recuperar-senha" onClick={() => persistCpfPrefillForRecovery(cpf)}>Esqueci minha senha</Link></div>
       <button className={styles.submitButton} type="submit" disabled={pending}>{pending ? 'Entrando…' : <><ArrowRight aria-hidden="true" size={24} /> Entrar</>}</button>

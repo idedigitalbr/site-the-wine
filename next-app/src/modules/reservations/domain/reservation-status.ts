@@ -14,7 +14,7 @@ export const reservationStatuses = [
 export type ReservationStatus = typeof reservationStatuses[number];
 
 const transitions: Record<ReservationStatus, readonly ReservationStatus[]> = {
-  draft: ['hold', 'pending', 'confirmed', 'cancelled'],
+  draft: ['hold', 'pending', 'payment_pending', 'confirmed', 'cancelled'],
   hold: ['payment_pending', 'pending', 'confirmed', 'cancelled', 'expired'],
   payment_pending: ['confirmed', 'cancelled', 'expired'],
   pending: ['confirmed', 'cancelled'],

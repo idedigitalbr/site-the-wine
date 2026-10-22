@@ -13,7 +13,7 @@ const emailProvider = new MockEmailProvider();
 
 type QueueReservationNotificationInput = {
   email: string;
-  template: Extract<NotificationTemplate, 'reservation_confirmation' | 'reservation_cancellation'>;
+  template: Extract<NotificationTemplate, 'reservation_confirmation' | 'reservation_payment_pending' | 'reservation_cancellation'>;
   publicCode: string;
   reservationDate: string;
   startTime: string;

@@ -10,6 +10,7 @@ import type {
   TableCombination,
 } from '../domain/availability';
 import type { AvailabilityRepository } from '../application/ports';
+import { activeReservationOccupancySql } from './checkout-occupancy-sql';
 
 type TableRow = RowDataPacket & {
   id: number;
@@ -152,7 +153,7 @@ export class MysqlAvailabilityRepository implements AvailabilityRepository {
         FROM reservations r
         INNER JOIN reservation_tables rt ON rt.reservation_id = r.id
         WHERE r.reservation_date = ?
-          AND r.status IN ('hold', 'payment_pending', 'pending', 'confirmed', 'seated')
+          AND ${activeReservationOccupancySql}
         UNION ALL
         SELECT
           h.restaurant_table_id AS tableId,

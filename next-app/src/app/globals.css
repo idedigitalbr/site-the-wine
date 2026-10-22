@@ -627,6 +627,131 @@ main.reservation-page-wrapper {
   .reservation-theme .reservation-review-summary-photo { height: 150px; }
 }
 
+/* Mobile reservation composition: preserve the desktop grid and remove only
+ * the secondary review surface that does not fit the approved phone flow. */
+@media (max-width: 639px) {
+  .reservation-theme .reservation-page-content {
+    padding: 42px 10px calc(64px + env(safe-area-inset-bottom));
+  }
+
+  .reservation-theme .reservation-header-container h1 {
+    font-size: clamp(2.25rem, 12vw, 3rem);
+    line-height: 0.98;
+  }
+
+  .reservation-theme .reservation-stepper-label {
+    max-width: 62px;
+    font-size: 0.46rem;
+    letter-spacing: 0.08em;
+    line-height: 1.1;
+  }
+
+  .reservation-theme .reservation-panel {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .reservation-theme .reservation-step-heading h2 {
+    font-size: 0.88rem;
+  }
+
+  .reservation-theme .reservation-step-heading p {
+    font-size: 0.72rem;
+  }
+
+  .reservation-theme .reservation-calendar {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .reservation-theme .reservation-calendar-grid {
+    column-gap: 2px;
+  }
+
+  .reservation-theme .reservation-calendar-day {
+    min-width: 0;
+  }
+
+  .reservation-theme .reservation-time-choice {
+    min-height: 47px;
+  }
+
+  .reservation-theme .reservation-guest-summary > div {
+    padding-right: 7px;
+    padding-left: 7px;
+  }
+
+  .reservation-theme .reservation-guest-summary strong {
+    font-size: 0.61rem;
+    line-height: 1.2;
+  }
+
+  .reservation-theme .reservation-guest-summary span:not(.reservation-guest-summary-dot) {
+    font-size: 0.56rem;
+    line-height: 1.35;
+  }
+
+  .reservation-theme .reservation-review-grid {
+    display: block;
+  }
+
+  .reservation-theme .reservation-review-summary {
+    display: none;
+  }
+
+  .reservation-theme .reservation-review-row {
+    height: auto;
+    min-height: 56px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+  }
+
+  .reservation-theme .reservation-review-row-copy strong {
+    font-size: 0.68rem;
+    line-height: 1.15;
+  }
+
+  .reservation-theme .reservation-panel-review > .reservation-wizard-actions {
+    margin-top: 18px;
+  }
+}
+
+@media (max-width: 370px) {
+  .reservation-theme .reservation-page-content {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .reservation-theme .reservation-stepper-label {
+    max-width: 56px;
+    font-size: 0.44rem;
+  }
+
+  .reservation-theme .reservation-panel {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .reservation-theme .reservation-panel > .reservation-wizard-actions {
+    width: calc(100% + 24px);
+    margin-right: -12px;
+    margin-left: -12px;
+  }
+
+  .reservation-theme .reservation-wizard-action {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .reservation-theme .reservation-wizard-action--back {
+    flex-basis: 6.4rem;
+  }
+
+  .reservation-theme .reservation-wizard-action--forward {
+    flex-basis: 9.4rem;
+  }
+}
+
 .reservation-admin-theme .admin-label {
   display: block;
   margin-bottom: 0.375rem;

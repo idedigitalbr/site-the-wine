@@ -7,6 +7,7 @@ import { burnCredentialVerificationTime } from './credential-timing';
 import { CustomerAuthError, isDuplicateKey } from './errors';
 import { ensureCustomerForAuthUser, findCustomerAccountByCpf } from './repository';
 import { getCustomerAuth } from './provider';
+import { PasswordCompromiseCheckUnavailable } from './password-compromise';
 import { assessSignupPassword } from './signup-password';
 
 type AuthApiResult<T> = { response: T; headers: Headers };
@@ -39,18 +40,15 @@ export async function signUpCustomer(
   request: Request,
   body: unknown,
 ): Promise<AuthApiResult<{ user: { id: string; name: string } }>> {
-  const parsed = customerSignupSchema.safeParse(body);
-  if (!parsed.success) throw invalidSignupError(parsed.error.issues[0]?.path.join('.') ?? 'form');
-  const input = parsed.data;
-  const passwordAssessment = assessSignupPassword(input.password, [input.name, input.cpf, input.birthDate, input.recoveryEmail]);
-  if (passwordAssessment.weak) throw new CustomerAuthError('Escolha uma senha mais forte para continuar.', 400, 'WEAK_PASSWORD');
+  const input = parseSignupInput(body);
+  await assertSignupPasswordAllowed(input);
   await assertCpfAvailable(input.cpf);
 
   try {
     const created = await getCustomerAuth().api.signUpEmail({
       body: {
         name: input.name,
-        email: input.recoveryEmail.trim().toLowerCase(),
+        email: input.recoveryEmail,
         password: input.password,
         cpfLookupHash: hashCustomerCpf(input.cpf),
         birthDate: new Date(`${input.birthDate}T00:00:00.000Z`),
@@ -77,6 +75,25 @@ export async function signUpCustomer(
     if (error instanceof CustomerAuthError) throw error;
     throw new CustomerAuthError('Não foi possível concluir o cadastro e o acesso. Tente entrar novamente.', 503, 'SIGNUP_UNAVAILABLE');
   }
+}
+
+function parseSignupInput(body: unknown) {
+  const parsed = customerSignupSchema.safeParse(body);
+  if (!parsed.success) throw invalidSignupError(parsed.error.issues[0]?.path.join('.') ?? 'form');
+  return parsed.data;
+}
+
+async function assertSignupPasswordAllowed(input: Awaited<ReturnType<typeof parseSignupInput>>): Promise<void> {
+  let passwordAssessment: Awaited<ReturnType<typeof assessSignupPassword>>;
+  try {
+    passwordAssessment = await assessSignupPassword(input.password, [input.name, input.cpf, input.birthDate, input.recoveryEmail]);
+  } catch (error) {
+    if (error instanceof PasswordCompromiseCheckUnavailable) {
+      throw new CustomerAuthError('Não foi possível verificar a segurança da senha agora. Tente novamente.', 503, 'PASSWORD_POLICY_UNAVAILABLE');
+    }
+    throw error;
+  }
+  if (passwordAssessment.weak && !input.acceptWeakPassword) throw new CustomerAuthError('Confirme que deseja usar uma senha fraca para continuar.', 400, 'WEAK_PASSWORD');
 }
 
 function isAccountConflict(error: unknown): boolean {

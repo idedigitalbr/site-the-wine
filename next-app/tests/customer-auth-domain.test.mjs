@@ -31,16 +31,28 @@ test('CPF accepts valid digits, masks pasted text and rejects invalid/repeated d
 });
 
 test('weak-password acknowledgement follows the documented length and zxcvbn thresholds', async () => {
-  const { isWeakPassword, validatePasswordBasics } = await loadTypeScriptModule(
+  const { isWeakPassword, validateSignupPasswordBasics } = await loadTypeScriptModule(
     '../src/modules/customer-auth/domain/password-policy.ts',
   );
 
-  assert.equal(isWeakPassword('a-long-enough-password', 3), false);
-  assert.equal(isWeakPassword('a-long-enough-password', 2), true);
-  assert.equal(isWeakPassword('ShortPass!1', 4), true);
-  assert.equal(validatePasswordBasics('  '), false);
-  assert.equal(validatePasswordBasics('x'.repeat(128)), true);
-  assert.equal(validatePasswordBasics('x'.repeat(129)), false);
+  assert.equal(isWeakPassword('a-long-password', 3), false);
+  assert.equal(isWeakPassword('a-long-password', 2), true);
+  assert.equal(isWeakPassword('Short!', 4), true);
+  assert.equal(isWeakPassword('Senha123', 4), true);
+  assert.equal(validateSignupPasswordBasics('  '), false);
+  assert.equal(validateSignupPasswordBasics('x'.repeat(8)), true);
+  assert.equal(validateSignupPasswordBasics('x'.repeat(20)), true);
+  assert.equal(validateSignupPasswordBasics('x'.repeat(21)), false);
+  assert.equal(validateSignupPasswordBasics('Senha forte 😀'), true);
+});
+
+test('name and email helpers normalize only the allowed frontend/server contract', async () => {
+  const name = await loadTypeScriptModule('../src/modules/customer-auth/domain/name.ts');
+
+  assert.equal(name.normalizeNameInput('  João   da Silva  '), 'João da Silva');
+  assert.equal(name.isValidCustomerName('João da Silva'), true);
+  assert.equal(name.isValidCustomerName('João\nSilva'), false);
+  assert.equal(name.isValidCustomerName('João  Silva'), true);
 });
 
 test('birth date is a real calendar date and cannot be in the future', async () => {

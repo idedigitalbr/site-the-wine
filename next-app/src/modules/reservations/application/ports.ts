@@ -1,5 +1,6 @@
 import type { ReservationDraft } from '../domain/reservation';
 import type { ReservationStatus } from '../domain/reservation-status';
+import type { PaymentStatus } from '@/modules/payments/domain/payment';
 import type {
   AvailabilityInventory,
   AvailabilitySearchQuery,
@@ -11,11 +12,13 @@ export type ReservationId = number;
 
 export type CustomerReservationRecord = {
   id: ReservationId;
+  publicCode: string;
   reservationDate: string;
   startTime: string;
   endTime: string;
   guestCount: number;
   status: ReservationStatus;
+  paymentStatus: PaymentStatus | null;
   specialNeeds: string[];
   notes: string;
 };

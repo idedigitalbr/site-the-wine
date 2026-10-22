@@ -13,7 +13,7 @@ function readEnvFile(path) {
 const fileEnvironment = readEnvFile(resolve('.env.local'));
 const value = (name, fallback = '') => process.env[name] ?? fileEnvironment[name] ?? fallback;
 const secret = value('NOTIFICATION_JOB_SECRET');
-const baseUrl = value('PUBLIC_APP_URL', 'http://127.0.0.1:3000').replace(/\/$/, '');
+const baseUrl = value('PUBLIC_APP_URL', 'http://127.0.0.1:3001').replace(/\/$/, '');
 
 if (!secret) {
   console.error('NOTIFICATION_JOB_SECRET não configurado.');

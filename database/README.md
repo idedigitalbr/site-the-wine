@@ -92,7 +92,7 @@ inventário em transação antes de gravar a reserva.
 O fluxo público cria o hold com `POST /api/reservations/hold` e confirma a
 reserva com `POST /api/reservations`. A confirmação sem hold ativo retorna
 `409 hold_required`. Para exercitar a proteção contra dupla reserva usando o
-MySQL local e o Next em execução na porta 3000, use `npm run test:reservation-db`
+MySQL local e o Next em execução na porta 3001, use `npm run test:reservation-db`
 dentro de `next-app`; o comando cria e remove um fixture isolado no database
 configurado.
 
@@ -107,3 +107,19 @@ Em `/admin/salao`, o floor manager permite posicionar mesas, acompanhar os
 estados livre/reservada/bloqueada, criar combinações e registrar bloqueios por
 salão, área ou mesa. Essas alterações alimentam o endpoint público de
 disponibilidade.
+
+## Checkout pendente e garantia de vaga
+
+`migrations/017_reservation_checkout_guarantee.sql` adiciona o estado persistente
+do checkout. Uma reserva recém-concluída pelo cliente fica em
+`payment_pending`, mantém sua alocação por 30 minutos e pode ser retomada pelo
+cliente autenticado em `/reservas?checkoutReservationId=<id>`. O prazo de
+pagamento é o início da reserva no fuso `RESERVATION_ESTABLISHMENT_TIMEZONE`
+mais duas horas; no instante exato do limite o pagamento é bloqueado.
+
+Após a garantia, a reserva pendente continua retomável, mas deixa de ocupar a
+capacidade até uma finalização que readquira uma mesa elegível na mesma
+transação. O checkout demonstrativo grava somente o progresso em
+`reservation_checkout_sessions` e não cria um pagamento financeiro `paid`.
+Mercado Pago permanece desligado; a porta para um resultado verificado e a
+reconciliação de webhook continuam pendentes antes de habilitar o gateway.

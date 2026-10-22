@@ -4,7 +4,7 @@ import {
   calculateEndTime,
   type AvailabilityQuery,
 } from '../domain/availability';
-import { confirmDraftReservation, createDraftReservation } from '../domain/reservation';
+import { createDraftReservation, startCheckoutReservation } from '../domain/reservation';
 import type {
   AvailabilityRepository,
   ConfirmReservationWithHoldInput,
@@ -29,7 +29,7 @@ export type CreatePublicReservationDependencies = {
 export type CreatedPublicReservation = {
   reservationId: number;
   publicCode: string;
-  status: 'confirmed';
+  status: 'payment_pending';
 };
 
 function optionMatchesTableIds(optionTableIds: number[], selectedTableIds: number[]): boolean {
@@ -72,7 +72,7 @@ export async function createPublicReservation(
     guestCount: input.guestCount,
     notes: input.notes,
   });
-  const reservation = confirmDraftReservation(draft);
+  const reservation = startCheckoutReservation(draft);
   const confirmation: ConfirmReservationWithHoldInput = {
     reservation,
     tableIds: selectedOption.tableIds,

@@ -194,3 +194,17 @@ export function formatSpecialNeeds(values: string[]): string {
 export function formatReservationNotes(value: string): string {
   return value.trim() || 'Sem observações adicionais';
 }
+
+const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
+
+export function isReservationExpired(
+  reservationDate: string,
+  startTime: string,
+  referenceTimeMs: number = Date.now(),
+): boolean {
+  if (!reservationDate || !startTime) return false;
+  const timePart = startTime.length === 5 ? `${startTime}:00` : startTime;
+  const reservationStartMs = new Date(`${reservationDate}T${timePart}-03:00`).getTime();
+  if (Number.isNaN(reservationStartMs)) return false;
+  return referenceTimeMs >= reservationStartMs + SIX_HOURS_IN_MS;
+}

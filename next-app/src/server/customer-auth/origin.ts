@@ -1,5 +1,27 @@
 import 'server-only';
 
+function normalizeOrigin(value: string): string | null {
+  try {
+    return new URL(value.trim()).origin;
+  } catch {
+    return null;
+  }
+}
+
+function getLoopbackAlias(url: URL): string | null {
+  if (url.hostname === '127.0.0.1') return 'localhost';
+  if (url.hostname === 'localhost') return '127.0.0.1';
+  return null;
+}
+
+function expandLoopbackOrigin(origin: string): string[] {
+  const url = new URL(origin);
+  const alias = getLoopbackAlias(url);
+  if (!alias) return [origin];
+  const port = url.port ? `:${url.port}` : '';
+  return [origin, `${url.protocol}//${alias}${port}`];
+}
+
 export function getTrustedCustomerAuthOrigins(
   baseURL?: string,
   environment: NodeJS.ProcessEnv = process.env,
@@ -12,7 +34,10 @@ export function getTrustedCustomerAuthOrigins(
     ...configuredOrigins,
   ].filter((value): value is string => Boolean(value?.trim()));
 
-  return [...new Set(candidates.map((value) => new URL(value.trim()).origin))];
+  const origins = candidates
+    .map(normalizeOrigin)
+    .filter((value): value is string => value !== null);
+  return [...new Set(origins.flatMap(expandLoopbackOrigin))];
 }
 
 export function hasTrustedOrigin(request: Request): boolean {

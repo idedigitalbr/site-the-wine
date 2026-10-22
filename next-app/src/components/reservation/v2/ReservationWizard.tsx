@@ -20,7 +20,6 @@ import { useForm, useWatch, type FieldErrors, type FieldPath, type UseFormRegist
 import { whatsappLinks } from '@/config/social';
 import { ReservationCheckout } from './ReservationCheckout';
 import { customerAuthHref } from '@/lib/customer-auth-destination';
-import { MockPaymentDemo } from './MockPaymentDemo';
 import { WaitlistForm } from './WaitlistForm';
 import { authenticatedPublicReservationSchema, type AuthenticatedPublicReservationInput } from '@/modules/reservations/schemas/public-reservation-schema';
 import { ReservationAccessGate } from './ReservationAccessGate';
@@ -573,24 +572,7 @@ function EmptyAvailability({ label, date, guests }: { label: string; date: strin
 }
 
 function Confirmation({ reservation }: { reservation: CreatedReservation }) {
-  return (
-    <>
-      <ReservationCheckout reservationId={reservation.reservationId} publicCode={reservation.publicCode} />
-      <section className="mx-auto max-w-3xl px-5 pb-12 text-center text-foreground">
-        <div className="mx-auto max-w-xl rounded-[var(--radius-lg)] border border-border bg-surface p-6 sm:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Acesso à reserva</p>
-          <p className="mt-3 text-sm leading-relaxed text-muted">Guarde o código e use o link privado para acompanhar ou cancelar a reserva.</p>
-          <Link href={`/minha-reserva/${reservation.secureToken}`} className="mt-5 inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-primary bg-primary/10 px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/20">
-            Acessar minha reserva <ArrowRight aria-hidden="true" size={16} />
-          </Link>
-        </div>
-        <details className="mx-auto mt-5 max-w-xl rounded-[var(--radius-lg)] border border-border bg-surface p-4 text-left sm:p-5">
-          <summary className="cursor-pointer text-sm font-semibold text-primary">Abrir simulação rápida de pagamento</summary>
-          <MockPaymentDemo reservationId={reservation.reservationId} publicCode={reservation.publicCode} />
-        </details>
-      </section>
-    </>
-  );
+  return <ReservationCheckout reservationId={reservation.reservationId} publicCode={reservation.publicCode} />;
 }
 
 function StepIndicators({ currentStep }: { currentStep: number }) {
@@ -882,10 +864,14 @@ function ReservationWizardContent({
     return <ReservationInitialization authState={authState} message={authError} onRetry={onRetry} />;
   }
 
+  if (confirmation) {
+    return <Confirmation reservation={confirmation} />;
+  }
+
   return (
     <main className="reservation-theme reservation-page-wrapper font-sans text-foreground">
       <div className="reservation-page-content">
-        {confirmation ? <Confirmation reservation={confirmation} /> : <ReservationShell {...shellProps} />}
+        <ReservationShell {...shellProps} />
       </div>
     </main>
   );
@@ -918,6 +904,8 @@ export function ReservationWizard() {
   const navigationLock = useRef(false);
   const holdLock = useRef(false);
   const submitLock = useRef(false);
+  const visitedStepsRef = useRef(new Set<number>());
+  const previousRenderedStepRef = useRef(step);
   const submissionKeys = useRef(new Map<string, string>());
   const initializationId = useRef(0);
   const initializationDelay = useRef<CancelableDelay | null>(null);
@@ -1019,6 +1007,28 @@ export function ReservationWizard() {
     };
   }, [initializeReservationSession, resetForm, resetWizard]);
 
+  useEffect(() => {
+    const previousStep = previousRenderedStepRef.current;
+    const isFirstEntryIntoNewStep = step > previousStep && !visitedStepsRef.current.has(step);
+
+    visitedStepsRef.current.add(step);
+    previousRenderedStepRef.current = step;
+
+    if (isFirstEntryIntoNewStep) {
+      let secondFrame: number | null = null;
+      const firstFrame = window.requestAnimationFrame(() => {
+        secondFrame = window.requestAnimationFrame(() => {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+        });
+      });
+
+      return () => {
+        window.cancelAnimationFrame(firstFrame);
+        if (secondFrame !== null) window.cancelAnimationFrame(secondFrame);
+      };
+    }
+  }, [step]);
+
   const invalidateSession = (reason: 'expired' | 'changed') => {
     redirectAfterSessionLoss(reason);
   };
@@ -1118,6 +1128,7 @@ export function ReservationWizard() {
         submissionId,
       });
       if (result.kind === 'created') {
+        router.replace(`/reservas?checkoutReservationId=${result.reservation.reservationId}`, { scroll: false });
         setConfirmation(result.reservation);
         setStep(6);
         return;

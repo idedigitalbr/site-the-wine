@@ -5,6 +5,7 @@ export type ListCustomerReservationsDependencies = {
   findCustomerIdByAuthUserId: (userId: string) => Promise<number | null>;
   reservations: CustomerReservationQueryRepository;
   calculateDuration: (startTime: string, endTime: string) => number | null;
+  timeZone: string;
 };
 
 export async function listCustomerReservations(
@@ -24,11 +25,14 @@ export async function listCustomerReservations(
   return {
     reservations: visibleRecords.map((record) => ({
       id: record.id,
+      publicCode: record.publicCode,
       reservationDate: record.reservationDate,
       startTime: record.startTime,
       durationMinutes: dependencies.calculateDuration(record.startTime, record.endTime),
       guestCount: record.guestCount,
       status: record.status,
+      paymentStatus: record.paymentStatus,
+      timeZone: dependencies.timeZone,
       specialNeeds: record.specialNeeds,
       notes: record.notes,
     })),

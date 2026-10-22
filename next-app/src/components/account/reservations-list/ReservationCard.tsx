@@ -1,9 +1,9 @@
 'use client';
-
-import { useState } from 'react';
 import {
   CalendarDays,
   ChevronRight,
+  CirclePlus,
+  CircleX,
   Clock3,
   Hourglass,
   MessageSquareMore,
@@ -14,6 +14,7 @@ import {
 import type { CustomerReservationItem } from '@/types/customer-reservations';
 import { ReservationField } from './ReservationField';
 import { ReservationStatusBadge } from './ReservationStatusBadge';
+import { ReservationCardActions } from './ReservationCardActions';
 import {
   formatCompactDurationParts,
   formatCompactGuestParts,
@@ -75,6 +76,11 @@ type DesktopTicketBodyProps = {
   guestText: string;
   preferencesText: string;
   notesText: string;
+  isExpanded: boolean;
+  variant: 'default' | 'historic';
+  onToggle: () => void;
+  onPrint: () => void;
+  detailsId: string;
 };
 
 function DesktopTicketBody({
@@ -83,33 +89,44 @@ function DesktopTicketBody({
   guestText,
   preferencesText,
   notesText,
+  isExpanded,
+  variant,
+  onToggle,
+  onPrint,
+  detailsId,
 }: DesktopTicketBodyProps) {
   return (
-    <div className={styles.desktopTicketMain}>
+    <div className={styles.desktopTicketMain} data-desktop-expanded={isExpanded ? 'true' : 'false'}>
       <div className={styles.desktopCenterGrid}>
         <div className={styles.desktopTopRow}>
           <ReservationField icon={Clock3} label="HORÁRIO" value={reservation.startTime} className={styles.colFirst} />
           <ReservationField icon={Hourglass} label="DURAÇÃO" value={durationText} className={styles.colDivider} />
           <ReservationField icon={Users} label="PESSOAS" value={guestText} className={styles.colDivider} />
         </div>
-        <div className={styles.desktopBottomRow}>
-          <ReservationField
-            icon={SlidersHorizontal}
-            label="PREFERÊNCIAS"
-            value={preferencesText}
-            className={`${styles.colFirst} ${styles.compactValueField}`}
-          />
-          <ReservationField
-            icon={MessageSquareMore}
-            label="OBSERVAÇÕES"
-            value={notesText}
-            className={`${styles.colDivider} ${styles.compactValueField}`}
-          />
+        <div className={styles.desktopExpandedPanel} id={detailsId} aria-hidden={!isExpanded}>
+          <div className={styles.desktopBottomRow}>
+            <ReservationField
+              icon={SlidersHorizontal}
+              label="PREFERÊNCIAS"
+              value={preferencesText}
+              className={`${styles.colFirst} ${styles.compactValueField}`}
+            />
+            <ReservationField
+              icon={MessageSquareMore}
+              label="OBSERVAÇÕES"
+              value={notesText}
+              className={`${styles.colDivider} ${styles.compactValueField}`}
+            />
+          </div>
+          <ReservationCardActions reservation={reservation} variant={variant} onPrint={onPrint} />
         </div>
       </div>
 
       <div className={styles.desktopRightZone}>
-        <ReservationStatusBadge status={reservation.status} />
+        <div className={styles.desktopStatusActions}>
+          <ReservationStatusBadge status={reservation.status} paymentStatus={reservation.paymentStatus} historic={variant === 'historic'} />
+          <button type="button" className={styles.expandButton} aria-expanded={isExpanded} aria-controls={detailsId} onClick={onToggle}>{isExpanded ? <CircleX size={18} aria-hidden="true" /> : <CirclePlus size={18} aria-hidden="true" />}{isExpanded ? 'Fechar' : 'Expandir'}</button>
+        </div>
         <Wine className={styles.wineWatermark} aria-hidden="true" size={42} strokeWidth={1.25} />
       </div>
     </div>
@@ -122,6 +139,9 @@ type MobileTicketBodyProps = {
   notesText: string;
   isExpanded: boolean;
   onToggle: () => void;
+  variant: 'default' | 'historic';
+  onPrint: () => void;
+  detailsId: string;
 };
 
 function MobileTicketBody({
@@ -130,6 +150,9 @@ function MobileTicketBody({
   notesText,
   isExpanded,
   onToggle,
+  variant,
+  onPrint,
+  detailsId,
 }: MobileTicketBodyProps) {
   const durationParts = formatCompactDurationParts(reservation.durationMinutes);
   const guestParts = formatCompactGuestParts(reservation.guestCount);
@@ -138,13 +161,14 @@ function MobileTicketBody({
     <div className={styles.mobileTicketMain} data-mobile-expanded={isExpanded ? 'true' : 'false'}>
       <header className={styles.mobileHeaderRow}>
         <h2 className={styles.mobileCardTitle}>Reserva</h2>
-        <ReservationStatusBadge status={reservation.status} />
+        <ReservationStatusBadge status={reservation.status} paymentStatus={reservation.paymentStatus} historic={variant === 'historic'} />
       </header>
 
       <button
         type="button"
         className={styles.mobileSummaryButton}
         aria-expanded={isExpanded}
+        aria-controls={detailsId}
         onClick={onToggle}
       >
         <span className={styles.mobileMetricCell}>
@@ -166,9 +190,10 @@ function MobileTicketBody({
           </span>
         </span>
         {!isExpanded && <ChevronRight className={styles.mobileChevron} aria-hidden="true" size={14} strokeWidth={1.8} />}
+        <span className={styles.mobileToggleLabel}>{isExpanded ? 'Fechar' : 'Expandir'}</span>
       </button>
 
-      <div className={styles.mobileDetailsPanel}>
+      <div className={styles.mobileDetailsPanel} id={detailsId} aria-hidden={!isExpanded}>
         <ReservationField
           icon={SlidersHorizontal}
           label="Preferências"
@@ -183,6 +208,7 @@ function MobileTicketBody({
           iconSize={17}
           className={styles.mobileDetailField}
         />
+        <ReservationCardActions reservation={reservation} variant={variant} onPrint={onPrint} />
       </div>
     </div>
   );
@@ -190,42 +216,59 @@ function MobileTicketBody({
 
 type ReservationCardProps = {
   reservation: CustomerReservationItem;
-  defaultMobileExpanded?: boolean;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onPrint: () => void;
+  variant?: 'default' | 'historic';
 };
 
 export function ReservationCard({
   reservation,
-  defaultMobileExpanded = false,
+  isExpanded,
+  onToggle,
+  onPrint,
+  variant = 'default',
 }: ReservationCardProps) {
-  const [isMobileExpanded, setIsMobileExpanded] = useState(defaultMobileExpanded);
+  const isHistoric = variant === 'historic';
   const dateParts = formatReservationTicketDate(reservation.reservationDate);
   const durationText = formatReservationDuration(reservation.durationMinutes);
   const guestText = formatGuestCount(reservation.guestCount);
   const preferencesText = formatSpecialNeeds(reservation.specialNeeds);
   const notesText = formatReservationNotes(reservation.notes);
+  const detailsId = `reservation-${reservation.id}-details`;
 
   return (
     <article
-      className={`${styles.ticketClip} ${styles.reservationTicket}`}
+      className={`${styles.ticketClip} ${styles.reservationTicket} ${isHistoric ? styles.historicTicket : ''}`}
       data-reservation-card
+      data-variant={variant}
+      data-expanded={isExpanded ? 'true' : 'false'}
       aria-label={`Reserva em ${dateParts.fullLabel} às ${reservation.startTime}`}
     >
       <TicketCutouts />
       <div className={styles.ticketSurface}>
-        <TicketDateStub dateParts={dateParts} />
+      <TicketDateStub dateParts={dateParts} />
         <DesktopTicketBody
           reservation={reservation}
           durationText={durationText}
           guestText={guestText}
           preferencesText={preferencesText}
           notesText={notesText}
+          isExpanded={isExpanded}
+          variant={variant}
+          onToggle={onToggle}
+          onPrint={onPrint}
+          detailsId={`${detailsId}-desktop`}
         />
         <MobileTicketBody
           reservation={reservation}
           preferencesText={preferencesText}
           notesText={notesText}
-          isExpanded={isMobileExpanded}
-          onToggle={() => setIsMobileExpanded((current) => !current)}
+          isExpanded={isExpanded}
+          onToggle={onToggle}
+          variant={variant}
+          onPrint={onPrint}
+          detailsId={`${detailsId}-mobile`}
         />
       </div>
     </article>
