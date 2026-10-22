@@ -19,9 +19,10 @@ import { useRouter } from 'next/navigation';
 import { useForm, useWatch, type FieldErrors, type FieldPath, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
 import { whatsappLinks } from '@/config/social';
 import { ReservationCheckout } from './ReservationCheckout';
+import { customerAuthHref } from '@/lib/customer-auth-destination';
 import { WaitlistForm } from './WaitlistForm';
 import { authenticatedPublicReservationSchema, type AuthenticatedPublicReservationInput } from '@/modules/reservations/schemas/public-reservation-schema';
-import { CustomerAuthStep } from './CustomerAuthStep';
+import { ReservationAccessGate } from './ReservationAccessGate';
 import { ReservationPreferencesStep } from './ReservationPreferencesStep';
 import { StepDateAndTime } from './StepDateAndTime';
 import { StepGuests } from './StepGuests';
@@ -63,6 +64,34 @@ type CreatedReservationHold = {
 type FormValues = AuthenticatedPublicReservationInput;
 
 type ReservationUser = { id: string; name: string };
+
+type CancelableDelay = {
+  promise: Promise<void>;
+  cancel: () => void;
+};
+
+function createCancelableDelay(milliseconds: number): CancelableDelay {
+  let timer: number | null = null;
+  let resolveDelay: (() => void) | null = null;
+  const promise = new Promise<void>((resolve) => {
+    resolveDelay = resolve;
+    timer = window.setTimeout(() => {
+      timer = null;
+      resolveDelay = null;
+      resolve();
+    }, milliseconds);
+  });
+
+  return {
+    promise,
+    cancel: () => {
+      if (timer !== null) window.clearTimeout(timer);
+      timer = null;
+      resolveDelay?.();
+      resolveDelay = null;
+    },
+  };
+}
 type SessionResponse = { status?: string; user?: ReservationUser };
 type ApiErrorResponse = { error?: string; message?: string; parseFailed?: boolean };
 
@@ -580,7 +609,6 @@ type WizardContentProps = {
   specialNeeds: string[];
   notes?: string;
   holdExpiresAt: number | null;
-  onAuthenticated: () => Promise<boolean>;
 };
 
 function WizardContent({
@@ -599,15 +627,14 @@ function WizardContent({
   specialNeeds,
   notes = '',
   holdExpiresAt,
-  onAuthenticated,
 }: WizardContentProps) {
-  return <div className="reservation-wizard-step"><WizardStepContent step={step} date={date} guests={guests} register={register} errors={errors} slots={slots} isLoading={isLoading} hasError={hasError} selectedTime={selectedTime} selectedTableIds={selectedTableIds} hasActiveHold={hasActiveHold} setValue={setValue} specialNeeds={specialNeeds} notes={notes} holdExpiresAt={holdExpiresAt} onAuthenticated={onAuthenticated} /></div>;
+  return <div className="reservation-wizard-step"><WizardStepContent step={step} date={date} guests={guests} register={register} errors={errors} slots={slots} isLoading={isLoading} hasError={hasError} selectedTime={selectedTime} selectedTableIds={selectedTableIds} hasActiveHold={hasActiveHold} setValue={setValue} specialNeeds={specialNeeds} notes={notes} holdExpiresAt={holdExpiresAt} /></div>;
 }
 
-function WizardStepContent({ step, date, guests, register, errors, slots, isLoading, hasError, selectedTime, selectedTableIds, hasActiveHold = false, setValue, specialNeeds, notes = '', onAuthenticated }: WizardContentProps) {
+function WizardStepContent({ step, date, guests, register, errors, slots, isLoading, hasError, selectedTime, selectedTableIds, hasActiveHold = false, setValue, specialNeeds, notes = '' }: WizardContentProps) {
   const selectedSlot = slots.find((candidate) => candidate.startTime === selectedTime);
   const contentByStep = {
-    1: <CustomerAuthStep onAuthenticated={onAuthenticated} />,
+    1: <ReservationAccessGate />,
     2: <StepDateAndTime register={register as never} selectedDate={date} dateError={errors.date?.message} timeError={errors.time?.message} slots={slots} isLoading={isLoading} hasError={hasError} selectedTime={selectedTime} setValue={setValue as never} />,
     3: <StepGuests register={register as never} setValue={setValue as never} selectedGuests={guests} selectedTime={selectedTime} slot={selectedSlot} selectedTableIds={selectedTableIds} hasActiveHold={hasActiveHold} error={errors.guests?.message} />,
     4: <ReservationPreferencesStep register={register} setValue={setValue} selectedNeeds={specialNeeds} notes={notes} errors={errors} />,
@@ -734,7 +761,6 @@ type ReservationShellProps = {
   onNext: () => void;
   handleSubmit: ReturnType<typeof useForm<FormValues>>['handleSubmit'];
   user: ReservationUser | null;
-  onAuthenticated: () => Promise<boolean>;
 };
 
 function ReservationShell({
@@ -764,7 +790,6 @@ function ReservationShell({
   onNext,
   handleSubmit,
   user,
-  onAuthenticated,
 }: ReservationShellProps) {
   return (
     <>
@@ -801,7 +826,6 @@ function ReservationShell({
           onNext={onNext}
           handleSubmit={handleSubmit}
           user={user}
-          onAuthenticated={onAuthenticated}
         />
       </div>
     </>
@@ -818,7 +842,7 @@ function ReservationInitialization({
   onRetry: () => void;
 }) {
   if (authState === 'checking') {
-    return <main className="reservation-theme min-h-screen bg-background px-5 py-24 text-foreground"><p className="mx-auto flex max-w-md items-center justify-center gap-3 text-sm text-muted" role="status"><LoaderCircle aria-hidden="true" className="animate-spin text-primary" size={18} /> Verificando seu acesso…</p></main>;
+    return <main className="reservation-theme min-h-screen bg-background px-5 py-24 text-foreground"><p className="mx-auto flex max-w-md items-center justify-center gap-3 text-sm text-muted" role="status"><LoaderCircle aria-hidden="true" className="animate-spin text-primary" size={18} /> Confirmando seu acesso…</p></main>;
   }
   return <main className="reservation-theme min-h-screen bg-background px-5 py-24 text-foreground"><section className="mx-auto max-w-lg rounded-[var(--radius-lg)] border border-border bg-surface p-6 text-center sm:p-9"><CircleAlert aria-hidden="true" className="mx-auto text-primary" size={28} /><h1 className="mt-4 font-display text-3xl">Não conseguimos iniciar sua reserva</h1><p className="mt-3 text-sm leading-relaxed text-muted">{message}</p><button type="button" onClick={onRetry} className="reservation-primary-button mt-6 justify-center"><ArrowRight aria-hidden="true" size={16} /> Tentar novamente</button><Link href="/" className="mt-5 block text-sm text-muted underline underline-offset-4">Voltar ao site</Link></section></main>;
 }
@@ -877,6 +901,9 @@ export function ReservationWizard() {
   const holdLock = useRef(false);
   const submitLock = useRef(false);
   const submissionKeys = useRef(new Map<string, string>());
+  const initializationId = useRef(0);
+  const initializationDelay = useRef<CancelableDelay | null>(null);
+  const mountedRef = useRef(false);
   const {
     register,
     handleSubmit,
@@ -924,51 +951,55 @@ export function ReservationWizard() {
     setAttemptId('');
     setAttemptRevision(0);
     setHold(null);
-    router.replace(`/?auth=${reason}`);
+    router.replace(customerAuthHref('/reservas', reason));
   }, [resetForm, resetWizard, router]);
 
-  const onAuthenticated = useCallback(async () => {
-    const result = await requestSessionFlow();
-    if (result.kind === 'authenticated') {
-      acceptAuthenticatedFlow(result.user, result.flowId, result.attemptId, result.revision);
-      return true;
+  const applyReservationSessionResult = useCallback((result: SessionFlowResult) => {
+    if (result.kind === 'anonymous') {
+      setUser(null);
+      setStep(1);
+      setAuthState('ready');
+      return;
     }
-    if (result.kind === 'error' && (result.error === 'session_expired' || result.error === 'account_changed')) {
-      redirectAfterSessionLoss(result.error === 'account_changed' ? 'changed' : 'expired');
+    if (result.kind === 'error') {
+      if (result.error === 'session_expired' || result.error === 'account_changed') {
+        redirectAfterSessionLoss(result.error === 'account_changed' ? 'changed' : 'expired');
+        return;
+      }
+      setAuthError(result.message);
+      setAuthState('error');
+      return;
     }
-    return false;
-  }, [acceptAuthenticatedFlow, redirectAfterSessionLoss]);
+    acceptAuthenticatedFlow(result.user, result.flowId, result.attemptId, result.revision);
+  }, [acceptAuthenticatedFlow, redirectAfterSessionLoss, setStep]);
+
+  const initializeReservationSession = useCallback(async () => {
+    if (!mountedRef.current) return;
+    const currentId = ++initializationId.current;
+    initializationDelay.current?.cancel();
+    const delay = createCancelableDelay(1000);
+    initializationDelay.current = delay;
+    setAuthState('checking');
+    const [result] = await Promise.all([requestSessionFlow(), delay.promise]);
+    if (!mountedRef.current || currentId !== initializationId.current) return;
+    initializationDelay.current = null;
+    applyReservationSessionResult(result);
+  }, [applyReservationSessionResult]);
 
   useEffect(() => {
-    let active = true;
+    mountedRef.current = true;
     resetWizard();
     resetForm(defaultReservationValues);
-
-    void requestSessionFlow().then((result) => {
-      if (!active) return;
-      if (result.kind === 'anonymous') {
-        setUser(null);
-        setStep(1);
-        setAuthState('ready');
-        return;
-      }
-      if (result.kind === 'error') {
-        if (result.error === 'session_expired' || result.error === 'account_changed') {
-          redirectAfterSessionLoss(result.error === 'account_changed' ? 'changed' : 'expired');
-          return;
-        }
-        setAuthError(result.message);
-        setAuthState('error');
-        return;
-      }
-      acceptAuthenticatedFlow(result.user, result.flowId, result.attemptId, result.revision);
-    });
+    queueMicrotask(() => { void initializeReservationSession(); });
 
     return () => {
-      active = false;
+      mountedRef.current = false;
+      initializationId.current += 1;
+      initializationDelay.current?.cancel();
+      initializationDelay.current = null;
       resetWizard();
     };
-  }, [acceptAuthenticatedFlow, redirectAfterSessionLoss, resetForm, resetWizard, setStep]);
+  }, [initializeReservationSession, resetForm, resetWizard]);
 
   const invalidateSession = (reason: 'expired' | 'changed') => {
     redirectAfterSessionLoss(reason);
@@ -1053,27 +1084,6 @@ export function ReservationWizard() {
     if (!canGoBack || navigationLock.current || holdLock.current || submitLock.current) return;
     setStep(step - 1);
   };
-  const retryInitialization = async () => {
-    setAuthState('checking');
-    const result = await requestSessionFlow();
-    if (result.kind === 'authenticated') {
-      acceptAuthenticatedFlow(result.user, result.flowId, result.attemptId, result.revision);
-      return;
-    }
-    if (result.kind === 'anonymous') {
-      setUser(null);
-      setStep(1);
-      setAuthState('ready');
-      return;
-    }
-    if (result.error === 'session_expired' || result.error === 'account_changed') {
-      redirectAfterSessionLoss(result.error === 'account_changed' ? 'changed' : 'expired');
-      return;
-    }
-    setAuthError(result.message);
-    setAuthState('error');
-  };
-
   const submit = async (input: FormValues) => {
     if (submitLock.current) return;
     submitLock.current = true;
@@ -1136,7 +1146,7 @@ export function ReservationWizard() {
     <ReservationWizardContent
       authState={authState}
       authError={authError}
-      onRetry={() => { void retryInitialization(); }}
+      onRetry={() => { void initializeReservationSession(); }}
       confirmation={confirmation}
       shellProps={{
         step,
@@ -1159,7 +1169,6 @@ export function ReservationWizard() {
         isAdvancing,
         isSubmitting,
         user,
-        onAuthenticated,
         onSubmit: submit,
         onInvalid: onInvalidSubmit,
         onEdit: (editStep) => setStep(editStep),

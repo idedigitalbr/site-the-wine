@@ -20,9 +20,13 @@ O pool MySQL usa UTC para manter compatíveis a expiração Better Auth, a expir
 
 ## Fluxo entregue
 
-Em `/reservas`, visitantes informam CPF, acessam uma conta existente ou cadastram uma nova. O cadastro cria a sessão de cliente e o vínculo com `customers` antes de abrir Data. Contas com sessão válida começam diretamente em Data. Sessão administrativa e cookie anônimo de hold permanecem separados.
+`/acesso` é a tela única de autenticação: começa no login e alterna localmente para cadastro, sem duplicar página ou transportar CPF entre modos. `/cadastro` é apenas um alias server-side para o mesmo screen. Sem contexto explícito, o sucesso vai para `/lista-de-reservas`; a entrada anônima por `/reservas` usa `returnTo` allowlisted e volta ao wizard já autenticado, que então cria o próprio flow e abre Data.
 
-O CPF é guardado como HMAC-SHA-256 com chave dedicada; as rotas públicas não retornam e-mail ou outros dados da conta. A resposta de consulta informa se há cadastro para permitir o fluxo solicitado.
+O cadastro cria a sessão de cliente e o vínculo com `customers` antes de navegar. O cliente confirma o cookie com um GET de sessão e exige o mesmo `user.id` retornado pelo POST. Sessão administrativa e cookie anônimo de hold permanecem separados.
+
+O CPF é guardado como HMAC-SHA-256 com chave dedicada; o browser nunca consulta SQL nem recebe dados de conta. O endpoint público antigo de lookup está aposentado e responde 410. Conflitos de CPF/e-mail retornam uma resposta genérica 409 para reduzir enumeração direta.
+
+Novas contas exigem senha forte na fachada server (comprimento mínimo efetivo de 15 caracteres e score local maior que 2); `acceptWeakPassword` não é mais uma exceção válida. Contas históricas continuam usando a política de login do Better Auth, para não quebrar senhas antigas.
 
 ## Itens provisórios
 
@@ -31,6 +35,7 @@ O CPF é guardado como HMAC-SHA-256 com chave dedicada; as rotas públicas não 
 - `/recuperar-senha` informa que a recuperação de senha ainda não está disponível; não envia e-mail.
 - O fluxo não comprova titularidade do CPF. A validação confirma somente formato e dígitos verificadores.
 - Migração de clientes históricos para contas não está incluída.
+- A imagem lateral do acesso usa temporariamente uma foto existente do ambiente; a referência visual de taça precisa de um asset aprovado antes da publicação final.
 
 ## Verificação segura
 

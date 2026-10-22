@@ -1,0 +1,108 @@
+.page { min-height: 100svh; color: #f8f3e9; background: #050505; font-family: var(--font-body, 'Albert Sans', sans-serif); }
+.main { display: grid; grid-template-columns: minmax(44%, 1fr) minmax(520px, 1fr); min-height: 100svh; }
+.visual { position: relative; min-height: 100svh; height: 100%; background: url('/assets/Ambiente/mesa-reservada-adega.webp') center center / cover no-repeat; }
+.visualOverlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgb(0 0 0 / 18%), rgb(0 0 0 / 48%) 65%, #050505 100%), linear-gradient(0deg, rgb(0 0 0 / 48%), transparent 58%); }
+.brandBlock { position: absolute; left: clamp(36px, 18.8vw, 314px); bottom: 40%; width: 310px; letter-spacing: .2em; }
+.brandBlock img { display: block; width: 192px; height: auto; }
+.brandBlock span { display: block; width: 56px; height: 1px; margin: 28px 0; background: #d3b97b; }
+.brandBlock p { margin: 0; color: #d9dce4; font-size: 13px; line-height: 2; letter-spacing: .34em; }
+.content { display: flex; align-items: center; padding: 96px clamp(38px, 6.2vw, 104px) 40px; background: #050505; }
+.main:not(.mainSignup) .content { padding-left: 0; padding-right: clamp(32px, 5.3vw, 90px); }
+.mainSignup .content { align-items: flex-start; padding-top: 110px; padding-bottom: 42px; }
+.authForm { width: min(100%, 744px); margin-inline: auto; }
+.headingBlock { margin-bottom: 34px; }
+.headingBlock h1 { margin: 10px 0 12px; color: #f7f4ef; font-family: var(--font-display, 'Cormorant Garamond', serif); font-size: clamp(42px, 4vw, 58px); font-weight: 400; line-height: .98; }
+.headingBlock p:last-child { max-width: 690px; margin: 0; color: #e2e0dc; font-size: 19px; line-height: 1.5; }
+.eyebrow { margin: 0; color: #e5c06a; font-size: 14px; font-weight: 700; letter-spacing: .23em; }
+.field { margin-bottom: 20px; min-width: 0; }
+.label { display: block; margin-bottom: 8px; color: #f3eee6; font-size: 16px; font-weight: 600; }
+.control { display: flex; min-height: 59px; align-items: center; border: 1px solid #e5c06a; border-radius: 7px; background: rgb(0 0 0 / 20%); transition: box-shadow .2s ease, border-color .15s ease; }
+.control:focus-within { border-color: #f3ca69; box-shadow: 0 0 0 2px rgb(243 202 105 / 45%), 0 0 12px rgb(229 192 106 / 30%); }
+.controlError { border-color: #e9877f; }
+.fieldIcon { display: inline-flex; margin-left: 17px; color: #e5c06a; }
+.input { min-width: 0; flex: 1; height: 57px; padding: 0 16px; color: #fff; background: transparent; border: 0; outline: 0; font: inherit; font-size: 17px; }
+.input::placeholder { color: #aaa8aa; }
+.input:-webkit-autofill, .input:-webkit-autofill:hover, .input:-webkit-autofill:focus { -webkit-text-fill-color: #fff; -webkit-box-shadow: 0 0 0 1000px #050505 inset; box-shadow: 0 0 0 1000px #050505 inset; caret-color: #fff; transition: background-color 9999s ease-in-out 0s; }
+.passwordToggle { display: grid; width: 54px; height: 54px; place-items: center; color: #e5c06a; background: transparent; border: 0; cursor: pointer; }
+.fieldDescription, .fieldError { margin: 6px 0 0; font-size: 13px; line-height: 1.35; }
+.fieldDescription { color: #aaaeb8; }
+.fieldError, .formError { color: #f2a29a; }
+.formError { margin-bottom: 18px; padding: 11px 13px; border: 1px solid rgb(233 135 127 / 55%); border-radius: 6px; background: rgb(120 30 26 / 28%); font-size: 14px; }
+.formSuccess { margin-bottom: 18px; padding: 11px 13px; border: 1px solid rgb(229 192 106 / 60%); border-radius: 6px; background: rgb(229 192 106 / 14%); color: #f3eee6; font-size: 14px; }
+.formLinks { display: flex; justify-content: space-between; gap: 20px; margin-top: 30px; }
+.textLink, .inlineLink { padding: 0; color: #e5c06a; background: none; border: 0; cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 4px; }
+.submitButton { display: flex; min-height: 62px; width: 100%; align-items: center; justify-content: center; gap: 18px; margin-top: 48px; color: #15110a; background: linear-gradient(105deg, #d8b66a, #f3ca69); border: 0; border-radius: 8px; cursor: pointer; font: 600 18px var(--font-body, sans-serif); transition: filter .15s, opacity .15s; }
+.submitButton:hover:not(:disabled) { filter: brightness(1.08); }
+.submitButton:disabled { cursor: wait; opacity: .68; }
+.signupForm .headingBlock { margin-bottom: 12px; }
+.signupForm .headingBlock h1 { font-size: clamp(40px, 3.4vw, 50px); }
+.signupForm .headingBlock p:last-child { color: #b8c8d9; font-size: 16px; line-height: 1.35; }
+.signupFields { display: block; }
+.signupGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
+.signupGrid .field { margin-bottom: 10px; }
+.signupGrid .label { font-size: 15px; }
+.signupGrid .input { font-size: 15px; }
+.signupForm .control { min-height: 55px; }
+.signupForm .input { height: 53px; }
+.signupForm .passwordToggle { height: 50px; }
+.passwordHelp { display: flex; gap: 10px; align-items: center; margin-top: 2px; color: #b8c8d9; font-size: 13px; }
+.passwordHelp svg { flex: 0 0 auto; color: #e5c06a; }
+.checkboxRow { display: flex; gap: 12px; align-items: flex-start; margin-top: 12px; color: #c8ced7; font-size: 14px; line-height: 1.45; cursor: pointer; }
+.checkboxRow input { width: 21px; height: 21px; flex: 0 0 auto; accent-color: #e5c06a; }
+.checkboxRow small { color: #9aa2af; }
+.signupForm .submitButton { margin-top: 20px; font-size: 16px; }
+.switchLine { margin: 14px 0 0; color: #c8ced7; text-align: center; font-size: 14px; }
+.statusPanel { width: min(100%, 600px); margin: auto; color: #d9dce4; font-size: 18px; line-height: 1.5; }
+.statusPanel > p { margin: 0; }
+.statusActions { display: flex; flex-direction: column; gap: 18px; align-items: center; }
+.statusActions .submitButton { margin-top: 28px; }
+.modalOverlay { position: fixed; z-index: 5000; inset: 0; display: grid; place-items: center; padding: 20px; background: rgb(0 0 0 / 78%); }
+.termsModal { position: relative; width: min(100%, 620px); max-height: min(85svh, 720px); overflow: auto; padding: 34px; color: #f6f2eb; background: #0d0c0a; border: 1px solid #d3b97b; border-radius: 8px; box-shadow: 0 24px 70px rgb(0 0 0 / 60%); }
+.modalClose { position: absolute; top: 16px; right: 16px; display: grid; width: 40px; height: 40px; place-items: center; color: #d3b97b; background: transparent; border: 0; cursor: pointer; }
+.modalTitle { margin: 10px 0 20px; font-family: var(--font-display, serif); font-size: 38px; font-weight: 400; }
+.modalBody { color: #ced2d7; font-size: 15px; line-height: 1.7; }
+.modalAction { min-height: 44px; margin-top: 20px; padding: 0 22px; color: #17120a; background: #e5c15f; border: 0; border-radius: 5px; cursor: pointer; font-weight: 700; }
+
+@media (max-width: 1050px) { .main { grid-template-columns: 42% minmax(0, 1fr); } .content { padding-inline: clamp(28px, 5vw, 60px); } .brandBlock { left: 34px; } }
+@media (min-width: 761px) and (min-height: 821px) { .main:not(.mainSignup) .content { transform: translateY(-20px); } }
+@media (min-width: 761px) and (max-height: 820px) {
+  .content { padding-block: 0; }
+  .main:not(.mainSignup) .headingBlock { margin-bottom: 24px; }
+  .main:not(.mainSignup) .formLinks { margin-top: 20px; }
+  .main:not(.mainSignup) .submitButton { min-height: 56px; margin-top: 32px; }
+  .mainSignup .content { padding-top: 96px; padding-bottom: 0; }
+  .mainSignup .headingBlock { margin-bottom: 14px; }
+  .mainSignup .headingBlock h1 { margin-top: 6px; margin-bottom: 7px; font-size: 42px; }
+  .mainSignup .headingBlock p:last-child { font-size: 14px; line-height: 1.25; }
+  .mainSignup .label { margin-bottom: 4px; font-size: 13px; }
+  .mainSignup .field { margin-bottom: 8px; }
+  .mainSignup .control { min-height: 50px; }
+  .mainSignup .input { height: 48px; font-size: 14px; }
+  .mainSignup .passwordToggle { width: 44px; height: 45px; }
+  .mainSignup .signupGrid { column-gap: 20px; }
+  .mainSignup .signupGrid .field { margin-bottom: 8px; }
+  .mainSignup .passwordHelp { font-size: 11px; line-height: 1.2; }
+  .mainSignup .checkboxRow { gap: 9px; margin-top: 8px; font-size: 12px; line-height: 1.2; }
+  .mainSignup .checkboxRow input { width: 18px; height: 18px; }
+  .mainSignup .signupForm .submitButton { min-height: 50px; margin-top: 14px; }
+  .mainSignup .switchLine { margin-top: 10px; font-size: 12px; }
+}
+@media (min-width: 761px) and (max-height: 700px) {
+  .mainSignup .content { padding-top: 86px; padding-bottom: 0; }
+  .mainSignup .headingBlock { margin-bottom: 8px; }
+  .mainSignup .headingBlock h1 { margin-top: 4px; margin-bottom: 4px; font-size: 38px; }
+  .mainSignup .headingBlock p:last-child { font-size: 12px; line-height: 1.15; }
+  .mainSignup .label { margin-bottom: 2px; font-size: 12px; }
+  .mainSignup .field, .mainSignup .signupGrid .field { margin-bottom: 4px; }
+  .mainSignup .control { min-height: 44px; }
+  .mainSignup .input { height: 42px; font-size: 13px; }
+  .mainSignup .passwordToggle { width: 40px; height: 40px; }
+  .mainSignup .signupGrid { column-gap: 16px; }
+  .mainSignup .checkboxRow { gap: 7px; margin-top: 5px; font-size: 11px; line-height: 1.1; }
+  .mainSignup .checkboxRow input { width: 16px; height: 16px; }
+  .mainSignup .signupForm .submitButton { min-height: 44px; margin-top: 8px; }
+  .mainSignup .switchLine { margin-top: 6px; font-size: 11px; }
+}
+@media (min-width: 761px) { .mainSignup .brandBlock { bottom: 44%; } }
+@media (max-width: 760px) { .page { padding-top: 0; } .main { display: block; min-height: 100svh; } .visual { min-height: 260px; } .brandBlock { bottom: 32px; left: 34px; } .brandBlock img { width: 160px; } .brandBlock span { margin: 14px 0; } .brandBlock p { font-size: 10px; } .content, .mainSignup .content { padding: 42px 22px 56px; } .signupGrid { column-gap: 12px; } }
+@media (max-width: 520px) { .visual { min-height: 200px; } .brandBlock { bottom: 24px; left: 22px; } .brandBlock p { display: none; } .content, .mainSignup .content { padding-inline: 18px; } .headingBlock h1 { font-size: 42px; } .headingBlock p:last-child { font-size: 16px; } .signupGrid { display: block; } .formLinks { align-items: flex-start; flex-direction: column; gap: 14px; } .termsModal { padding: 28px 22px; } }
