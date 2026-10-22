@@ -4,6 +4,10 @@
 @import 'tailwindcss/utilities.css' layer(utilities);
 @import '../styles/reservation-tokens.css';
 
+html[data-reservation-checkout='true'] [data-reservation-checkout-footer] {
+  display: none;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

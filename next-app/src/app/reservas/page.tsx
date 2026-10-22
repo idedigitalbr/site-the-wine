@@ -18,7 +18,7 @@ export default function ReservationsPage() {
     <>
       <Header />
       <ReservationWizard />
-      <Footer />
+      <div data-reservation-checkout-footer><Footer /></div>
       <SiteBehaviorController />
     </>
   );

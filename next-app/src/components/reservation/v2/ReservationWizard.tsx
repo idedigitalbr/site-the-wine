@@ -18,7 +18,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, useWatch, type FieldErrors, type FieldPath, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
 import { whatsappLinks } from '@/config/social';
-import { MockPaymentDemo } from './MockPaymentDemo';
+import { ReservationCheckout } from './ReservationCheckout';
 import { WaitlistForm } from './WaitlistForm';
 import { authenticatedPublicReservationSchema, type AuthenticatedPublicReservationInput } from '@/modules/reservations/schemas/public-reservation-schema';
 import { CustomerAuthStep } from './CustomerAuthStep';
@@ -543,27 +543,7 @@ function EmptyAvailability({ label, date, guests }: { label: string; date: strin
 }
 
 function Confirmation({ reservation }: { reservation: CreatedReservation }) {
-  return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="reservation-confirmation-container mx-auto max-w-xl rounded-[var(--radius-lg)] border border-border bg-surface p-8 text-center shadow-sm sm:p-12">
-      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-        <Check aria-hidden="true" size={28} strokeWidth={2.2} />
-      </span>
-      <p className="mt-6 text-xs font-semibold uppercase tracking-[0.24em] text-primary">Reserva recebida</p>
-      <h2 className="mt-3 font-display text-4xl text-foreground">Sua experiência está a caminho.</h2>
-      <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted">Anotamos sua reserva. Guarde o código abaixo e acesse o link privado para acompanhar os detalhes.</p>
-      <div className="mt-7 rounded-[var(--radius-md)] border border-border bg-surface-muted p-4">
-        <span className="block text-xs uppercase tracking-[0.2em] text-muted">Código da reserva</span>
-        <strong className="mt-2 block text-xl tracking-[0.18em] text-primary">{reservation.publicCode}</strong>
-      </div>
-      <Link href={`/minha-reserva/${reservation.secureToken}`} className="mt-5 inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-primary bg-primary/10 px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/20">
-        Acessar minha reserva <ArrowRight aria-hidden="true" size={16} />
-      </Link>
-      <MockPaymentDemo reservationId={reservation.reservationId} publicCode={reservation.publicCode} />
-      <Link href="/" className="mt-8 inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover">
-        Voltar ao site <ArrowRight aria-hidden="true" size={16} />
-      </Link>
-    </motion.div>
-  );
+  return <ReservationCheckout reservationId={reservation.reservationId} publicCode={reservation.publicCode} />;
 }
 
 function StepIndicators({ currentStep }: { currentStep: number }) {
