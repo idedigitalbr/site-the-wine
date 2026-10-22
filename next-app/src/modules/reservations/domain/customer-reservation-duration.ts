@@ -4,7 +4,10 @@ function parseClock(value: string): number | null {
   return hours * 60 + minutes;
 }
 
-export function calculateCustomerReservationDuration(startTime: string, endTime: string): number | null {
+export function calculateCustomerReservationDuration(
+  startTime: string,
+  endTime: string,
+): number | null {
   const start = parseClock(startTime);
   const end = parseClock(endTime);
   if (start === null || end === null || end <= start) return null;

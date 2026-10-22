@@ -1,0 +1,74 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { loadCustomerReservationsModule } from './support/load-customer-reservations-module.mjs';
+
+const duration = loadCustomerReservationsModule(
+  new URL('../src/modules/reservations/domain/customer-reservation-duration.ts', import.meta.url),
+);
+const formatters = loadCustomerReservationsModule(
+  new URL('../src/components/account/reservations-list/reservationCardFormatters.ts', import.meta.url),
+);
+const application = loadCustomerReservationsModule(
+  new URL('../src/modules/reservations/application/list-customer-reservations.ts', import.meta.url),
+);
+
+test('calculates valid customer reservation durations and rejects invalid clocks', () => {
+  assert.equal(duration.calculateCustomerReservationDuration('20:00', '22:00'), 120);
+  assert.equal(duration.calculateCustomerReservationDuration('21:00', '22:30'), 90);
+  assert.equal(duration.calculateCustomerReservationDuration('20:00', '20:01'), 1);
+  for (const pair of [['bad', '22:00'], ['25:00', '22:00'], ['20:99', '22:00'], ['20:00', '20:00'], ['21:00', '20:00']]) {
+    assert.equal(duration.calculateCustomerReservationDuration(pair[0], pair[1]), null);
+  }
+});
+
+test('formats calendar dates in Portuguese without browser timezone normalization', () => {
+  assert.equal(formatters.formatReservationDate('2026-10-23'), '23 de outubro de 2026');
+  assert.equal(formatters.formatReservationDate('2026-02-31'), 'Data não informada');
+  assert.equal(formatters.formatReservationDate('2026-13-01'), 'Data não informada');
+  assert.equal(formatters.formatReservationDate('2024-02-29'), '29 de fevereiro de 2024');
+  assert.equal(formatters.formatReservationDate('invalid'), 'Data não informada');
+});
+
+test('formats duration, people, preferences and notes according to the card contract', () => {
+  assert.equal(formatters.formatReservationDuration(120), '120 minutos');
+  assert.equal(formatters.formatReservationDuration(1), '1 minuto');
+  assert.equal(formatters.formatReservationDuration(null), 'Duração não informada');
+  assert.equal(formatters.formatGuestCount(1), '1 pessoa');
+  assert.equal(formatters.formatGuestCount(2), '2 pessoas');
+  assert.equal(formatters.formatSpecialNeeds(['other', 'high_chair', 'dietary_restriction']), 'Restrição alimentar, Cadeira infantil, Outra necessidade');
+  assert.equal(formatters.formatSpecialNeeds(['none', 'unknown', 'unknown']), 'Preferência não identificada');
+  assert.equal(formatters.formatSpecialNeeds([]), 'Nenhuma preferência informada');
+  assert.equal(formatters.formatReservationNotes('  Frieira no pé  '), 'Frieira no pé');
+  assert.equal(formatters.formatReservationNotes(''), 'Sem observações adicionais');
+});
+
+test('resolves account identity before querying and paginates 20 visible records', async () => {
+  const calls = [];
+  const records = Array.from({ length: 21 }, (_, index) => ({
+    id: index + 1,
+    reservationDate: '2026-10-23',
+    startTime: '20:00',
+    endTime: '22:00',
+    guestCount: 2,
+    status: 'confirmed',
+    specialNeeds: [],
+    notes: '',
+  }));
+  const response = await application.listCustomerReservations('user-a', 0, {
+    findCustomerIdByAuthUserId: async (userId) => userId === 'user-a' ? 11 : 22,
+    reservations: { listByCustomerId: async (customerId, page) => { calls.push({ customerId, page }); return records; } },
+    calculateDuration: duration.calculateCustomerReservationDuration,
+  });
+  assert.equal(response.reservations.length, 20);
+  assert.equal(response.nextOffset, 20);
+  assert.deepEqual(calls, [{ customerId: 11, page: { offset: 0, limit: 21 } }]);
+
+  const emptyCalls = [];
+  const empty = await application.listCustomerReservations('missing', 20, {
+    findCustomerIdByAuthUserId: async () => null,
+    reservations: { listByCustomerId: async (...args) => { emptyCalls.push(args); return []; } },
+    calculateDuration: duration.calculateCustomerReservationDuration,
+  });
+  assert.deepEqual(empty, { reservations: [], nextOffset: null });
+  assert.deepEqual(emptyCalls, []);
+});

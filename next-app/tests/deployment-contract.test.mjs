@@ -45,7 +45,8 @@ test('deploy workflow pins the VPS and updates only the web and migration servic
   assert.match(workflow, /job\.services\.mysql\.ports\[3306\]/);
   assert.match(workflow, /VPS_SSH_FINGERPRINT/);
   assert.match(workflow, /VPS_HOST: 179\.236\.75\.128/);
-  assert.match(workflow, /runs-on: \[self-hosted, linux, x64, oracle-vps, docker\]/);
+  assert.match(workflow, /runs-on: ubuntu-latest/);
+  assert.doesNotMatch(workflow, /runs-on: \[self-hosted,/);
   assert.match(workflow, /Prepare writable deploy environment[\s\S]*?Checkout tested commit/);
   assert.match(workflow, /GIT_CONFIG_GLOBAL=%s/);
   assert.match(workflow, /ssh-keygen -lf/);
