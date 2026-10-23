@@ -15,13 +15,12 @@
 }
 
 .root *, .root *::before, .root *::after { box-sizing: border-box; }
-.inner { width: min(1448px, calc(100% - clamp(176px, 12vw, 224px))); margin: 0 auto; padding: 112px 0 16px; }
+.inner { position: relative; width: min(1448px, calc(100% - clamp(176px, 12vw, 224px))); margin: 0 auto; padding: 112px 0 16px; }
 .backButton { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 27px; border: 1px solid var(--checkout-gold); border-radius: 999px; background: transparent; color: var(--checkout-gold); font: inherit; font-size: 15px; cursor: pointer; text-decoration: none; }
 .backButton:hover, .backButton:focus-visible { background: #f1c86116; outline: 2px solid var(--checkout-bright); outline-offset: 3px; }
 .heading { margin: 22px auto 18px; text-align: center; }
 .heading p { margin: 0; color: var(--checkout-gold); font-size: 13px; font-weight: 600; letter-spacing: .2em; }
 .heading h1, .successTicket h1 { margin: 8px 0 4px; font-family: var(--font-display-ui, 'Cormorant Garamond', serif); font-size: 48px; font-weight: 400; line-height: 1.08; }
-.heading h1:focus-visible { outline: 2px solid var(--checkout-bright); outline-offset: 5px; }
 .heading > span { color: var(--checkout-text); font-size: 16px; }
 .layout { display: grid; grid-template-columns: minmax(0, 1.95fr) minmax(360px, 1fr); align-items: start; gap: 28px; }
 .pixSummary { min-width: 0; }
@@ -136,41 +135,47 @@
 @media (max-width: 1365px) and (min-width: 1024px) { .inner { width: calc(100% - 112px); } .layout { grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; } .methodHeader { padding-inline: 20px; } .fields { padding-left: 40px; padding-right: 20px; } .ticketContent { padding-inline: 22px; } }
 @media (max-height: 820px) and (min-width: 1024px) { .inner { padding-top: 84px; padding-bottom: 12px; } .heading { margin: 14px auto 12px; } .heading p { font-size: 12px; } .heading h1 { font-size: 38px; line-height: 1.05; } .heading > span { font-size: 14px; } .methodHeader { min-height: 78px; padding-block: 12px; } .methodTitle { font-size: 29px; } .methodDescription { font-size: 18px; } .fields { padding-top: 12px; padding-bottom: 15px; } .fieldStack { gap: 8px; } .field { gap: 3px; font-size: 12px; } .field input, .field select { min-height: 44px; } .summary .ticketContent { padding-block: 22px; } .summary h2 { margin-bottom: 10px; font-size: 30px; } .summaryRow { min-height: 44px; } .summaryRow > span, .summaryRow strong { font-size: 13px; } .summaryRow small { font-size: 9px; } .prices { gap: 8px; margin-top: 11px; padding-bottom: 11px; } .total { padding-top: 11px; } .total span { font-size: 26px; } .total strong { font-size: 24px; } .submitButton { min-height: 50px; } .demoNote { font-size: 10px; } .successInner { padding-top: 84px; } .successTicket .ticketContent { padding-block: 17px; } .successIcon { width: 50px; height: 50px; } .successTicket h1 { margin-top: 6px; font-size: 42px; } .successTicket h2 { font-size: 23px; } .successCopy { margin-block: 5px 10px; } .successMeta { padding-top: 11px; } .successActions { margin-top: 10px; } }
 @media (min-width: 1024px) {
-  .inner { width: min(1120px, calc(100% - 128px)); padding: 88px 0 18px; }
-  .heading { margin: 0 auto 24px; }
-  .heading h1 { font-size: 44px; line-height: 1.1; margin: 7px 0 8px; }
-  .heading > span { font-family: var(--font-display-ui, 'Cormorant Garamond', serif); font-size: 23px; line-height: 1.2; }
-  .layout { grid-template-columns: minmax(0, 1.95fr) minmax(340px, 1fr); gap: 30px; }
-  .methods { gap: 16px; }
-  .methodHeader { min-height: 100px; padding: 18px 28px; gap: 20px; }
+  .inner { width: min(1120px, calc(100% - 128px)); padding: 88px 0 4px; }
+  .backButton { position: absolute; top: 88px; left: 0; }
+  .heading { margin: 0 auto 14px; }
+  .heading h1 { font-size: 42px; line-height: 1.08; margin: 5px 0 6px; }
+  .heading > span { font-family: var(--font-display-ui, 'Cormorant Garamond', serif); font-size: 20px; line-height: 1.15; }
+  .layout { grid-template-columns: minmax(0, 1.95fr) minmax(340px, 1fr); gap: 24px; }
+  .methods, .aside { gap: 10px; }
+  .methodHeader { min-height: 88px; padding: 14px 28px; gap: 18px; }
   .methodTitle { font-size: 30px; font-weight: 400; }
   .methodDescription { font-size: 19px; line-height: 1.2; }
   .fields { border-top: 0; padding: 0 28px 22px; }
   .field { color: var(--checkout-gold); font-size: 14px; }
   .field input, .field select { min-height: 44px; font-size: 15px; }
-  .summary .ticketContent { padding: 25px 26px 22px; }
-  .summary h2 { margin-bottom: 12px; font-size: 30px; font-weight: 400; }
-  .summaryRow { grid-template-columns: 25px 66px minmax(0, 1fr); gap: 8px; min-height: 45px; padding-block: 6px; }
+  .summary .ticketContent { padding: 20px 26px 17px; }
+  .summary h2 { margin-bottom: 8px; font-size: 30px; font-weight: 400; }
+  .summaryRow { grid-template-columns: 25px 66px minmax(0, 1fr); gap: 8px; min-height: 42px; padding-block: 4px; }
   .summaryRow > span { font-size: 12px; }
   .summaryRow strong { font-size: 14px; font-weight: 400; line-height: 1.35; }
   .summaryRow small { font-size: 9px; font-weight: 500; }
-  .prices { margin-top: 14px; gap: 9px; padding-bottom: 14px; }
+  .prices { margin-top: 10px; gap: 7px; padding-bottom: 10px; }
   .prices strong { font-weight: 400; }
-  .total { padding-top: 14px; }
+  .total { padding-top: 10px; }
   .total span { font-size: 28px; }
   .total strong { font-size: 25px; font-weight: 400; }
-  .submitButton { min-height: 48px; font-size: 14px; padding: 10px 15px; }
-  .demoNote { font-size: 10px; }
+  .submitButton { min-height: 46px; font-size: 14px; padding: 8px 15px; }
+  .demoNote { margin-top: -3px; font-size: 10px; }
 }
 @media (min-width: 1024px) and (max-height: 760px) {
-  .inner { padding-top: 84px; padding-bottom: 12px; }
-  .heading { margin-top: -36px; margin-bottom: 10px; }
+  .inner { padding-top: 88px; padding-bottom: 0; }
+  .heading { margin-top: 0; margin-bottom: 10px; }
   .heading h1 { font-size: 40px; }
-  .heading > span { font-size: 21px; }
-  .methodHeader { min-height: 88px; padding-block: 12px; }
+  .heading > span { font-size: 18px; }
+  .methodHeader { min-height: 84px; padding-block: 10px; }
   .methodSelected .methodHeader { min-height: 68px; }
   .fields { padding-bottom: 16px; }
   .fieldStack { gap: 8px; }
+  .summary .ticketContent { padding-top: 16px; padding-bottom: 12px; }
+  .summary h2 { margin-bottom: 6px; }
+  .summaryRow { min-height: 38px; padding-block: 2px; }
+  .prices { margin-top: 8px; gap: 5px; padding-bottom: 8px; }
+  .total { padding-top: 8px; }
 }
 @media (max-width: 1023px) { .inner { width: min(calc(100% - 48px), 760px); padding-top: 108px; } .layout { grid-template-columns: 1fr; } .aside { gap: 12px; } .pixSummary { display: none; } }
 @media (max-width: 639px) { .inner { width: calc(100% - 32px); padding-top: 88px; padding-bottom: calc(32px + env(safe-area-inset-bottom)); } .backButton { min-height: 38px; padding-inline: 22px; } .heading { margin: 26px auto 16px; } .heading p { font-size: 12px; } .heading h1 { font-size: clamp(2rem, 9vw, 2.5rem); } .heading > span { display: block; font-size: 14px; line-height: 1.4; } .methodHeader { grid-template-columns: 26px 44px minmax(0, 1fr) 24px; gap: 12px; min-height: 86px; padding: 16px; } .methodTitle { font-size: 25px; white-space: normal; } .methodDescription { display: none; } .fields { padding: 16px; } .cardNumber input { padding-right: 14px; } .brands { display: none; } .cardGrid { grid-template-columns: 1fr 1fr; } .debitGrid { grid-template-columns: 1fr 1fr; } .cardGrid .field:nth-child(3) { grid-column: 1 / -1; } .ticketContent { padding-inline: 16px; } .summary .ticketContent { padding-block: 21px; } .summary h2 { font-size: 28px; } .summaryRow { grid-template-columns: 27px 78px minmax(0, 1fr); } .pixPanel { padding: 18px 16px; } .pixPanelHeader { align-items: flex-start; } .pixContent { grid-template-columns: 1fr; gap: 20px; } .qr { width: 176px; height: 176px; } .successInner { width: calc(100% - 32px); padding-top: 92px; } .successTicket .ticketContent { padding: 22px 16px; } .successTicket h1 { font-size: 53px; } .successTicket h2 { font-size: 25px; } .successMeta { grid-template-columns: 1fr; gap: 14px; } .successMeta div { padding: 0; } .successMeta div + div { border-left: 0; border-top: 1px solid var(--checkout-divider); padding-top: 14px; } .successActions { grid-template-columns: 1fr; gap: 12px; margin-top: 14px; } .outlineAction, .goldAction { min-height: 50px; } }

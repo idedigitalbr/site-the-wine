@@ -21,19 +21,40 @@ export function PixScreen({ context, payment, onBack, onCopy, copied, onConfirm 
 
 export function GuaranteeNotice({ context }: { context: CheckoutContext }) {
   const [now, setNow] = useState(() => Date.now());
-  const [clockOffset] = useState(() => Date.now() - Date.parse(context.serverNow));
-  useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer); }, []);
+  const [clockOffset] = useState(() => {
+    const serverNow = Date.parse(context.serverNow);
+    return Number.isFinite(serverNow) ? Date.now() - serverNow : 0;
+  });
+  useEffect(() => {
+    const update = () => setNow(Date.now());
+    const timer = window.setInterval(update, 1000);
+    window.addEventListener('focus', update);
+    document.addEventListener('visibilitychange', update);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', update);
+      document.removeEventListener('visibilitychange', update);
+    };
+  }, []);
   if (!context.paymentDeadlineAt || !context.seatGuaranteeExpiresAt) return null;
   const effectiveEnd = Math.min(Date.parse(context.seatGuaranteeExpiresAt), Date.parse(context.paymentDeadlineAt));
   const remaining = effectiveEnd - (now - clockOffset);
   if (remaining <= 0) return <p className={styles.guaranteeNotice}>O prazo de garantia terminou. Você ainda pode pagar, sujeito à disponibilidade.</p>;
   const end = new Date(effectiveEnd);
   const time = new Intl.DateTimeFormat('pt-BR', { timeZone: context.timeZone, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(end);
-  return <p className={styles.guaranteeNotice}>Conclua o pagamento até <strong>{time}</strong> para garantir sua vaga. Após esse horário, o pagamento dependerá da disponibilidade.</p>;
+  return <p className={styles.guaranteeNotice}>Conclua o pagamento em <strong>{formatCountdown(remaining)}</strong> para garantir sua vaga (até {time}). Após esse prazo, o pagamento dependerá da disponibilidade.</p>;
+}
+
+function formatCountdown(milliseconds: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return [hours, minutes, seconds].map((value) => String(value).padStart(2, '0')).join(':');
 }
 
 export function CheckoutHeading({ title, subtitle }: { title: string; subtitle?: string }) {
-  return <header className={styles.heading}><p>FINALIZAR RESERVA</p><h1 tabIndex={-1} data-checkout-heading>{title}</h1>{subtitle && <span>{subtitle}</span>}</header>;
+  return <header className={styles.heading}><p>FINALIZAR RESERVA</p><h1 data-checkout-heading>{title}</h1>{subtitle && <span>{subtitle}</span>}</header>;
 }
 
 function QrCode({ value }: { value: string }) { return <div className={styles.qr} aria-label="QR Code demonstrativo sem cobrança">{Array.from({ length: 81 }, (_, index) => <i key={index} data-on={isQrCellOn(index, value)} />)}</div>; }

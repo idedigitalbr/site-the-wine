@@ -41,7 +41,6 @@ export function ReservationCheckout({ reservationId, publicCode: _publicCode }: 
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
-    window.requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-checkout-heading]')?.focus({ preventScroll: true }));
   }, [screen, context]);
 
   const validation = useMemo(() => validateActivePayment(form.method, form), [form]);
