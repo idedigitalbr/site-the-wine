@@ -33,10 +33,10 @@ export async function listCustomerAccountTransactions(userId: string) {
 export async function getAccountSettingsForRequest(request: Request) {
   const session = await requireAuthenticatedSession(request);
   const row = await findAccountSettingsByUserId(session.user.id);
-  const transactions = await listCustomerAccountTransactions(session.user.id);
   const formattedPhone = formatWhatsAppPhoneInput(row.customerPhone ?? row.customerNormalizedPhone ?? '');
 
   return {
+    userId: session.user.id,
     profile: {
       name: row.customerName || row.userName,
       email: row.customerEmail || row.userEmail,
@@ -50,6 +50,15 @@ export async function getAccountSettingsForRequest(request: Request) {
       whatsAppConfigured: Boolean(formattedPhone),
       whatsAppNumber: formattedPhone,
     },
+  };
+}
+
+export async function getAccountTransactionsForRequest(request: Request) {
+  const session = await requireAuthenticatedSession(request);
+  const transactions = await listCustomerAccountTransactions(session.user.id);
+
+  return {
+    userId: session.user.id,
     transactions,
   };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   changePasswordSchema,
@@ -11,6 +11,7 @@ import {
 } from '@/modules/account-settings/domain/account-settings-schema';
 import {
   fetchAccountSettings,
+  fetchAccountTransactions,
   isAccountSettingsUnauthorized,
   requestChangePassword,
   requestSaveWhatsApp,
@@ -66,6 +67,7 @@ const validTabs: AccountTab[] = ['dados', 'notificacoes', 'dados-bancarios'];
 const preferenceKeys = ['reservationConfirmations', 'reservationReminders', 'newsAndEvents', 'promotions'] as const;
 const localPreferenceKeys = ['reservationConfirmations', 'reservationReminders'] as const;
 type EmailPreferenceKey = typeof preferenceKeys[number];
+type ActiveTransactionRequest = { controller: AbortController; generation: number };
 
 const AccountSettingsContext = createContext<AccountSettingsContextValue | undefined>(undefined);
 
@@ -109,24 +111,65 @@ function toEmailPreferences(preferences: NotificationPreferences) {
   };
 }
 
-async function fetchCustomerSessionId(signal: AbortSignal): Promise<string | null> {
-  const response = await fetch('/api/customer-auth/session', {
-    method: 'GET',
-    cache: 'no-store',
-    credentials: 'same-origin',
-    signal,
-  });
-  if (!response.ok) return null;
-  const data = await response.json() as { user?: { id?: string }; status?: string };
-  return data.status === 'authenticated' && data.user?.id ? data.user.id : null;
-}
-
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
 }
 
 function isEmailPreferenceKey(key: keyof NotificationPreferences): key is EmailPreferenceKey {
   return preferenceKeys.includes(key as EmailPreferenceKey);
+}
+
+function isCurrentTransactionRequest(
+  isMounted: boolean,
+  signal: AbortSignal,
+  activeRequest: ActiveTransactionRequest | null,
+  generation: number,
+): boolean {
+  return isMounted && !signal.aborted && activeRequest?.generation === generation;
+}
+
+function handleTransactionSuccess(
+  payload: { userId: string; transactions: AccountTransaction[] },
+  expectedUserId: string,
+  isCurrent: () => boolean,
+  onUserMismatch: () => void,
+  onSuccess: (transactions: AccountTransaction[]) => void,
+): void {
+  if (!isCurrent()) return;
+  if (payload.userId !== expectedUserId) {
+    onUserMismatch();
+    return;
+  }
+  onSuccess(payload.transactions);
+}
+
+function handleTransactionFailure(
+  error: unknown,
+  isCurrent: () => boolean,
+  onUnauthorized: () => void,
+  onFailure: () => void,
+): void {
+  if (!isCurrent()) return;
+  if (isAccountSettingsUnauthorized(error)) {
+    onUnauthorized();
+    return;
+  }
+  onFailure();
+}
+
+function canStartTransactionLoad(input: {
+  isMounted: boolean;
+  isRedirecting: boolean;
+  hasProfileHydrated: boolean;
+  accountUserId: string | null;
+  force: boolean;
+  transactionsStatus: 'idle' | 'loading' | 'ready' | 'error';
+  activeRequest: ActiveTransactionRequest | null;
+}): boolean {
+  if (!input.isMounted || input.isRedirecting) return false;
+  if (!input.hasProfileHydrated || !input.accountUserId) return false;
+  if (!input.force && input.transactionsStatus !== 'idle') return false;
+  return !input.activeRequest;
 }
 
 export function AccountSettingsProvider({ children }: { children: React.ReactNode }) {
@@ -153,9 +196,15 @@ export function AccountSettingsProvider({ children }: { children: React.ReactNod
   const [notifications, setNotifications] = useState<NotificationPreferences>(initialNotifications);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(initialPaymentMethods);
   const [transactions, setTransactions] = useState<AccountTransaction[]>(initialTransactions);
+  const [transactionsStatus, setTransactionsStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [transactionFilter, setTransactionFilter] = useState<string>('todos');
   const [accountUserId, setAccountUserId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [hasProfileHydrated, setHasProfileHydrated] = useState(false);
+  const transactionRequestRef = useRef<ActiveTransactionRequest | null>(null);
+  const transactionGenerationRef = useRef(0);
+  const isMountedRef = useRef(true);
+  const isRedirectingRef = useRef(false);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
@@ -175,18 +224,16 @@ export function AccountSettingsProvider({ children }: { children: React.ReactNod
 
     async function hydrateSettings() {
       try {
-        const [settings, userId] = await Promise.all([
-          fetchAccountSettings(controller.signal),
-          fetchCustomerSessionId(controller.signal),
-        ]);
+        const settings = await fetchAccountSettings(controller.signal);
         if (!isMounted) return;
-        setAccountUserId(userId);
+        setAccountUserId(settings.userId);
         setProfile(settings.profile);
-        setNotifications((current) => ({ ...current, ...settings.notifications, ...readStoredPreferences(userId ?? '') }));
-        setTransactions(settings.transactions);
+        setNotifications((current) => ({ ...current, ...settings.notifications, ...readStoredPreferences(settings.userId) }));
+        setHasProfileHydrated(true);
       } catch (error) {
         if (!isMounted || controller.signal.aborted) return;
         if (isAccountSettingsUnauthorized(error)) {
+          isRedirectingRef.current = true;
           router.replace('/acesso?auth=expired');
           return;
         }
@@ -202,6 +249,79 @@ export function AccountSettingsProvider({ children }: { children: React.ReactNod
       controller.abort();
     };
   }, [router, showToast]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      transactionGenerationRef.current += 1;
+      transactionRequestRef.current?.controller.abort();
+      transactionRequestRef.current = null;
+    };
+  }, []);
+
+  const loadTransactions = useCallback((force = false) => {
+    if (!canStartTransactionLoad({
+      isMounted: isMountedRef.current,
+      isRedirecting: isRedirectingRef.current,
+      hasProfileHydrated,
+      accountUserId,
+      force,
+      transactionsStatus,
+      activeRequest: transactionRequestRef.current,
+    })) return;
+
+    const controller = new AbortController();
+    const generation = transactionGenerationRef.current + 1;
+    transactionGenerationRef.current = generation;
+    transactionRequestRef.current = { controller, generation };
+    const expectedUserId = accountUserId!;
+    setTransactionsStatus('loading');
+    const isCurrent = () => isCurrentTransactionRequest(
+      isMountedRef.current,
+      controller.signal,
+      transactionRequestRef.current,
+      generation,
+    );
+    const redirectToExpired = () => {
+      setTransactions([]);
+      setTransactionsStatus('error');
+      isRedirectingRef.current = true;
+      router.replace('/acesso?auth=expired');
+    };
+
+    void fetchAccountTransactions(controller.signal)
+      .then((payload) => handleTransactionSuccess(
+        payload,
+        expectedUserId,
+        isCurrent,
+        redirectToExpired,
+        (nextTransactions) => {
+          setTransactions(nextTransactions);
+          setTransactionsStatus('ready');
+        },
+      ))
+      .catch((error) => handleTransactionFailure(
+        error,
+        isCurrent,
+        redirectToExpired,
+        () => setTransactionsStatus('error'),
+      ))
+      .finally(() => {
+        if (transactionRequestRef.current?.generation === generation) transactionRequestRef.current = null;
+      });
+  }, [accountUserId, hasProfileHydrated, router, transactionsStatus]);
+
+  useEffect(() => {
+    if (activeTab === 'dados-bancarios' && hasProfileHydrated && transactionsStatus === 'idle') {
+      loadTransactions();
+    }
+  }, [activeTab, hasProfileHydrated, loadTransactions, transactionsStatus]);
+
+  const retryTransactions = useCallback(() => {
+    if (isRedirectingRef.current || transactionRequestRef.current) return;
+    loadTransactions(true);
+  }, [loadTransactions]);
 
   const updateProfile = useCallback(
     async (data: Partial<UserProfile>): Promise<{ success: boolean; message?: string }> => {
@@ -362,6 +482,8 @@ export function AccountSettingsProvider({ children }: { children: React.ReactNod
     addPaymentMethod,
     removePaymentMethod,
     transactions,
+    transactionsStatus,
+    retryTransactions,
     transactionFilter,
     setTransactionFilter,
     filteredTransactions,
@@ -379,12 +501,14 @@ export function AccountSettingsProvider({ children }: { children: React.ReactNod
     paymentMethods,
     profile,
     removePaymentMethod,
+    retryTransactions,
     saveWhatsAppNumber,
     setActiveTab,
     toggleNotification,
     toast,
     transactionFilter,
     transactions,
+    transactionsStatus,
     updateProfile,
   ]);
 

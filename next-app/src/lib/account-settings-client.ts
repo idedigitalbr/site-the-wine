@@ -6,8 +6,13 @@ import type {
 } from '@/types/account-settings';
 
 export type AccountSettingsPayload = {
+  userId: string;
   profile: UserProfile;
   notifications: NotificationPreferences;
+};
+
+export type AccountTransactionsPayload = {
+  userId: string;
   transactions: AccountTransaction[];
 };
 
@@ -43,6 +48,10 @@ async function requestJson<T>(url: string, init: RequestInit = {}): Promise<T> {
 
 export function fetchAccountSettings(signal?: AbortSignal): Promise<AccountSettingsPayload> {
   return requestJson<AccountSettingsPayload>('/api/account/settings', { method: 'GET', signal });
+}
+
+export function fetchAccountTransactions(signal?: AbortSignal): Promise<AccountTransactionsPayload> {
+  return requestJson<AccountTransactionsPayload>('/api/account/transactions', { method: 'GET', signal });
 }
 
 export function requestUpdateProfile(input: { name: string; email: string }) {

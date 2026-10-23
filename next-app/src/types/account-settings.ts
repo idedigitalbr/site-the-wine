@@ -60,6 +60,8 @@ export interface AccountSettingsContextValue {
   addPaymentMethod: (card: Omit<PaymentMethod, 'id'>) => Promise<{ success: boolean; message?: string }>;
   removePaymentMethod: (id: string) => Promise<{ success: boolean; message?: string }>;
   transactions: AccountTransaction[];
+  transactionsStatus: 'idle' | 'loading' | 'ready' | 'error';
+  retryTransactions: () => void;
   transactionFilter: string;
   setTransactionFilter: (filter: string) => void;
   filteredTransactions: AccountTransaction[];

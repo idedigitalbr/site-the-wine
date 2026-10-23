@@ -10,6 +10,8 @@ type RequestKind = 'first' | 'more';
 type ActiveRequest = { controller: AbortController; generation: number; kind: RequestKind };
 type LoadPhase = 'loading' | 'ready' | 'error' | 'redirecting';
 
+const AUTO_REVALIDATE_INTERVAL_MS = 30_000;
+
 class UnauthorizedError extends Error {}
 
 function isAbortError(error: unknown): boolean {
@@ -55,6 +57,12 @@ function deduplicateReservations(
   return [...current, ...incoming.filter((item) => !seen.has(item.id))];
 }
 
+function latestRevalidationAt(successAt: number | null, attemptAt: number | null): number | null {
+  if (successAt === null) return attemptAt;
+  if (attemptAt === null) return successAt;
+  return Math.max(successAt, attemptAt);
+}
+
 export function useCustomerReservations() {
   const router = useRouter();
   const [reservations, setReservations] = useState<CustomerReservationItem[]>([]);
@@ -64,10 +72,15 @@ export function useCustomerReservations() {
   const [moreError, setMoreError] = useState(false);
   const generationRef = useRef(0);
   const activeRequestRef = useRef<ActiveRequest | null>(null);
+  const lastFirstPageSuccessAtRef = useRef<number | null>(null);
+  const lastAutomaticAttemptAtRef = useRef<number | null>(null);
+  const isMountedRef = useRef(true);
+  const isRedirectingRef = useRef(false);
 
   const isStale = useCallback((generation: number) => generationRef.current !== generation, []);
 
   const handleUnauthorized = useCallback(() => {
+    isRedirectingRef.current = true;
     generationRef.current += 1;
     activeRequestRef.current?.controller.abort();
     activeRequestRef.current = null;
@@ -85,6 +98,7 @@ export function useCustomerReservations() {
     setReservations(payload.reservations);
     setNextOffset(payload.nextOffset);
     setPhase('ready');
+    lastFirstPageSuccessAtRef.current = performance.now();
   }, [isStale]);
 
   const handleFirstError = useCallback((generation: number, error: unknown) => {
@@ -147,25 +161,48 @@ export function useCustomerReservations() {
   }, [applyMorePayload, handleMoreError, nextOffset]);
 
   useEffect(() => {
-    queueMicrotask(() => void replaceFirstPage());
+    isMountedRef.current = true;
+    isRedirectingRef.current = false;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled || !isMountedRef.current) return;
+      void replaceFirstPage();
+    });
     return () => {
+      cancelled = true;
+      isMountedRef.current = false;
       generationRef.current += 1;
       activeRequestRef.current?.controller.abort();
       activeRequestRef.current = null;
     };
   }, [replaceFirstPage]);
 
+  const revalidateOnVisibility = useCallback(() => {
+    if (!isMountedRef.current || isRedirectingRef.current || phase === 'redirecting') return;
+    if (document.visibilityState !== 'visible') return;
+    if (activeRequestRef.current) return;
+
+    const lastActivityAt = latestRevalidationAt(
+      lastFirstPageSuccessAtRef.current,
+      lastAutomaticAttemptAtRef.current,
+    );
+    if (lastActivityAt === null) return;
+
+    const now = performance.now();
+    if (now - lastActivityAt < AUTO_REVALIDATE_INTERVAL_MS) return;
+    lastAutomaticAttemptAtRef.current = now;
+    void replaceFirstPage(true);
+  }, [phase, replaceFirstPage]);
+
   useEffect(() => {
-    const revalidate = () => void replaceFirstPage(true);
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') revalidate();
-    };
-    window.addEventListener('focus', revalidate);
-    document.addEventListener('visibilitychange', onVisibilityChange);
+    document.addEventListener('visibilitychange', revalidateOnVisibility);
     return () => {
-      window.removeEventListener('focus', revalidate);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
+      document.removeEventListener('visibilitychange', revalidateOnVisibility);
     };
+  }, [revalidateOnVisibility]);
+
+  const retry = useCallback(() => {
+    void replaceFirstPage(true);
   }, [replaceFirstPage]);
 
   return {
@@ -174,7 +211,7 @@ export function useCustomerReservations() {
     phase,
     isLoadingMore,
     moreError,
-    retry: replaceFirstPage,
+    retry,
     loadMore: appendNextPage,
   };
 }

@@ -23,17 +23,36 @@ function transactionStatusClass(status: string, stylesMap: typeof styles): strin
 
 function TransactionTableBody({
   transactions,
-  isProfileLoading,
+  transactionsStatus,
+  retryTransactions,
 }: {
   transactions: ReturnType<typeof useAccountSettings>['filteredTransactions'];
-  isProfileLoading: boolean;
+  transactionsStatus: ReturnType<typeof useAccountSettings>['transactionsStatus'];
+  retryTransactions: ReturnType<typeof useAccountSettings>['retryTransactions'];
 }) {
+  if (transactionsStatus === 'error') {
+    return (
+      <tbody>
+        <tr>
+          <td colSpan={6} className="text-center py-8 text-[#8E8980]">
+            <div role="alert" className="flex flex-col items-center gap-3">
+              <span>Não foi possível carregar seu histórico de transações.</span>
+              <button type="button" onClick={retryTransactions} className={styles.paginationButton}>
+                Tentar novamente
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    );
+  }
+
   if (transactions.length === 0) {
     return (
       <tbody>
         <tr>
           <td colSpan={6} className="text-center py-8 text-[#8E8980]">
-            {isProfileLoading
+            {transactionsStatus === 'idle' || transactionsStatus === 'loading'
               ? 'Carregando histórico de transações…'
               : 'Nenhuma transação encontrada.'}
           </td>
@@ -83,7 +102,8 @@ export function BankingDataTab() {
     filteredTransactions,
     transactionFilter,
     setTransactionFilter,
-    isProfileLoading,
+    transactionsStatus,
+    retryTransactions,
   } = useAccountSettings();
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -211,7 +231,8 @@ export function BankingDataTab() {
             </thead>
             <TransactionTableBody
               transactions={paginatedTransactions}
-              isProfileLoading={isProfileLoading}
+              transactionsStatus={transactionsStatus}
+              retryTransactions={retryTransactions}
             />
           </table>
         </div>

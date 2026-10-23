@@ -32,7 +32,10 @@ const mocks = {
       customerPhone: '(91) 98765-4321',
       customerNormalizedPhone: '91987654321',
     }),
-    listCustomerTransactionsByUserId: async () => [],
+    listCustomerTransactionsByUserId: async () => {
+      transactionListCalls += 1;
+      return [];
+    },
     updateCustomerProfileInTransaction: async () => undefined,
     updateCustomerWhatsAppInTransaction: async () => undefined,
     updateCustomerMarketingConsent: async () => undefined,
@@ -43,6 +46,7 @@ const mocks = {
 };
 
 const moduleCache = new Map();
+let transactionListCalls = 0;
 
 function loadTypeScript(relativePath) {
   const filename = isAbsolute(relativePath)
@@ -91,11 +95,31 @@ function request(body = undefined) {
 }
 
 test('returns real account settings for an authenticated session', async () => {
+  transactionListCalls = 0;
   const result = await service.getAccountSettingsForRequest(request());
+  assert.equal(result.userId, 'user-1');
   assert.equal(result.profile.name, 'Ana Wine');
   assert.equal(result.profile.cpf, '***.***.***-**');
   assert.equal(result.notifications.whatsAppNumber, '(91) 98765-4321');
-  assert.deepEqual(result.transactions, []);
+  assert.equal('transactions' in result, false);
+  assert.equal(transactionListCalls, 0);
+});
+
+test('returns account transactions for the authenticated session only', async () => {
+  transactionListCalls = 0;
+  mocks.repository.listCustomerTransactionsByUserId = async (userId) => {
+    transactionListCalls += 1;
+    assert.equal(userId, 'user-1');
+    return [{ id: 'pay-1' }];
+  };
+  const result = await service.getAccountTransactionsForRequest(request());
+  assert.equal(result.userId, 'user-1');
+  assert.deepEqual(result.transactions, [{ id: 'pay-1' }]);
+  assert.equal(transactionListCalls, 1);
+  mocks.repository.listCustomerTransactionsByUserId = async () => {
+    transactionListCalls += 1;
+    return [];
+  };
 });
 
 test('rejects anonymous account-settings requests with 401', async () => {
@@ -104,6 +128,17 @@ test('rejects anonymous account-settings requests with 401', async () => {
     () => service.getAccountSettingsForRequest(request()),
     (error) => error instanceof TestCustomerAuthError && error.status === 401 && error.code === 'UNAUTHORIZED',
   );
+  mocks.customerAuth.getCustomerSession = async () => ({ user: { id: 'user-1', name: 'Ana Wine', email: 'ana@example.com' } });
+});
+
+test('rejects anonymous transaction requests without querying history', async () => {
+  transactionListCalls = 0;
+  mocks.customerAuth.getCustomerSession = async () => null;
+  await assert.rejects(
+    () => service.getAccountTransactionsForRequest(request()),
+    (error) => error instanceof TestCustomerAuthError && error.status === 401 && error.code === 'UNAUTHORIZED',
+  );
+  assert.equal(transactionListCalls, 0);
   mocks.customerAuth.getCustomerSession = async () => ({ user: { id: 'user-1', name: 'Ana Wine', email: 'ana@example.com' } });
 });
 
