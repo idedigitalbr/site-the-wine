@@ -1,19 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDateSchema } from '@/modules/admin/schemas/admin-schema';
+import { adminDashboardQuerySchema } from '@/modules/admin/schemas/admin-schema';
 import { loadAdminDashboard } from '@/server/admin/composition';
 import { AdminAuthError, requireAdminSession } from '@/server/admin/auth';
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  const timeZone = process.env.RESERVATION_ESTABLISHMENT_TIMEZONE?.trim() || 'America/Sao_Paulo';
+  return new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date());
+}
+
+function dashboardInput(request: NextRequest) {
+  const params = request.nextUrl.searchParams;
+  const input: Record<string, string> = Object.fromEntries(params.entries());
+  const date = input.date || todayIso();
+  if (!input.from) input.from = date;
+  if (!input.to) input.to = date;
+  return input;
 }
 
 export async function GET(request: NextRequest) {
   try {
     await requireAdminSession();
-    const date = request.nextUrl.searchParams.get('date') ?? todayIso();
-    const parsed = adminDateSchema.safeParse(date);
-    if (!parsed.success) return NextResponse.json({ error: 'invalid_date' }, { status: 400 });
-    return NextResponse.json(await loadAdminDashboard(parsed.data));
+    const parsed = adminDashboardQuerySchema.safeParse(dashboardInput(request));
+    if (!parsed.success) return NextResponse.json({ error: 'invalid_dashboard_query' }, { status: 400 });
+    return NextResponse.json(await loadAdminDashboard({
+      fromDate: parsed.data.from,
+      toDate: parsed.data.to,
+      search: parsed.data.search,
+      time: parsed.data.time,
+      status: parsed.data.status,
+      areaId: parsed.data.areaId,
+      page: parsed.data.page,
+      pageSize: parsed.data.pageSize,
+    }));
   } catch (error) {
     if (error instanceof AdminAuthError) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     console.error('Admin dashboard failed', error);

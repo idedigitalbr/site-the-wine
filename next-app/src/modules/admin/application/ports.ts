@@ -1,7 +1,7 @@
-import type { ReservationStatus } from '@/modules/reservations/domain/reservation-status';
-import type { ReservationOperation } from '@/modules/reservations/domain/reservation-operation';
-import type { ConfirmedReservationDraft } from '@/modules/reservations/domain/reservation';
-import type { WaitlistStatus } from '@/modules/reservations/domain/waitlist';
+import type { ReservationStatus } from "@/modules/reservations/domain/reservation-status";
+import type { ReservationOperation } from "@/modules/reservations/domain/reservation-operation";
+import type { ConfirmedReservationDraft } from "@/modules/reservations/domain/reservation";
+import type { WaitlistStatus } from "@/modules/reservations/domain/waitlist";
 
 export type AdminReservation = {
   id: number;
@@ -70,35 +70,83 @@ export type AdminWaitlistEntry = {
 };
 
 export type AdminDashboard = {
-  date: string;
-  metrics: {
-    total: number;
-    pending: number;
-    confirmed: number;
-    seated: number;
-  };
-  reservations: AdminReservation[];
-};
-
-export type AdminAnalytics = {
   fromDate: string;
   toDate: string;
+  periodLabel: string;
   metrics: {
     reservations: number;
-    covers: number;
-    completed: number;
-    cancelled: number;
-    noShow: number;
-    uniqueCustomers: number;
-    assignedCovers: number;
-    assignedCapacity: number;
+    expectedGuests: number;
+    reservedTables: number;
+    activeGuarantees: number;
+    pendingPayments: number;
     occupancyRate: number;
-    revenue: number | null;
+    totalTables: number;
   };
-  daily: Array<{ date: string; reservations: number; covers: number }>;
-  sources: Array<{ source: string; reservations: number; covers: number }>;
-  peakHours: Array<{ hour: string; reservations: number; covers: number }>;
-  revenueMode: 'mock';
+  reservations: {
+    items: AdminDashboardReservation[];
+    total: number;
+    page: number;
+    pageSize: number;
+  };
+  alerts: AdminDashboardAlert[];
+  updates: AdminDashboardUpdate[];
+  availability: Array<{ label: string; committed: number; available: number }>;
+  distribution: Array<{
+    status: ReservationStatus;
+    label: string;
+    count: number;
+    percentage: number;
+  }>;
+  tableTypes: Array<{
+    capacity: 2 | 4 | 6 | 8;
+    occupied: number;
+    total: number;
+    percentage: number;
+  }>;
+  areas: AdminArea[];
+};
+
+export type AdminDashboardReservation = AdminReservation & {
+  paymentStatus: "pending" | "paid" | "not_realized" | "unknown";
+  paymentLabel: string;
+  estimatedTableLabel: string | null;
+  areaName: string | null;
+  paymentDeadlineAt: string | null;
+};
+
+export type AdminDashboardAlert = {
+  id: number;
+  type: "payment_pending";
+  title: string;
+  customerName: string;
+  reservationDate: string;
+  startTime: string;
+  estimatedTableLabel: string | null;
+  detail: string;
+  paymentDeadlineAt: string | null;
+};
+
+export type AdminDashboardUpdate = {
+  id: number;
+  reservationId: number;
+  eventType: string;
+  eventLabel: string;
+  customerName: string;
+  reservationDate: string;
+  estimatedTableLabel: string | null;
+  createdAt: string;
+  toStatus: ReservationStatus | null;
+};
+
+export type AdminDashboardQuery = {
+  fromDate: string;
+  toDate: string;
+  search?: string;
+  time?: string;
+  status?: ReservationStatus | "";
+  areaId?: number;
+  page?: number;
+  pageSize?: number;
 };
 
 export type AdminCustomer = {
@@ -147,7 +195,12 @@ export type AdminCustomerProfile = {
   activities: AdminCustomerActivity[];
 };
 
-export type AdminArea = { id: number; code: string; name: string; active: boolean };
+export type AdminArea = {
+  id: number;
+  code: string;
+  name: string;
+  active: boolean;
+};
 export type AdminTableType = {
   id: number;
   code: string;
@@ -198,7 +251,7 @@ export type AdminConfiguration = {
   businessHours: AdminBusinessHour[];
 };
 
-export type FloorTableState = 'available' | 'reserved' | 'blocked';
+export type FloorTableState = "available" | "reserved" | "blocked";
 export type FloorTable = AdminTable & { state: FloorTableState };
 export type AdminCombination = {
   id: number;
@@ -234,7 +287,10 @@ export type AdminFloorPlanSettings = {
 };
 
 export type CreateAreaInput = { code: string; name: string };
-export type CreateTableTypeInput = CreateAreaInput & { capacityMin: number; capacityMax: number };
+export type CreateTableTypeInput = CreateAreaInput & {
+  capacityMin: number;
+  capacityMax: number;
+};
 export type CreateTableInput = CreateAreaInput & {
   areaId: number;
   tableTypeId: number;
@@ -243,21 +299,29 @@ export type CreateTableInput = CreateAreaInput & {
   shape: string;
   joinable: boolean;
 };
-export type CreateShiftInput = CreateAreaInput & { startsAt: string; endsAt: string };
+export type CreateShiftInput = CreateAreaInput & {
+  startsAt: string;
+  endsAt: string;
+};
 export type CreateBusinessHourInput = {
   dayOfWeek: number;
   shiftId: number;
   opensAt: string;
   closesAt: string;
 };
-export type ConfigurationResource = 'area' | 'table_type' | 'table' | 'shift' | 'business_hour';
+export type ConfigurationResource =
+  "area" | "table_type" | "table" | "shift" | "business_hour";
 export type AdminConfigurationUpdate =
-  | ({ resource: 'area'; id: number } & CreateAreaInput)
-  | ({ resource: 'table_type'; id: number } & CreateTableTypeInput)
-  | ({ resource: 'table'; id: number } & CreateTableInput)
-  | ({ resource: 'shift'; id: number } & CreateShiftInput)
-  | ({ resource: 'business_hour'; id: number } & CreateBusinessHourInput);
-export type CreateCombinationInput = { code: string; name: string; tableIds: number[] };
+  | ({ resource: "area"; id: number } & CreateAreaInput)
+  | ({ resource: "table_type"; id: number } & CreateTableTypeInput)
+  | ({ resource: "table"; id: number } & CreateTableInput)
+  | ({ resource: "shift"; id: number } & CreateShiftInput)
+  | ({ resource: "business_hour"; id: number } & CreateBusinessHourInput);
+export type CreateCombinationInput = {
+  code: string;
+  name: string;
+  tableIds: number[];
+};
 export type CreateBlockedPeriodInput = {
   areaId: number | null;
   tableId: number | null;
@@ -266,23 +330,39 @@ export type CreateBlockedPeriodInput = {
   reason: string;
 };
 export type UpdateFloorPlanSettingsInput = AdminFloorPlanSettings;
-export type UpdateTablePositionInput = { tableId: number; positionX: number; positionY: number };
+export type UpdateTablePositionInput = {
+  tableId: number;
+  positionX: number;
+  positionY: number;
+};
 
 export interface AdminRepository {
-  getDashboard(date: string): Promise<AdminDashboard>;
-  getAnalytics(fromDate: string, toDate: string): Promise<AdminAnalytics>;
+  getDashboard(query: AdminDashboardQuery): Promise<AdminDashboard>;
   listCustomers(search?: string): Promise<AdminCustomer[]>;
   getCustomerProfile(id: number): Promise<AdminCustomerProfile | null>;
   listReservations(date?: string): Promise<AdminReservation[]>;
+  getReservation(id: number): Promise<AdminReservation | null>;
   listWaitlist(date?: string): Promise<AdminWaitlistEntry[]>;
   getReservationStatus(id: number): Promise<ReservationStatus | null>;
-  updateReservationStatus(id: number, fromStatus: ReservationStatus, status: ReservationStatus): Promise<void>;
-  getReservationOperationState(id: number): Promise<AdminReservationOperationState | null>;
-  applyReservationOperation(id: number, operation: ReservationOperation): Promise<void>;
+  updateReservationStatus(
+    id: number,
+    fromStatus: ReservationStatus,
+    status: ReservationStatus,
+  ): Promise<void>;
+  getReservationOperationState(
+    id: number,
+  ): Promise<AdminReservationOperationState | null>;
+  applyReservationOperation(
+    id: number,
+    operation: ReservationOperation,
+  ): Promise<void>;
   listReservationTimeline(id: number): Promise<AdminReservationTimelineEntry[]>;
   getReservationAssignment(id: number): Promise<AdminReservationAssignment>;
   assignReservationTables(id: number, tableIds: number[]): Promise<void>;
-  updateReservationSchedule(id: number, schedule: AdminReservationSchedule): Promise<void>;
+  updateReservationSchedule(
+    id: number,
+    schedule: AdminReservationSchedule,
+  ): Promise<void>;
   createWalkInReservation(input: CreateWalkInReservationInput): Promise<number>;
   getWaitlistStatus(id: number): Promise<WaitlistStatus | null>;
   updateWaitlistStatus(id: number, status: WaitlistStatus): Promise<void>;
@@ -293,7 +373,10 @@ export interface AdminRepository {
   createShift(input: CreateShiftInput): Promise<number>;
   createBusinessHour(input: CreateBusinessHourInput): Promise<number>;
   updateConfiguration(input: AdminConfigurationUpdate): Promise<void>;
-  deactivateConfiguration(resource: ConfigurationResource, id: number): Promise<void>;
+  deactivateConfiguration(
+    resource: ConfigurationResource,
+    id: number,
+  ): Promise<void>;
   getFloorMap(date: string, time: string): Promise<AdminFloorMap>;
   createCombination(input: CreateCombinationInput): Promise<number>;
   deactivateCombination(id: number): Promise<void>;
