@@ -66,6 +66,15 @@ function reservationPaymentDeadlineAt(reservationDate: string, startTime: string
   return new Date(candidate.getTime() + 2 * 60 * 60 * 1000);
 }
 
+function checkoutPaymentDeadline(input: ReservationDraft): Date | null {
+  if (input.status !== 'payment_pending') return null;
+  return reservationPaymentDeadlineAt(
+    input.reservationDate,
+    input.startTime,
+    process.env.RESERVATION_ESTABLISHMENT_TIMEZONE?.trim() || 'America/Sao_Paulo',
+  );
+}
+
 async function insertReservationEvent(
   connection: PoolConnection,
   reservationId: number,
@@ -248,16 +257,8 @@ async function assertNoConflicts(
 }
 
 // The SQL branch keeps legacy reservations nullable while initializing the four checkout fields atomically.
-// eslint-disable-next-line complexity
 async function insertReservation(connection: PoolConnection, input: ReservationDraft): Promise<number> {
-  const checkoutStarted = input.status === 'payment_pending';
-  const paymentDeadline = checkoutStarted
-    ? reservationPaymentDeadlineAt(
-      input.reservationDate,
-      input.startTime,
-      process.env.RESERVATION_ESTABLISHMENT_TIMEZONE?.trim() || 'America/Sao_Paulo',
-    )
-    : null;
+  const paymentDeadline = checkoutPaymentDeadline(input);
   const [result] = await connection.execute<ResultSetHeader>(
     `INSERT INTO reservations
       (public_code, customer_id, experience_id, reservation_date,

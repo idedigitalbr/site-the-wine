@@ -5,6 +5,7 @@ import { ArrowRight, CircleAlert, LoaderCircle } from 'lucide-react';
 import Link from 'next/link';
 import { confirmDemoPix, fetchReservationCheckout, startReservationCheckout } from '@/lib/reservation-checkout-client';
 import { sanitizeCardNumber, sanitizeCvv, sanitizeExpiry, sanitizePersonName, validateActivePayment } from '@/modules/payments/checkout/checkout-validation';
+import { getResumedPayment } from '@/modules/payments/checkout/checkout-resume';
 import type { CheckoutContext, CheckoutFormValues, CheckoutMethod, CheckoutPaymentResult } from '@/modules/payments/checkout/checkout-contract';
 import styles from './ReservationCheckout.module.css';
 import { CheckoutHeading, GuaranteeNotice, PixScreen } from './CheckoutPixPanel';
@@ -104,21 +105,8 @@ function activeFieldMap(method: CheckoutMethod | null): TouchedFields {
 }
 function checkoutButtonLabel(method: CheckoutMethod | null): string { if (!method) return 'Escolha uma forma de pagamento'; return method === 'pix' ? 'Pagar com Pix' : method === 'credit' ? 'Pagar com cartão de crédito' : 'Pagar com cartão de débito'; }
 function sanitizeCardField(field: keyof CheckoutFormValues['card'], value: string): string | number { if (field === 'holderName') return sanitizePersonName(value); if (field === 'number') return sanitizeCardNumber(value); if (field === 'expiry') return sanitizeExpiry(value); if (field === 'cvv') return sanitizeCvv(value); return 1; }
-// Resume payloads are deliberately checked together so an incomplete server record never opens a fake screen.
-// eslint-disable-next-line complexity
-function resumedPayment(value: CheckoutContext): { screen: Screen; payment: CheckoutPaymentResult } | null {
-  const resume = value.resume;
-  if (resume.state === 'pix_pending' && resume.method === 'pix' && resume.paymentId && resume.pixDisplayCode && resume.pixQrValue && resume.pixExpiresAt) {
-    return { screen: 'pix', payment: { paymentId: resume.paymentId, reservationId: value.reservation.id, method: 'pix', mode: 'demo', totalAmountCents: value.quote.totalAmountCents, status: 'pending', pix: { displayCode: resume.pixDisplayCode, qrValue: resume.pixQrValue, expiresAt: resume.pixExpiresAt } } };
-  }
-  if ((resume.state === 'demo_completed' || resume.state === 'paid') && resume.paymentId && resume.paidAt) {
-    return { screen: 'success', payment: { paymentId: resume.paymentId, reservationId: value.reservation.id, method: resume.method ?? 'credit', mode: 'demo', totalAmountCents: value.quote.totalAmountCents, status: 'paid', paidAt: resume.paidAt, demonstrative: true } };
-  }
-  return null;
-}
-
 function setResumedScreen(value: CheckoutContext, setScreen: (screen: Screen) => void, setPayment: (payment: CheckoutPaymentResult) => void) {
-  const resumed = resumedPayment(value);
+  const resumed = getResumedPayment(value);
   if (!resumed) return;
   setPayment(resumed.payment);
   setScreen(resumed.screen);

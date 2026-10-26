@@ -89,26 +89,26 @@ test('phase seven supports transactional table assignment and schedule changes',
   assert.match(scheduleComponent, /\/schedule/);
 });
 
-test('phase eight exposes protected operational analytics without real payment revenue', () => {
+test('phase eight exposes the protected operations dashboard without real payment revenue', () => {
   const ports = source('src/modules/admin/application/ports.ts');
   const adminRepository = source('src/modules/admin/infrastructure/mysql-admin-repository.ts');
-  const analyticsUseCase = source('src/modules/admin/application/get-analytics.ts');
+  const dashboardUseCase = source('src/modules/admin/application/get-dashboard.ts');
   const composition = source('src/server/admin/composition.ts');
-  const route = source('src/app/api/admin/analytics/route.ts');
+  const route = source('src/app/api/admin/dashboard/route.ts');
   const page = source('src/app/admin/(protected)/page.tsx');
-  const view = source('src/components/admin/AdminAnalyticsView.tsx');
+  const view = source('src/components/admin/AdminDashboardView.tsx');
 
-  assert.match(ports, /export type AdminAnalytics/);
-  assert.match(ports, /revenueMode: 'mock'/);
-  assert.match(adminRepository, /async getAnalytics/);
-  assert.match(adminRepository, /assignedCapacity/);
-  assert.match(analyticsUseCase, /getAdminAnalytics/);
-  assert.match(composition, /loadAdminAnalytics/);
+  assert.match(ports, /export type AdminDashboard/);
+  assert.match(ports, /pendingPayments/);
+  assert.match(adminRepository, /async getDashboard/);
+  assert.match(adminRepository, /getDashboard/);
+  assert.match(dashboardUseCase, /getAdminDashboard/);
+  assert.match(composition, /loadAdminDashboard/);
   assert.match(route, /requireAdminSession/);
-  assert.match(route, /adminAnalyticsQuerySchema/);
-  assert.match(page, /loadAdminAnalytics/);
-  assert.match(view, /Ocupação atribuída/);
-  assert.match(view, /nenhum valor real/);
+  assert.match(route, /adminDashboardQuerySchema/);
+  assert.match(page, /AdminDashboardView/);
+  assert.match(view, /Central de operações/);
+  assert.match(view, /estimativa/);
 });
 
 test('phase nine exposes a protected customer directory with operational history', () => {

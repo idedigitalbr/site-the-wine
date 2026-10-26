@@ -1,17 +1,26 @@
 import 'server-only';
 import type { CheckoutContext } from '@/modules/payments/checkout/checkout-contract';
-import { MysqlReservationCheckoutQuery } from '@/modules/reservations/infrastructure/mysql-reservation-checkout-query';
+import { MysqlReservationCheckoutQuery, type ReservationCheckoutRecord } from '@/modules/reservations/infrastructure/mysql-reservation-checkout-query';
 import { findCustomerIdByAuthUserId } from '@/server/customer-auth/repository';
 import { demoCheckoutPolicy } from '@/server/payments/checkout-policy';
-import { checkoutEligibility, guaranteeIsActive } from '@/modules/reservations/domain/checkout-policy';
+import { checkoutEligibility, guaranteeIsActive, type CheckoutPolicyInput } from '@/modules/reservations/domain/checkout-policy';
 import { MysqlReservationCheckoutRepository, type CheckoutPixConfirmationInput, type CheckoutStartInput } from '@/modules/reservations/infrastructure/mysql-checkout-repository';
 
 const checkoutQuery = new MysqlReservationCheckoutQuery();
 const checkoutRepository = new MysqlReservationCheckoutRepository();
 const payableStatuses = new Set(['pending', 'payment_pending', 'confirmed']);
 
+function checkoutPolicyInput(reservation: ReservationCheckoutRecord): CheckoutPolicyInput {
+  return {
+    now: new Date(reservation.serverNow),
+    checkoutStartedAt: reservation.checkoutStartedAt ? new Date(reservation.checkoutStartedAt) : null,
+    seatGuaranteeExpiresAt: reservation.seatGuaranteeExpiresAt ? new Date(reservation.seatGuaranteeExpiresAt) : null,
+    paymentDeadlineAt: reservation.paymentDeadlineAt ? new Date(reservation.paymentDeadlineAt) : null,
+    status: reservation.status,
+  };
+}
+
 // This assembler keeps the API contract in one place; the policy itself remains in the domain module.
-// eslint-disable-next-line complexity
 export async function getReservationCheckoutContext(reservationId: number, userId: string): Promise<CheckoutContext | null> {
   const customerId = await findCustomerIdByAuthUserId(userId);
   if (!customerId) return null;
@@ -19,14 +28,8 @@ export async function getReservationCheckoutContext(reservationId: number, userI
   if (!reservation) return null;
   if (!payableStatuses.has(reservation.status)) throw new Error('reservation_not_payable');
   const totalAmountCents = demoCheckoutPolicy.unitAmountCents * reservation.guestCount;
-  const now = new Date(reservation.serverNow);
-  const eligibility = checkoutEligibility({
-    now,
-    checkoutStartedAt: reservation.checkoutStartedAt ? new Date(reservation.checkoutStartedAt) : null,
-    seatGuaranteeExpiresAt: reservation.seatGuaranteeExpiresAt ? new Date(reservation.seatGuaranteeExpiresAt) : null,
-    paymentDeadlineAt: reservation.paymentDeadlineAt ? new Date(reservation.paymentDeadlineAt) : null,
-    status: reservation.status,
-  });
+  const policyInput = checkoutPolicyInput(reservation);
+  const eligibility = checkoutEligibility(policyInput);
   return {
     mode: reservation.checkoutMode === 'live' ? 'gateway' : demoCheckoutPolicy.mode,
     reservation: { id: reservation.id, publicCode: reservation.publicCode, status: reservation.status },
@@ -38,7 +41,7 @@ export async function getReservationCheckoutContext(reservationId: number, userI
     seatGuaranteeExpiresAt: reservation.seatGuaranteeExpiresAt,
     paymentDeadlineAt: reservation.paymentDeadlineAt,
     timeZone: process.env.RESERVATION_ESTABLISHMENT_TIMEZONE?.trim() || 'America/Sao_Paulo',
-    guaranteeActive: guaranteeIsActive({ now, checkoutStartedAt: reservation.checkoutStartedAt ? new Date(reservation.checkoutStartedAt) : null, seatGuaranteeExpiresAt: reservation.seatGuaranteeExpiresAt ? new Date(reservation.seatGuaranteeExpiresAt) : null, paymentDeadlineAt: reservation.paymentDeadlineAt ? new Date(reservation.paymentDeadlineAt) : null, status: reservation.status }),
+    guaranteeActive: guaranteeIsActive(policyInput),
     checkoutProgress: reservation.checkoutProgress ?? 'pending',
     eligibility,
     resume: { method: reservation.checkoutMethod, state: reservation.checkoutProgress, pixExpiresAt: reservation.pixExpiresAt, paymentId: reservation.lastPaymentId, pixDisplayCode: reservation.pixDisplayCode, pixQrValue: reservation.pixQrValue, paidAt: reservation.paidAt },

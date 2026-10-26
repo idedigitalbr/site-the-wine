@@ -214,21 +214,29 @@ async function completeReservation(connection: PoolConnection, reservation: Rese
 }
 
 export class MysqlReservationCheckoutRepository {
+  private replayedCheckoutResult(existing: OperationRow | null, input: CheckoutStartInput): CheckoutPaymentResult | null {
+    if (!existing) return null;
+    if (existing.requestFingerprint !== fingerprint(input)) throw new Error('checkout_idempotency_conflict');
+    return parseStoredResult(existing.resultJson);
+  }
+
+  private isCompletedCheckout(reservation: ReservationRow, session: SessionRow): boolean {
+    return session.state === 'paid' || session.state === 'demo_completed' || reservation.status === 'confirmed';
+  }
+
+  private completedCheckoutResult(reservation: ReservationRow, session: SessionRow, input: CheckoutStartInput): CheckoutPaymentResult {
+    return { paymentId: `DEMO-${reservation.id}-completed`, reservationId: reservation.id, method: session.method ?? input.method, mode: 'demo', totalAmountCents: input.totalAmountCents, status: 'paid', paidAt: new Date().toISOString(), demonstrative: true };
+  }
+
   async start(input: CheckoutStartInput): Promise<CheckoutPaymentResult> {
-    // The transaction intentionally keeps idempotency, deadline and demo-method branches together.
-    // eslint-disable-next-line complexity
+    // The transaction keeps the ownership lock, replay, deadline and demo branches together.
     return withTransaction(async (connection) => {
       const reservation = await lockReservation(connection, input);
       const session = await lockSession(connection, input.reservationId);
       const existing = await readOperation(connection, input.reservationId, input.operationKey);
-      if (existing) {
-        if (existing.requestFingerprint !== fingerprint(input)) throw new Error('checkout_idempotency_conflict');
-        const stored = parseStoredResult(existing.resultJson);
-        if (stored) return stored;
-      }
-      if (session.state === 'paid' || session.state === 'demo_completed' || reservation.status === 'confirmed') {
-        return { paymentId: `DEMO-${reservation.id}-completed`, reservationId: reservation.id, method: session.method ?? input.method, mode: 'demo', totalAmountCents: input.totalAmountCents, status: 'paid', paidAt: new Date().toISOString(), demonstrative: true };
-      }
+      const replayed = this.replayedCheckoutResult(existing, input);
+      if (replayed) return replayed;
+      if (this.isCompletedCheckout(reservation, session)) return this.completedCheckoutResult(reservation, session, input);
       const paymentDeadline = dateValue(reservation.paymentDeadlineAt);
       if (!paymentDeadline || Date.now() >= paymentDeadline.getTime()) throw new Error('reservation_payment_deadline_passed');
       const paymentId = `DEMO-${reservation.id}-${input.operationKey.slice(0, 8)}`;
