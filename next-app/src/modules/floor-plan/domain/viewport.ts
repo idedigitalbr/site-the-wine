@@ -2,6 +2,14 @@ export type ViewportBounds = { x: number; y: number; width: number; height: numb
 
 export const MAX_FLOOR_PLAN_ZOOM = 24;
 
+export function clampPanAxis(position: number, contentStart: number, contentSize: number, viewportSize: number, padding = 24) {
+  const travel = viewportSize * .2;
+  const centered = viewportSize / 2 - contentStart - contentSize / 2;
+  const minimum = Math.min(centered - travel, viewportSize - padding - contentStart - contentSize);
+  const maximum = Math.max(centered + travel, padding - contentStart);
+  return Math.max(minimum, Math.min(maximum, position));
+}
+
 export function viewportForBounds(bounds: ViewportBounds, viewportWidth: number, viewportHeight: number, padding = 24) {
   const availableWidth = Math.max(1, viewportWidth - padding * 2); const availableHeight = Math.max(1, viewportHeight - padding * 2); const zoom = Math.max(0.0001, Math.min(MAX_FLOOR_PLAN_ZOOM, Math.min(availableWidth / Math.max(1, bounds.width), availableHeight / Math.max(1, bounds.height))));
   return { x: viewportWidth / 2 - (bounds.x + bounds.width / 2) * zoom, y: viewportHeight / 2 - (bounds.y + bounds.height / 2) * zoom, zoom };

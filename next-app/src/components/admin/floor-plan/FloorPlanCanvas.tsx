@@ -9,7 +9,7 @@ import { applyEditorConstraints } from '@/modules/floor-plan/domain/editor-const
 import { getFloorPlanEditorSettings } from '@/modules/floor-plan/domain/editor-settings';
 import { FloorPlanScene } from '@/components/floor-plan/FloorPlanScene';
 import { resizeBackground, translateBackground } from '@/modules/floor-plan/domain/background-geometry';
-import { MAX_FLOOR_PLAN_ZOOM, sceneBoundsToViewport, viewportForSceneBounds } from '@/modules/floor-plan/domain/viewport';
+import { clampPanAxis, MAX_FLOOR_PLAN_ZOOM, sceneBoundsToViewport, viewportForSceneBounds } from '@/modules/floor-plan/domain/viewport';
 import { workspaceBounds } from '@/modules/floor-plan/domain/workspace-geometry';
 
 type BackgroundHandle = 'move' | 'rotate' | 'nw' | 'ne' | 'se' | 'sw' | 'e' | 'w' | 'n' | 's';
@@ -24,10 +24,8 @@ function clampViewportToBounds(viewport: { x: number; y: number; zoom: number },
   const zoom = Math.max(0.0001, viewport.zoom);
   const scaledWidth = screenBounds.width * zoom;
   const scaledHeight = screenBounds.height * zoom;
-  const centeredX = viewportWidth / 2 - (screenBounds.x + screenBounds.width / 2) * zoom;
-  const centeredY = viewportHeight / 2 - (screenBounds.y + screenBounds.height / 2) * zoom;
-  const x = scaledWidth >= viewportWidth - padding * 2 ? Math.max(viewportWidth - padding - (screenBounds.x + screenBounds.width) * zoom, Math.min(padding - screenBounds.x * zoom, viewport.x)) : centeredX;
-  const y = scaledHeight >= viewportHeight - padding * 2 ? Math.max(viewportHeight - padding - (screenBounds.y + screenBounds.height) * zoom, Math.min(padding - screenBounds.y * zoom, viewport.y)) : centeredY;
+  const x = clampPanAxis(viewport.x, screenBounds.x * zoom, scaledWidth, viewportWidth, padding);
+  const y = clampPanAxis(viewport.y, screenBounds.y * zoom, scaledHeight, viewportHeight, padding);
   return { x, y, zoom };
 }
 function gestureDelta(active: Gesture, origin: FloorElement, point: { x: number; y: number }) { if (active.kind !== 'move') return { x: point.x - active.startX, y: point.y - active.startY }; const center = elementCenter(origin); return { x: point.x - active.startX - center.x, y: point.y - active.startY - center.y }; }

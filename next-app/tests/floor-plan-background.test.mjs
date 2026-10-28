@@ -47,6 +47,17 @@ test('scene fit accounts for the SVG document scale', async () => {
   assert.ok(viewport.y > 0);
 });
 
+test('pan remains movable at fit and zoom-out while keeping finite navigation bounds', async () => {
+  const { clampPanAxis } = await loadTypeScriptModule('src/modules/floor-plan/domain/viewport.ts');
+  for (const size of [400, 752, 1600]) {
+    const center = 400 - 24 - size / 2;
+    assert.equal(clampPanAxis(center + 60, 24, size, 800), center + 60);
+    assert.equal(clampPanAxis(center - 60, 24, size, 800), center - 60);
+    assert.ok(clampPanAxis(1e6, 24, size, 800) < 800);
+    assert.ok(clampPanAxis(-1e6, 24, size, 800) > -2000);
+  }
+});
+
 test('background flow stores only an asset reference and removes creation tools', () => {
   const model = source('src/modules/floor-plan/domain/model.ts');
   const palette = source('src/components/admin/floor-plan/FloorPlanPalette.tsx');
