@@ -18,6 +18,56 @@ const preferenceLabels: Record<(typeof preferenceOrder)[number], string> = {
   other: 'Outra necessidade',
 };
 
+const monthsLong = [
+  'janeiro',
+  'fevereiro',
+  'março',
+  'abril',
+  'maio',
+  'junho',
+  'julho',
+  'agosto',
+  'setembro',
+  'outubro',
+  'novembro',
+  'dezembro',
+] as const;
+
+const monthsShort = [
+  'JAN',
+  'FEV',
+  'MAR',
+  'ABR',
+  'MAI',
+  'JUN',
+  'JUL',
+  'AGO',
+  'SET',
+  'OUT',
+  'NOV',
+  'DEZ',
+] as const;
+
+const weekdaysLong = [
+  'DOMINGO',
+  'SEGUNDA-FEIRA',
+  'TERÇA-FEIRA',
+  'QUARTA-FEIRA',
+  'QUINTA-FEIRA',
+  'SEXTA-FEIRA',
+  'SÁBADO',
+] as const;
+
+const weekdaysShort = [
+  'Dom',
+  'Seg',
+  'Ter',
+  'Qua',
+  'Qui',
+  'Sex',
+  'Sáb',
+] as const;
+
 export const reservationStatusLabels: Record<ReservationStatus, string> = {
   draft: 'Pendente',
   hold: 'Pendente',
@@ -31,25 +81,85 @@ export const reservationStatusLabels: Record<ReservationStatus, string> = {
   expired: 'Expirada',
 };
 
-export function formatReservationDate(value: string): string {
+export type ReservationTicketDateParts = {
+  isValid: boolean;
+  day: string;
+  monthYearLine1: string;
+  monthYearLine2: string;
+  weekdayLong: string;
+  monthShort: string;
+  year: string;
+  weekdayShort: string;
+  fullLabel: string;
+};
+
+type ParsedCalendarDate = {
+  year: number;
+  monthIndex: number;
+  day: number;
+  dayText: string;
+  yearText: string;
+  weekdayIndex: number;
+};
+
+const invalidTicketDateParts: ReservationTicketDateParts = {
+  isValid: false,
+  day: '--',
+  monthYearLine1: 'Data não',
+  monthYearLine2: 'informada',
+  weekdayLong: 'DATA INDISPONÍVEL',
+  monthShort: '---',
+  year: '----',
+  weekdayShort: '---',
+  fullLabel: 'Data não informada',
+};
+
+function isSameUtcCalendarDate(date: Date, year: number, monthIndex: number, day: number): boolean {
+  if (date.getUTCFullYear() !== year) return false;
+  if (date.getUTCMonth() !== monthIndex) return false;
+  return date.getUTCDate() === day;
+}
+
+function parseIsoCalendarDate(value: string): ParsedCalendarDate | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return 'Data não informada';
+  if (!match) return null;
   const [, yearText, monthText, dayText] = match;
   const year = Number(yearText);
-  const month = Number(monthText);
+  const monthIndex = Number(monthText) - 1;
   const day = Number(dayText);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  if (
-    date.getUTCFullYear() !== year
-    || date.getUTCMonth() !== month - 1
-    || date.getUTCDate() !== day
-  ) return 'Data não informada';
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(date);
+  const date = new Date(Date.UTC(year, monthIndex, day));
+  if (!isSameUtcCalendarDate(date, year, monthIndex, day)) return null;
+  return {
+    year,
+    monthIndex,
+    day,
+    dayText,
+    yearText,
+    weekdayIndex: date.getUTCDay(),
+  };
+}
+
+export function formatReservationDate(value: string): string {
+  const parsed = parseIsoCalendarDate(value);
+  if (!parsed) return 'Data não informada';
+  return `${parsed.dayText} de ${monthsLong[parsed.monthIndex]} de ${parsed.yearText}`;
+}
+
+export function formatReservationTicketDate(value: string): ReservationTicketDateParts {
+  const parsed = parseIsoCalendarDate(value);
+  if (!parsed) return invalidTicketDateParts;
+  const monthName = monthsLong[parsed.monthIndex];
+  return {
+    isValid: true,
+    day: parsed.dayText,
+    monthYearLine1: `de ${monthName}`,
+    monthYearLine2: `de ${parsed.yearText}`,
+    weekdayLong: weekdaysLong[parsed.weekdayIndex],
+    monthShort: monthsShort[parsed.monthIndex],
+    year: parsed.yearText,
+    weekdayShort: weekdaysShort[parsed.weekdayIndex],
+    fullLabel: `${parsed.dayText} de ${monthName} de ${parsed.yearText}`,
+  };
 }
 
 export function formatReservationDuration(value: number | null): string {
@@ -57,8 +167,20 @@ export function formatReservationDuration(value: number | null): string {
   return value === 1 ? '1 minuto' : `${value} minutos`;
 }
 
+export function formatCompactDurationParts(value: number | null): { primary: string; unit: string | null } {
+  if (value === null) return { primary: 'Não inf.', unit: null };
+  return { primary: String(value), unit: 'min' };
+}
+
 export function formatGuestCount(value: number): string {
   return value === 1 ? '1 pessoa' : `${value} pessoas`;
+}
+
+export function formatCompactGuestParts(value: number): { count: string; unit: string } {
+  return {
+    count: String(value),
+    unit: value === 1 ? 'pessoa' : 'pessoas',
+  };
 }
 
 export function formatSpecialNeeds(values: string[]): string {

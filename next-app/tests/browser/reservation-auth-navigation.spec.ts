@@ -3,7 +3,6 @@ import { PNG } from 'pngjs';
 
 type MockOptions = {
   authenticated?: boolean;
-  lookupStatus?: 'exists' | 'available';
   holdDelayMs?: number;
   holdDurationMs?: number;
   checkpointDelayMs?: number;
@@ -21,6 +20,7 @@ type MockState = {
   stages: string[];
   reservations: number;
   reservationRequests: unknown[];
+  authRequests: string[];
 };
 
 async function fulfill(route: Route, body: unknown, status = 200) {
@@ -37,6 +37,7 @@ async function installApiMocks(page: Page, options: MockOptions = {}): Promise<M
     stages: [],
     reservations: 0,
     reservationRequests: [],
+    authRequests: [],
   };
   let checkpointNetworkFailuresRemaining = options.checkpointResult === 'network-once' ? 1 : 0;
 
@@ -52,16 +53,15 @@ async function installApiMocks(page: Page, options: MockOptions = {}): Promise<M
     if (pathname === '/api/reservations/flow' && method === 'POST') {
       return fulfill(route, { flowId: 'flow_test_' + 'x'.repeat(33), attemptId: 'attempt_test_' + 'x'.repeat(30), revision: 0 });
     }
-    if (pathname === '/api/customer-auth/lookup' && method === 'POST') {
-      return fulfill(route, { status: options.lookupStatus ?? 'exists' });
-    }
     if (pathname === '/api/customer-auth/sign-in' && method === 'POST') {
+      state.authRequests.push(pathname);
       state.authenticated = true;
-      return fulfill(route, { status: 'authenticated' });
+      return fulfill(route, { status: 'authenticated', user: { id: 'customer-test', name: 'Cliente de teste' } });
     }
     if (pathname === '/api/customer-auth/sign-up' && method === 'POST') {
+      state.authRequests.push(pathname);
       state.authenticated = true;
-      return fulfill(route, { status: 'created' });
+      return fulfill(route, { status: 'created', user: { id: 'customer-test', name: 'Cliente de teste' } });
     }
     if (pathname === '/api/customer-auth/check-session' && method === 'POST') {
       if (options.checkpointDelayMs) await new Promise((resolve) => setTimeout(resolve, options.checkpointDelayMs));
@@ -70,6 +70,7 @@ async function installApiMocks(page: Page, options: MockOptions = {}): Promise<M
         return route.abort();
       }
       if (options.checkpointResult === 'session_expired' || options.checkpointResult === 'account_changed') {
+        state.authenticated = false;
         return fulfill(route, {
           error: options.checkpointResult,
           message: 'A sessão não está mais disponível.',
@@ -290,37 +291,45 @@ test('logged-in user can return through reservation stages to Data without reach
   expect(api.reservations).toBe(1);
 });
 
-test('login completed inside reservation applies the same Data boundary', async ({ page }) => {
-  await installApiMocks(page, { lookupStatus: 'exists' });
+test('anonymous reservation shows the access gate without embedding authentication', async ({ page }) => {
+  const api = await installApiMocks(page);
   await page.goto('/reservas');
-  await expect(page.locator('#reservation-cpf')).toBeVisible();
-  await page.locator('#reservation-cpf').fill('52998224725');
-  await expect(page.getByRole('heading', { name: /Este CPF já possui cadastro/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Acessar conta' }).click();
-  await page.locator('#reservation-password').fill('senha-de-teste');
-  await page.getByRole('button', { name: 'Entrar e continuar' }).click();
+  await expect(page.getByRole('heading', { name: 'Acesse sua conta para continuar' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Entrar ou criar conta' })).toHaveAttribute('href', '/acesso?returnTo=%2Freservas');
+  await expect(page.locator('.reservation-calendar')).toHaveCount(0);
+  expect(api.authRequests).toEqual([]);
+});
+
+test('login entered from the reservation gate returns to reservations and opens Data', async ({ page }) => {
+  const api = await installApiMocks(page);
+  await page.goto('/acesso?returnTo=%2Freservas');
+  await page.locator('#login-cpf').fill('52998224725');
+  await page.locator('#login-password').fill('senha-de-teste');
+  const startedAt = Date.now();
+  await page.getByRole('button', { name: 'Entrar' }).click();
 
   await expectOnData(page);
   await expect(page.getByRole('button', { name: 'Voltar' })).toHaveCount(0);
+  expect(Date.now() - startedAt).toBeGreaterThanOrEqual(950);
+  expect(api.authRequests).toEqual(['/api/customer-auth/sign-in']);
 });
 
-test('signup completed inside reservation applies the same Data boundary', async ({ page }) => {
-  await installApiMocks(page, { lookupStatus: 'available' });
-  await page.goto('/reservas');
-  await page.locator('#reservation-cpf').fill('52998224725');
-  await expect(page.getByRole('heading', { name: 'Seus dados de acesso' })).toBeVisible();
-
+test('signup entered from the reservation gate returns to reservations and opens Data', async ({ page }) => {
+  const api = await installApiMocks(page);
+  await page.goto('/acesso?returnTo=%2Freservas&modo=cadastro');
   await page.locator('#signup-name').fill('Cliente de teste');
-  await page.locator('#signup-birth-date').fill('1990-01-01');
+  await page.locator('#signup-cpf').fill('52998224725');
+  await page.locator('#signup-birth-date').fill('01/01/1990');
   await page.locator('#signup-email').fill('cliente@example.test');
   await page.locator('#signup-email-confirmation').fill('cliente@example.test');
   await page.locator('#signup-password').fill('LongRandomWinePassphrase42');
   await page.locator('#signup-password-confirmation').fill('LongRandomWinePassphrase42');
-  await page.locator('#signup-accept-terms').check();
+  await page.getByText('Aceito os').locator('..').getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Criar conta e continuar' }).click();
 
   await expectOnData(page);
   await expect(page.getByRole('button', { name: 'Voltar' })).toHaveCount(0);
+  expect(api.authRequests).toEqual(['/api/customer-auth/sign-up']);
 });
 
 test('Voltar is disabled while a table hold is pending', async ({ page }) => {
@@ -344,7 +353,7 @@ for (const [reason, redirectState] of [['session_expired', 'expired'], ['account
     await page.getByRole('button', { name: '19:00' }).click();
     await page.getByRole('button', { name: 'Continuar' }).click();
 
-    await expect(page).toHaveURL(new RegExp('/\\?auth=' + redirectState + '$'));
+    await expect(page).toHaveURL(new RegExp('/acesso\\?returnTo=%2Freservas&auth=' + redirectState + '$'));
     await expect(page.locator('#reservation-cpf')).toHaveCount(0);
   });
 }

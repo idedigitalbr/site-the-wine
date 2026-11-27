@@ -72,3 +72,24 @@ test('resolves account identity before querying and paginates 20 visible records
   assert.deepEqual(empty, { reservations: [], nextOffset: null });
   assert.deepEqual(emptyCalls, []);
 });
+
+
+test('formats structured ticket date parts and compact mobile metrics deterministically', () => {
+  assert.deepEqual(formatters.formatReservationTicketDate('2026-10-14'), {
+    isValid: true,
+    day: '14',
+    monthYearLine1: 'de outubro',
+    monthYearLine2: 'de 2026',
+    weekdayLong: 'QUARTA-FEIRA',
+    monthShort: 'OUT',
+    year: '2026',
+    weekdayShort: 'Qua',
+    fullLabel: '14 de outubro de 2026',
+  });
+  assert.equal(formatters.formatReservationTicketDate('2026-02-31').isValid, false);
+  assert.equal(formatters.formatReservationTicketDate('2026-02-31').day, '--');
+  assert.deepEqual(formatters.formatCompactDurationParts(120), { primary: '120', unit: 'min' });
+  assert.deepEqual(formatters.formatCompactDurationParts(null), { primary: 'Não inf.', unit: null });
+  assert.deepEqual(formatters.formatCompactGuestParts(1), { count: '1', unit: 'pessoa' });
+  assert.deepEqual(formatters.formatCompactGuestParts(7), { count: '7', unit: 'pessoas' });
+});

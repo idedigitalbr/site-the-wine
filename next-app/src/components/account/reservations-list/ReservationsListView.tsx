@@ -12,15 +12,32 @@ type ReservationsListState = ReturnType<typeof useCustomerReservations>;
 function ReadyReservations({ state }: { state: ReservationsListState }) {
   return (
     <>
-      {state.reservations.length === 0 && <p className={styles.emptyMessage}>Você ainda não tem reservas.</p>}
+      {state.reservations.length === 0 && (
+        <p className={styles.emptyMessage}>Você ainda não tem reservas.</p>
+      )}
       <div className={styles.cardsGrid}>
-        {state.reservations.map((reservation) => <ReservationCard key={reservation.id} reservation={reservation} />)}
+        {state.reservations.map((reservation, index) => (
+          <ReservationCard
+            key={reservation.id}
+            reservation={reservation}
+            defaultMobileExpanded={index === 0}
+          />
+        ))}
         <AddReservationCard />
       </div>
       {state.nextOffset !== null && (
         <div className={styles.pagination}>
-          {state.moreError && <p className={styles.feedbackText} role="alert">Não foi possível carregar mais reservas.</p>}
-          <button className={styles.actionButton} type="button" disabled={state.isLoadingMore} onClick={() => void state.loadMore()}>
+          {state.moreError && (
+            <p className={styles.feedbackText} role="alert">
+              Não foi possível carregar mais reservas.
+            </p>
+          )}
+          <button
+            className={styles.actionButton}
+            type="button"
+            disabled={state.isLoadingMore}
+            onClick={() => void state.loadMore()}
+          >
             {state.isLoadingMore ? 'Carregando…' : state.moreError ? 'Tentar carregar mais' : 'Carregar mais'}
           </button>
         </div>
@@ -38,12 +55,26 @@ function ReservationsListStateContent({ state }: { state: ReservationsListState 
       </div>
     );
   }
-  if (state.phase === 'redirecting') return <div className={styles.feedbackBox} role="status">Redirecionando para o acesso…</div>;
+  if (state.phase === 'redirecting') {
+    return (
+      <div className={styles.feedbackBox} role="status">
+        Redirecionando para o acesso…
+      </div>
+    );
+  }
   if (state.phase === 'error') {
     return (
       <div className={styles.feedbackBox} role="alert">
-        <p className={styles.feedbackText}>Não foi possível carregar suas reservas agora. Tente novamente.</p>
-        <button className={styles.actionButton} type="button" onClick={() => void state.retry()}>Tentar novamente</button>
+        <p className={styles.feedbackText}>
+          Não foi possível carregar suas reservas agora. Tente novamente.
+        </p>
+        <button
+          className={styles.actionButton}
+          type="button"
+          onClick={() => void state.retry()}
+        >
+          Tentar novamente
+        </button>
       </div>
     );
   }

@@ -32,7 +32,7 @@ export default async function ReservationsListRoute() {
   const request = new Request('http://internal/lista-de-reservas', { headers: requestHeaders });
   const access = await getCustomerReservationsPageAccess(request, getCustomerSession);
 
-  if (access.status === 'anonymous') redirect('/reservas');
+  if (access.status === 'anonymous') redirect('/acesso');
   if (access.status === 'unavailable') {
     return (
       <PageShell>
