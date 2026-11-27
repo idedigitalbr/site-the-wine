@@ -43,8 +43,8 @@ test('customer signup schema validates CPF, birth date, email confirmation, pass
     birthDate: '2000-02-29',
     recoveryEmail: ' Ruy@Example.com ',
     recoveryEmailConfirmation: 'ruy@example.com',
-    password: 'senha que deve continuar literal ',
-    passwordConfirmation: 'senha que deve continuar literal ',
+    password: 'senha forte! ',
+    passwordConfirmation: 'senha forte! ',
     acceptWeakPassword: true,
     marketingConsent: false,
     acceptTerms: true,
@@ -60,5 +60,10 @@ test('customer signup schema validates CPF, birth date, email confirmation, pass
   assert.equal(customerSignupSchema.safeParse({ ...input, birthDate: '2027-01-01' }).success, false);
   assert.equal(customerSignupSchema.safeParse({ ...input, recoveryEmailConfirmation: 'other@example.com' }).success, false);
   assert.equal(customerSignupSchema.safeParse({ ...input, passwordConfirmation: 'different' }).success, false);
+  assert.equal(customerSignupSchema.safeParse({ ...input, name: 'João\nSilva' }).success, false);
+  assert.equal(customerSignupSchema.safeParse({ ...input, recoveryEmail: 'ruy silva@example.com' }).success, false);
+  assert.equal(customerSignupSchema.safeParse({ ...input, recoveryEmailConfirmation: `${'a'.repeat(245)}@example.com` }).success, false);
+  assert.equal(customerSignupSchema.safeParse({ ...input, password: '1234567', passwordConfirmation: '1234567' }).success, false);
+  assert.equal(customerSignupSchema.safeParse({ ...input, password: 'x'.repeat(21), passwordConfirmation: 'x'.repeat(21) }).success, false);
   assert.equal(customerSignupSchema.safeParse({ ...input, acceptTerms: false }).success, false);
 });

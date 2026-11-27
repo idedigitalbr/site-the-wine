@@ -56,6 +56,29 @@ async function chooseDateAndTime(page: Page) {
   await page.getByRole('button', { name: '20:30', exact: true }).click();
 }
 
+async function assertFirstEntryScrollBehavior(page: Page, viewport: { width: number; height: number }) {
+  await page.setViewportSize(viewport);
+  await installVisualFixture(page);
+  await openData(page);
+  await chooseDateAndTime(page);
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' }));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+
+  await page.locator('.reservation-wizard-action--forward').evaluate((button) => (button as HTMLButtonElement).click());
+  await expect(page.locator('.reservation-guest-trigger')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' }));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await page.locator('.reservation-wizard-action--back').evaluate((button) => (button as HTMLButtonElement).click());
+  await expect(page.locator('.reservation-calendar')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+
+  await page.locator('.reservation-wizard-action--forward').evaluate((button) => (button as HTMLButtonElement).click());
+  await expect(page.locator('.reservation-guest-trigger')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+}
+
 test.describe('reservas V2.4 visual fixture', () => {
   test.use({ viewport: { width: 1024, height: 682 } });
 
@@ -141,5 +164,32 @@ test.describe('reservas V2.4 visual fixture', () => {
     expect(overflow).toBeLessThanOrEqual(1);
     const mobileTimeColumns = await page.locator('.reservation-time-grid').evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').length);
     expect(mobileTimeColumns).toBe(2);
+  });
+
+  test('mobile confirmation removes the secondary summary surface', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await installVisualFixture(page);
+    await openData(page);
+    await chooseDateAndTime(page);
+    await page.getByRole('button', { name: /Continuar/i }).click();
+    await page.locator('.reservation-guest-trigger').click();
+    await page.getByRole('button', { name: '6 pessoas', exact: true }).click();
+    await page.getByRole('button', { name: /Continuar/i }).click();
+    await page.getByRole('button', { name: /Continuar/i }).click();
+
+    await expect(page.locator('.reservation-review-grid')).toBeVisible();
+    await expect(page.locator('.reservation-review-summary')).toBeHidden();
+    await expect(page.locator('.reservation-review-summary-photo')).toBeHidden();
+    await expect(page.locator('.reservation-wizard-actions')).toBeVisible();
+    await page.screenshot({ path: test.info().outputPath('06-confirmacao-mobile-sem-resumo.png'), fullPage: false });
+    await page.locator('.reservation-panel-review').screenshot({ path: test.info().outputPath('crop-confirmacao-mobile-sem-resumo.png') });
+  });
+
+  test('scrolls only when entering a reservation step for the first time', async ({ page }) => {
+    await assertFirstEntryScrollBehavior(page, { width: 1024, height: 682 });
+  });
+
+  test('keeps the same first-entry scroll rule on mobile', async ({ page }) => {
+    await assertFirstEntryScrollBehavior(page, { width: 390, height: 844 });
   });
 });

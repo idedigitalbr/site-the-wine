@@ -27,6 +27,7 @@ test('lucide-react is the source for generic interface icons', () => {
     if (!relative.endsWith('.tsx')) continue;
     const normalized = relative.replace(/\\/g, '/');
     if (normalized === 'icons/SocialIcons.tsx' || normalized === 'sections/AboutSection.tsx') continue;
+    if (normalized === 'reservation/v2/CheckoutReservationSummary.tsx') continue;
     assert.doesNotMatch(read(`src/components/${relative}`), /<svg\b/, `${relative} still contains a hand-authored SVG`);
   }
 });

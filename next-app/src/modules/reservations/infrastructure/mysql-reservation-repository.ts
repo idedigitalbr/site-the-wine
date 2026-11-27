@@ -53,6 +53,28 @@ type OperationRow = RowDataPacket & {
   replayExpiresAt: string | null;
 };
 
+const activeReservationOccupancySql = `(r.status IN ('hold', 'pending', 'confirmed', 'seated') OR (r.status = 'payment_pending' AND (r.checkout_mode IS NULL OR (r.seat_guarantee_expires_at > CURRENT_TIMESTAMP(3) AND r.payment_deadline_at > CURRENT_TIMESTAMP(3)))))`;
+
+function reservationPaymentDeadlineAt(reservationDate: string, startTime: string, timeZone: string): Date {
+  const base = new Date(`${reservationDate}T${startTime}:00.000Z`);
+  let candidate = base;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(candidate).reduce<Record<string, string>>((result, part) => { result[part.type] = part.value; return result; }, {});
+    const represented = Date.parse(`${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}Z`);
+    candidate = new Date(base.getTime() - (represented - candidate.getTime()));
+  }
+  return new Date(candidate.getTime() + 2 * 60 * 60 * 1000);
+}
+
+function checkoutPaymentDeadline(input: ReservationDraft): Date | null {
+  if (input.status !== 'payment_pending') return null;
+  return reservationPaymentDeadlineAt(
+    input.reservationDate,
+    input.startTime,
+    process.env.RESERVATION_ESTABLISHMENT_TIMEZONE?.trim() || 'America/Sao_Paulo',
+  );
+}
+
 async function insertReservationEvent(
   connection: PoolConnection,
   reservationId: number,
@@ -166,7 +188,7 @@ async function assertNoReservationConflict(
      INNER JOIN reservations r ON r.id = rt.reservation_id
      WHERE rt.restaurant_table_id IN (${placeholders(ids)})
        AND r.reservation_date = ?
-       AND r.status IN ('hold', 'payment_pending', 'pending', 'confirmed', 'seated')
+       AND ${activeReservationOccupancySql}
        AND r.start_time < ? AND r.end_time > ?
      FOR UPDATE`,
     [...ids, input.reservation.reservationDate, input.reservation.endTime, input.reservation.startTime],
@@ -234,13 +256,19 @@ async function assertNoConflicts(
   await assertNoHoldConflict(connection, input.tableIds, window.startsAt, window.endsAt, input.sessionTokenHash, attemptIdHash);
 }
 
+// The SQL branch keeps legacy reservations nullable while initializing the four checkout fields atomically.
 async function insertReservation(connection: PoolConnection, input: ReservationDraft): Promise<number> {
+  const paymentDeadline = checkoutPaymentDeadline(input);
   const [result] = await connection.execute<ResultSetHeader>(
     `INSERT INTO reservations
       (public_code, customer_id, experience_id, reservation_date,
        start_time, end_time, guest_count, status, preferred_table_type_id,
-       source, notes, internal_notes, confirmation_token_hash)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       source, notes, internal_notes, confirmation_token_hash,
+       checkout_started_at, seat_guarantee_expires_at, payment_deadline_at, checkout_mode)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+       IF(? = 'payment_pending', UTC_TIMESTAMP(3), NULL),
+       IF(? = 'payment_pending', DATE_ADD(UTC_TIMESTAMP(3), INTERVAL 30 MINUTE), NULL),
+       ?, IF(? = 'payment_pending', 'demo', NULL))`,
     [
       input.publicCode,
       input.customerId,
@@ -255,9 +283,21 @@ async function insertReservation(connection: PoolConnection, input: ReservationD
       input.notes ?? null,
       input.internalNotes ?? null,
       input.confirmationTokenHash ?? null,
+      input.status,
+      input.status,
+      paymentDeadline,
+      input.status,
     ],
   );
   return result.insertId;
+}
+
+async function insertCheckoutSession(connection: PoolConnection, reservationId: number): Promise<void> {
+  await connection.execute(
+    `INSERT INTO reservation_checkout_sessions (reservation_id, mode, state, version)
+     VALUES (?, 'demo', 'pending', 1)`,
+    [reservationId],
+  );
 }
 
 async function insertTableAssignments(
@@ -640,7 +680,8 @@ export class MysqlReservationRepository implements ReservationRepository, Reserv
       const reservationId = await insertReservation(connection, input.reservation);
       await insertTableAssignments(connection, reservationId, ids);
       await insertSpecialNeeds(connection, reservationId, input.specialNeeds, input.specialNeedsOther);
-      await insertReservationEvent(connection, reservationId, 'created', null, 'confirmed', 'customer', `reservation:${reservationId}:created`);
+      await insertCheckoutSession(connection, reservationId);
+      await insertReservationEvent(connection, reservationId, 'created', null, 'payment_pending', 'customer', `reservation:${reservationId}:created`);
       await connection.execute(
         `DELETE FROM reservation_holds
          WHERE session_token_hash = ? AND restaurant_table_id IN (${placeholders(ids)})`,
@@ -688,7 +729,8 @@ export class MysqlReservationRepository implements ReservationRepository, Reserv
       const reservationId = await insertReservation(connection, input.reservation);
       await insertTableAssignments(connection, reservationId, ids);
       await insertSpecialNeeds(connection, reservationId, input.specialNeeds, input.specialNeedsOther);
-      await insertReservationEvent(connection, reservationId, 'created', null, 'confirmed', 'customer', `reservation:${reservationId}:created`);
+      await insertCheckoutSession(connection, reservationId);
+      await insertReservationEvent(connection, reservationId, 'created', null, 'payment_pending', 'customer', `reservation:${reservationId}:created`);
       await connection.execute(
         `DELETE FROM reservation_holds
          WHERE attempt_id_hash = ? AND session_token_hash = ? AND restaurant_table_id IN (${placeholders(ids)})`,

@@ -85,7 +85,7 @@ test('real adapter uses customer binding, ordering and one query per page', asyn
   const pool = { execute: async (sql, params) => {
     calls.push({ sql, params });
     return [[{
-      id: '11', reservationDate: '2026-10-23', startTime: '20:00', endTime: '22:00', guestCount: '2', status: 'confirmed', notes: null, specialNeedsCsv: 'high_chair, dietary_restriction,none,',
+      id: '11', publicCode: 'TW-11', reservationDate: '2026-10-23', startTime: '20:00', endTime: '22:00', guestCount: '2', status: 'confirmed', paymentStatus: null, notes: null, specialNeedsCsv: 'high_chair, dietary_restriction,none,',
     }], []];
   } };
   const repository = new adapterModule.MysqlCustomerReservationQueryRepository(pool);
@@ -94,5 +94,26 @@ test('real adapter uses customer binding, ordering and one query per page', asyn
   assert.deepEqual(calls[0].params, [11, 21, 0]);
   assert.match(calls[0].sql, /WHERE r\.customer_id = \?/);
   assert.match(calls[0].sql, /ORDER BY r\.reservation_date ASC, r\.start_time ASC, r\.id ASC/);
-  assert.deepEqual(rows[0], { id: 11, reservationDate: '2026-10-23', startTime: '20:00', endTime: '22:00', guestCount: 2, status: 'confirmed', specialNeeds: ['high_chair', 'dietary_restriction'], notes: '' });
+  assert.deepEqual(rows[0], { id: 11, publicCode: 'TW-11', reservationDate: '2026-10-23', startTime: '20:00', endTime: '22:00', guestCount: 2, status: 'confirmed', paymentStatus: null, specialNeeds: ['high_chair', 'dietary_restriction'], notes: '' });
+});
+
+test('real adapter preserves past and terminal reservations for account history', async () => {
+  const historicalRows = [
+    { id: '21', reservationDate: '2025-10-23', startTime: '18:00', endTime: '20:00', guestCount: '2', status: 'completed', notes: 'Concluída', specialNeedsCsv: null },
+    { id: '22', reservationDate: '2025-10-24', startTime: '19:00', endTime: '21:00', guestCount: '3', status: 'cancelled', notes: 'Cancelada', specialNeedsCsv: null },
+    { id: '23', reservationDate: '2025-10-25', startTime: '20:00', endTime: '22:00', guestCount: '4', status: 'no_show', notes: 'Não compareceu', specialNeedsCsv: null },
+    { id: '24', reservationDate: '2025-10-26', startTime: '20:00', endTime: '22:00', guestCount: '2', status: 'expired', notes: 'Expirada', specialNeedsCsv: null },
+  ];
+  const calls = [];
+  const pool = { execute: async (sql, params) => {
+    calls.push({ sql, params });
+    return [historicalRows, []];
+  } };
+  const repository = new adapterModule.MysqlCustomerReservationQueryRepository(pool);
+  const rows = await repository.listByCustomerId(11, { offset: 0, limit: 21 });
+
+  assert.deepEqual(rows.map((row) => row.status), ['completed', 'cancelled', 'no_show', 'expired']);
+  assert.deepEqual(rows.map((row) => row.reservationDate), ['2025-10-23', '2025-10-24', '2025-10-25', '2025-10-26']);
+  assert.match(calls[0].sql, /WHERE r\.customer_id = \?/);
+  assert.doesNotMatch(calls[0].sql, /r\.status\s+(?:IN|NOT IN)/i);
 });

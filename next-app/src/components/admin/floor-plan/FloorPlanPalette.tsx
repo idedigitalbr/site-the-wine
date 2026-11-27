@@ -1,0 +1,9 @@
+'use client';
+import { Circle, Grid2X2, Hand, RectangleHorizontal, type LucideIcon } from 'lucide-react';
+import { FloorPlanBackgroundSettings, type FloorPlanBackgroundSettingsProps } from './FloorPlanBackgroundSettings';
+
+export type PaletteAction = 'select' | 'table-square' | 'table-round' | 'table-rectangle';
+const groups: Array<{ label: string; items: Array<{ action: PaletteAction; label: string; icon: LucideIcon }> }> = [
+  { label: 'Mesas', items: [{ action: 'table-square', label: 'Quadrada', icon: Grid2X2 }, { action: 'table-round', label: 'Redonda', icon: Circle }, { action: 'table-rectangle', label: 'Retangular', icon: RectangleHorizontal }] },
+];
+export function FloorPlanPalette({ active, onAction, background }: { active: PaletteAction; onAction: (action: PaletteAction) => void; background: FloorPlanBackgroundSettingsProps }) { return <aside className="floor-plan-palette"><div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><Hand size={16} className="text-primary" /> Ferramentas</div><button className={`floor-plan-tool ${active === 'select' ? 'is-active' : ''}`} onClick={() => onAction('select')}><Hand size={16} /> Selecionar</button>{groups.map((group) => <div key={group.label} className="mt-5"><p className="floor-plan-group-label">{group.label}</p>{group.items.map(({ action, label, icon: Icon }) => <button key={action} className={`floor-plan-tool ${active === action ? 'is-active' : ''}`} onClick={() => onAction(action)}><Icon size={16} /> {label}</button>)}</div>)}<div className="floor-plan-palette-tip mt-5 rounded-md border border-border bg-surface-muted p-3 text-xs text-muted"><p className="font-semibold text-foreground">Dica</p><p className="mt-1">As mesas próximas ficam identificadas nas propriedades. A junção só acontece na reserva.</p></div><FloorPlanBackgroundSettings background={background.background} disabled={background.disabled} onUpload={background.onUpload} /></aside>; }

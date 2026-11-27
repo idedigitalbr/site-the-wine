@@ -17,7 +17,7 @@ npm install
 npm run dev:laragon
 ```
 
-Acesse `http://127.0.0.1:3000`. Se quiser usar um domínio local do Laragon, configure um proxy/reverse proxy para encaminhar o domínio ao processo Node em `127.0.0.1:3000`; não aponte o Apache/Nginx diretamente para `next-app` como se fosse um site PHP.
+Acesse `http://127.0.0.1:3001`. Se quiser usar um domínio local do Laragon, configure um proxy/reverse proxy para encaminhar o domínio ao processo Node em `127.0.0.1:3001`; não aponte o Apache/Nginx diretamente para `next-app` como se fosse um site PHP.
 
 Para executar a versão compilada localmente:
 

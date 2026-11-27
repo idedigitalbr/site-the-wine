@@ -1,0 +1,12 @@
+.receipt {
+  color: #111;
+  background: #fff;
+  font-family: Arial, sans-serif;
+}
+
+.receipt h2 { margin: 0 0 16px; font-size: 22px; font-weight: 700; }
+.receipt dl { display: grid; gap: 8px; margin: 0; }
+.receipt dl > div { display: flex; justify-content: space-between; gap: 20px; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+.receipt dt { color: #555; font-size: 12px; }
+.receipt dd { margin: 0; font-size: 13px; font-weight: 600; text-align: right; }
+.notice { margin: 18px 0 0; font-size: 11px; line-height: 1.5; }

@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import { isValidCpf } from './cpf';
 import { isValidBirthDate } from './birth-date';
-import { validatePasswordBasics } from './password-policy';
+import { isValidCustomerName, normalizeNameInput } from './name';
+import { isValidRecoveryEmail, normalizeRecoveryEmail, RECOVERY_EMAIL_MAX_LENGTH } from './recovery-email';
+import { validateSignupPasswordBasics, validateSignupPasswordLength } from './password-policy';
 
-export function normalizeRecoveryEmail(value: string): string {
-  return value.trim().toLowerCase();
-}
+export { normalizeRecoveryEmail } from './recovery-email';
 
 export function todayInSaoPaulo(now = new Date()): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -24,18 +24,19 @@ export const customerCpfSchema = z.string()
 
 export const customerSignupSchema = z.object({
   cpf: customerCpfSchema,
-  name: z.string().trim().min(2, 'Informe seu nome completo.').max(160, 'Use até 160 caracteres.'),
+  name: z.string().max(200, 'Use um nome válido.').refine(isValidCustomerName, 'Informe um nome completo válido.').transform(normalizeNameInput),
   birthDate: z.string().refine((value) => isValidBirthDate(value, todayInSaoPaulo()), 'Informe uma data válida, que não seja futura.'),
-  recoveryEmail: z.string().trim().max(254, 'Use até 254 caracteres.')
-    .pipe(z.email('Informe um e-mail válido.')),
-  recoveryEmailConfirmation: z.string().trim().pipe(z.email('Confirme o e-mail.')),
-  password: z.string().refine(validatePasswordBasics, 'A senha não pode estar vazia ou conter apenas espaços e deve ter até 128 caracteres.'),
-  passwordConfirmation: z.string(),
+  recoveryEmail: z.string().max(RECOVERY_EMAIL_MAX_LENGTH, 'Use até 254 caracteres.')
+    .refine(isValidRecoveryEmail, 'Informe um e-mail válido.').transform(normalizeRecoveryEmail),
+  recoveryEmailConfirmation: z.string().max(RECOVERY_EMAIL_MAX_LENGTH, 'Use até 254 caracteres.')
+    .refine(isValidRecoveryEmail, 'Confirme o e-mail.').transform(normalizeRecoveryEmail),
+  password: z.string().refine(validateSignupPasswordBasics, 'A senha deve ter entre 8 e 20 caracteres e não pode conter apenas espaços.'),
+  passwordConfirmation: z.string().refine(validateSignupPasswordLength, 'A senha deve ter entre 8 e 20 caracteres.'),
   acceptWeakPassword: z.boolean(),
   marketingConsent: z.boolean(),
   acceptTerms: z.literal(true, 'É necessário aceitar os Termos e Condições.'),
 }).superRefine((value, context) => {
-  if (normalizeRecoveryEmail(value.recoveryEmail) !== normalizeRecoveryEmail(value.recoveryEmailConfirmation)) {
+  if (value.recoveryEmail !== value.recoveryEmailConfirmation) {
     context.addIssue({ code: 'custom', path: ['recoveryEmailConfirmation'], message: 'Os e-mails não correspondem.' });
   }
   if (value.password !== value.passwordConfirmation) {

@@ -22,16 +22,22 @@ function isCalendarDate(value: string): boolean {
 
 export const adminDateSchema = z.string().regex(datePattern).refine(isCalendarDate, 'Informe uma data válida.');
 
-function isAnalyticsRangeValid(from: string, to: string): boolean {
+function isAdminRangeValid(from: string, to: string): boolean {
   const start = Date.parse(`${from}T00:00:00Z`);
   const end = Date.parse(`${to}T00:00:00Z`);
-  return end >= start && end - start <= 31 * 24 * 60 * 60 * 1000;
+  return end >= start && end - start <= 30 * 24 * 60 * 60 * 1000;
 }
 
-export const adminAnalyticsQuerySchema = z.object({
+export const adminDashboardQuerySchema = z.object({
   from: adminDateSchema,
   to: adminDateSchema,
-}).refine(({ from, to }) => isAnalyticsRangeValid(from, to), 'O período deve ser válido e ter no máximo 31 dias.');
+  search: z.string().trim().max(80).optional().default(''),
+  time: z.string().regex(timePattern).optional().default(''),
+  status: z.union([z.enum(reservationStatuses), z.literal('')]).optional().default(''),
+  areaId: z.coerce.number().int().min(0).optional(),
+  page: z.coerce.number().int().min(1).max(10000).optional().default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).optional().default(9),
+}).refine(({ from, to }) => isAdminRangeValid(from, to), 'O período deve ser válido e ter no máximo 31 dias.');
 
 export const adminCustomerQuerySchema = z.object({
   search: z.string().trim().max(80).optional(),

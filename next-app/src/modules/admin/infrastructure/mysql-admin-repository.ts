@@ -1,12 +1,23 @@
-import type { ResultSetHeader, RowDataPacket } from 'mysql2';
-import type { PoolConnection } from 'mysql2/promise';
-import { getDatabasePool } from '@/server/db';
-import type { ReservationOperation } from '@/modules/reservations/domain/reservation-operation';
-import type { ReservationStatus } from '@/modules/reservations/domain/reservation-status';
-import type { WaitlistStatus } from '@/modules/reservations/domain/waitlist';
+import type { ResultSetHeader, RowDataPacket } from "mysql2";
+import type { PoolConnection } from "mysql2/promise";
+import { getDatabasePool } from "@/server/db";
+import type { ReservationOperation } from "@/modules/reservations/domain/reservation-operation";
+import type { ReservationStatus } from "@/modules/reservations/domain/reservation-status";
+import type { WaitlistStatus } from "@/modules/reservations/domain/waitlist";
+import {
+  reservationEventLabel,
+  reservationStatusLabel,
+} from "@/lib/admin-labels";
+import {
+  allocatePlaceholderTables,
+  availabilityMetrics,
+  peakReservedTables,
+  placeholderTableLabels,
+  tableCapacityMetrics,
+  type PlaceholderReservation,
+} from "../domain/dashboard-placeholder-tables";
 import type {
   AdminArea,
-  AdminAnalytics,
   AdminBlockedPeriod,
   AdminBusinessHour,
   AdminCombination,
@@ -17,6 +28,10 @@ import type {
   AdminCustomerProfile,
   AdminCustomerReservation,
   AdminDashboard,
+  AdminDashboardAlert,
+  AdminDashboardQuery,
+  AdminDashboardReservation,
+  AdminDashboardUpdate,
   AdminFloorMap,
   AdminFloorPlanSettings,
   AdminRepository,
@@ -42,7 +57,9 @@ import type {
   FloorTableState,
   UpdateTablePositionInput,
   UpdateFloorPlanSettingsInput,
-} from '../application/ports';
+} from "../application/ports";
+
+/* eslint-disable complexity */
 
 type ReservationRow = RowDataPacket & {
   id: number;
@@ -63,6 +80,50 @@ type ReservationRow = RowDataPacket & {
   seatedAt: string | null;
   completedAt: string | null;
   noShowAt: string | null;
+};
+
+type DashboardReservationRow = RowDataPacket & {
+  id: number;
+  publicCode: string;
+  reservationDate: string;
+  startTime: string;
+  endTime: string;
+  guestCount: number;
+  status: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string | null;
+  tableLabel: string | null;
+  areaName: string | null;
+  notes: string | null;
+  source: string;
+  checkedInAt: string | null;
+  seatedAt: string | null;
+  completedAt: string | null;
+  noShowAt: string | null;
+  paymentStatus: string | null;
+  paymentDeadlineAt: string | null;
+  seatGuaranteeExpiresAt: string | null;
+  checkoutMode: string | null;
+  paymentPendingActive: number;
+};
+
+type DashboardUpdateRow = RowDataPacket & {
+  id: number;
+  reservationId: number;
+  eventType: string;
+  fromStatus: string | null;
+  toStatus: string | null;
+  customerName: string;
+  reservationDate: string;
+  createdAt: string;
+};
+
+type DashboardSummaryRow = RowDataPacket & {
+  reservations: number;
+  expectedGuests: number;
+  activeGuarantees: number;
+  pendingPayments: number;
 };
 
 type ReservationOperationStateRow = RowDataPacket & {
@@ -88,7 +149,12 @@ type ReservationScheduleRow = RowDataPacket & {
   status: string;
   tableIds: string | null;
 };
-type AssignmentTableRow = RowDataPacket & { id: number; capacityMin: number; capacityMax: number; joinable: number };
+type AssignmentTableRow = RowDataPacket & {
+  id: number;
+  capacityMin: number;
+  capacityMax: number;
+  joinable: number;
+};
 
 type WaitlistRow = RowDataPacket & {
   id: number;
@@ -103,28 +169,6 @@ type WaitlistRow = RowDataPacket & {
   notes: string | null;
   createdAt: string;
 };
-
-type MetricsRow = RowDataPacket & {
-  total: number;
-  pending: number;
-  confirmed: number;
-  seated: number;
-};
-
-type AnalyticsSummaryRow = RowDataPacket & {
-  reservations: number;
-  covers: number;
-  completed: number;
-  cancelled: number;
-  noShow: number;
-  uniqueCustomers: number;
-  assignedCovers: number;
-  assignedCapacity: number;
-};
-type AnalyticsAssignmentRow = RowDataPacket & { assignedCovers: number; assignedCapacity: number };
-type AnalyticsDailyRow = RowDataPacket & { date: string; reservations: number; covers: number };
-type AnalyticsSourceRow = RowDataPacket & { source: string; reservations: number; covers: number };
-type AnalyticsPeakHourRow = RowDataPacket & { hour: string; reservations: number; covers: number };
 
 type CustomerRow = RowDataPacket & {
   id: number;
@@ -165,7 +209,12 @@ type CustomerActivityRow = RowDataPacket & {
 };
 
 type StatusRow = RowDataPacket & { status: string };
-type AreaRow = RowDataPacket & { id: number; code: string; name: string; active: number };
+type AreaRow = RowDataPacket & {
+  id: number;
+  code: string;
+  name: string;
+  active: number;
+};
 type TableTypeRow = RowDataPacket & {
   id: number;
   code: string;
@@ -216,7 +265,10 @@ type CombinationRow = RowDataPacket & {
   tableLabel: string | null;
   active: number;
 };
-type FloorPlanSettingsRow = RowDataPacket & { backgroundUrl: string | null; backgroundOpacity: number };
+type FloorPlanSettingsRow = RowDataPacket & {
+  backgroundUrl: string | null;
+  backgroundOpacity: number;
+};
 type BlockedPeriodRow = RowDataPacket & {
   id: number;
   areaId: number | null;
@@ -232,16 +284,18 @@ type CountRow = RowDataPacket & { count: number };
 
 function configurationTable(resource: ConfigurationResource): string {
   const tables: Record<ConfigurationResource, string> = {
-    area: 'dining_areas',
-    table_type: 'table_types',
-    table: 'restaurant_tables',
-    shift: 'service_shifts',
-    business_hour: 'business_hours',
+    area: "dining_areas",
+    table_type: "table_types",
+    table: "restaurant_tables",
+    shift: "service_shifts",
+    business_hour: "business_hours",
   };
   return tables[resource];
 }
 
-async function withTransaction<T>(operation: (connection: PoolConnection) => Promise<T>): Promise<T> {
+async function withTransaction<T>(
+  operation: (connection: PoolConnection) => Promise<T>,
+): Promise<T> {
   const connection = await getDatabasePool().getConnection();
   try {
     await connection.beginTransaction();
@@ -257,7 +311,7 @@ async function withTransaction<T>(operation: (connection: PoolConnection) => Pro
 }
 
 function placeholders(values: number[]): string {
-  return values.map(() => '?').join(', ');
+  return values.map(() => "?").join(", ");
 }
 
 function mapReservation(row: ReservationRow): AdminReservation {
@@ -273,7 +327,7 @@ function mapReservation(row: ReservationRow): AdminReservation {
     customerPhone: row.customerPhone,
     customerEmail: row.customerEmail,
     tableLabel: row.tableLabel,
-    tableIds: row.tableIds ? row.tableIds.split(',').map(Number) : [],
+    tableIds: row.tableIds ? row.tableIds.split(",").map(Number) : [],
     notes: row.notes,
     source: row.source,
     checkedInAt: row.checkedInAt,
@@ -316,7 +370,9 @@ function mapCustomer(row: CustomerRow): AdminCustomer {
   };
 }
 
-function mapCustomerReservation(row: CustomerReservationRow): AdminCustomerReservation {
+function mapCustomerReservation(
+  row: CustomerReservationRow,
+): AdminCustomerReservation {
   return {
     id: Number(row.id),
     publicCode: row.publicCode,
@@ -346,7 +402,12 @@ function mapCustomerActivity(row: CustomerActivityRow): AdminCustomerActivity {
 }
 
 function mapArea(row: AreaRow): AdminArea {
-  return { id: Number(row.id), code: row.code, name: row.name, active: Boolean(row.active) };
+  return {
+    id: Number(row.id),
+    code: row.code,
+    name: row.name,
+    active: Boolean(row.active),
+  };
 }
 
 function mapTableType(row: TableTypeRow): AdminTableType {
@@ -411,16 +472,21 @@ function mapCombination(row: CombinationRow): AdminCombination {
     id: Number(row.id),
     code: row.code,
     name: row.name,
-    tableIds: row.tableIds ? row.tableIds.split(',').map(Number) : [],
-    tableLabel: row.tableLabel ?? '',
+    tableIds: row.tableIds ? row.tableIds.split(",").map(Number) : [],
+    tableLabel: row.tableLabel ?? "",
     active: Boolean(row.active),
   };
 }
 
-function mapFloorPlanSettings(row: FloorPlanSettingsRow | undefined): AdminFloorPlanSettings {
+function mapFloorPlanSettings(
+  row: FloorPlanSettingsRow | undefined,
+): AdminFloorPlanSettings {
   return {
     url: row?.backgroundUrl ?? null,
-    opacity: Math.min(0.8, Math.max(0.1, Number(row?.backgroundOpacity ?? 0.24))),
+    opacity: Math.min(
+      0.8,
+      Math.max(0.1, Number(row?.backgroundOpacity ?? 0.24)),
+    ),
   };
 }
 
@@ -438,50 +504,209 @@ function mapBlockedPeriod(row: BlockedPeriodRow): AdminBlockedPeriod {
   };
 }
 
-function mapMetrics(row: MetricsRow | undefined): AdminDashboard['metrics'] {
-  const value = (key: keyof MetricsRow) => Number(row && row[key] !== undefined ? row[key] : 0);
+function dashboardPaymentStatus(
+  value: string | null,
+): AdminDashboardReservation["paymentStatus"] {
+  if (value === "paid") return "paid";
+  if (value === "pending" || value === "processing") return "pending";
+  if (!value) return "not_realized";
+  return "unknown";
+}
+
+function dashboardPaymentLabel(
+  status: AdminDashboardReservation["paymentStatus"],
+): string {
+  if (status === "paid") return "Pago";
+  if (status === "pending") return "Pendente";
+  if (status === "not_realized") return "Não realizado";
+  return "Indisponível";
+}
+
+function periodLabel(fromDate: string, toDate: string): string {
+  const timeZone =
+    process.env.RESERVATION_ESTABLISHMENT_TIMEZONE?.trim() ||
+    "America/Sao_Paulo";
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone }).format(
+    new Date(),
+  );
+  const yesterdayDate = new Date(`${today}T12:00:00Z`);
+  yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
+  const yesterday = yesterdayDate.toISOString().slice(0, 10);
+  if (fromDate === toDate && fromDate === today) return "Hoje";
+  if (fromDate === toDate && fromDate === yesterday) return "Ontem";
+  if (fromDate === toDate) return formatPeriodDate(fromDate);
+  if (toDate === today) return `${formatPeriodDate(fromDate)} – hoje`;
+  return `${formatPeriodDate(fromDate)} – ${formatPeriodDate(toDate)}`;
+}
+
+function formatPeriodDate(value: string): string {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  })
+    .format(new Date(Date.UTC(year, month - 1, day)))
+    .replace(".", "");
+}
+
+function dashboardFilters(query: AdminDashboardQuery): {
+  where: string;
+  params: Array<string | number>;
+} {
+  const filters: string[] = [
+    "r.status NOT IN ('draft', 'hold')",
+    "r.reservation_date BETWEEN ? AND ?",
+  ];
+  const params: Array<string | number> = [query.fromDate, query.toDate];
+  if (query.search) {
+    filters.push("(c.name LIKE ? OR c.phone LIKE ? OR r.public_code LIKE ?)");
+    params.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`);
+  }
+  if (query.time) {
+    filters.push("TIME_FORMAT(r.start_time, '%H:%i') = ?");
+    params.push(query.time);
+  }
+  if (query.status) {
+    filters.push("r.status = ?");
+    params.push(query.status);
+  }
+  if (query.areaId !== undefined) {
+    if (query.areaId === 0) {
+      filters.push(
+        "NOT EXISTS (SELECT 1 FROM reservation_tables filter_rt INNER JOIN restaurant_tables filter_t ON filter_t.id = filter_rt.restaurant_table_id WHERE filter_rt.reservation_id = r.id AND filter_t.area_id IS NOT NULL)",
+      );
+    } else {
+      filters.push(
+        "EXISTS (SELECT 1 FROM reservation_tables filter_rt INNER JOIN restaurant_tables filter_t ON filter_t.id = filter_rt.restaurant_table_id WHERE filter_rt.reservation_id = r.id AND filter_t.area_id = ?)",
+      );
+      params.push(query.areaId);
+    }
+  }
+  return { where: filters.join(" AND "), params };
+}
+
+function dashboardPlaceholderReservations(
+  rows: DashboardReservationRow[],
+): PlaceholderReservation[] {
+  return rows.map((row) => ({
+    id: Number(row.id),
+    reservationDate: row.reservationDate,
+    startTime: row.startTime,
+    endTime: row.endTime,
+    guestCount: Number(row.guestCount),
+    eligible:
+      ["payment_pending", "pending", "confirmed", "seated"].includes(
+        row.status,
+      ) &&
+      (row.status !== "payment_pending" || Boolean(row.paymentPendingActive)),
+  }));
+}
+
+function mapDashboardReservation(
+  row: DashboardReservationRow,
+  allocations: Map<number, string[]>,
+): AdminDashboardReservation {
+  const allocation = allocations.get(Number(row.id)) ?? [];
+  const paymentStatus = dashboardPaymentStatus(row.paymentStatus);
   return {
-    total: value('total'),
-    pending: value('pending'),
-    confirmed: value('confirmed'),
-    seated: value('seated'),
+    id: Number(row.id),
+    publicCode: row.publicCode,
+    reservationDate: row.reservationDate,
+    startTime: row.startTime,
+    endTime: row.endTime,
+    guestCount: Number(row.guestCount),
+    status: row.status as ReservationStatus,
+    customerName: row.customerName,
+    customerPhone: row.customerPhone,
+    customerEmail: row.customerEmail,
+    tableLabel: row.tableLabel,
+    tableIds: [],
+    notes: row.notes,
+    source: row.source,
+    checkedInAt: row.checkedInAt,
+    seatedAt: row.seatedAt,
+    completedAt: row.completedAt,
+    noShowAt: row.noShowAt,
+    paymentStatus,
+    paymentLabel: dashboardPaymentLabel(paymentStatus),
+    estimatedTableLabel: placeholderTableLabels(allocation),
+    areaName: row.areaName,
+    paymentDeadlineAt: row.paymentDeadlineAt,
   };
 }
 
-function analyticsValue(row: AnalyticsSummaryRow | undefined, key: keyof AnalyticsSummaryRow): number {
-  return Number(row && row[key] !== undefined ? row[key] : 0);
+function dashboardDistribution(rows: DashboardReservationRow[]) {
+  const counts = new Map<string, number>();
+  for (const row of rows)
+    counts.set(row.status, (counts.get(row.status) ?? 0) + 1);
+  const total =
+    [...counts.values()].reduce((sum, value) => sum + value, 0) || 1;
+  const entries = [...counts.entries()];
+  const rounded = entries.map(([, count]) => Math.round((count / total) * 100));
+  const correction = 100 - rounded.reduce((sum, value) => sum + value, 0);
+  return entries.map(([status, count], index) => ({
+    status: status as ReservationStatus,
+    label: reservationStatusLabel(status),
+    count,
+    percentage:
+      rounded[index] + (index === rounded.length - 1 ? correction : 0),
+  }));
 }
 
-function mapAnalyticsMetrics(row: AnalyticsSummaryRow | undefined): AdminAnalytics['metrics'] {
-  const assignedCovers = analyticsValue(row, 'assignedCovers');
-  const assignedCapacity = analyticsValue(row, 'assignedCapacity');
-  return {
-    reservations: analyticsValue(row, 'reservations'),
-    covers: analyticsValue(row, 'covers'),
-    completed: analyticsValue(row, 'completed'),
-    cancelled: analyticsValue(row, 'cancelled'),
-    noShow: analyticsValue(row, 'noShow'),
-    uniqueCustomers: analyticsValue(row, 'uniqueCustomers'),
-    assignedCovers,
-    assignedCapacity,
-    occupancyRate: assignedCapacity > 0 ? Math.round((assignedCovers / assignedCapacity) * 1000) / 10 : 0,
-    revenue: null,
-  };
+function dashboardAlerts(
+  reservations: AdminDashboardReservation[],
+): AdminDashboardAlert[] {
+  return reservations
+    .filter((reservation) => reservation.status === "payment_pending")
+    .sort((first, second) =>
+      (first.paymentDeadlineAt ?? "9999").localeCompare(
+        second.paymentDeadlineAt ?? "9999",
+      ),
+    )
+    .map((reservation) => ({
+      id: reservation.id,
+      type: "payment_pending" as const,
+      title: "Pagamento pendente",
+      customerName: reservation.customerName,
+      reservationDate: reservation.reservationDate,
+      startTime: reservation.startTime,
+      estimatedTableLabel: reservation.estimatedTableLabel,
+      detail: reservation.paymentDeadlineAt
+        ? `Aguardando confirmação até ${reservation.paymentDeadlineAt.slice(-5)}`
+        : "Aguardando confirmação",
+      paymentDeadlineAt: reservation.paymentDeadlineAt,
+    }));
 }
 
-function mapAnalyticsDaily(row: AnalyticsDailyRow): AdminAnalytics['daily'][number] {
-  return { date: row.date, reservations: Number(row.reservations), covers: Number(row.covers) };
+function dashboardUpdates(
+  rows: DashboardUpdateRow[],
+  allocations: Map<number, string[]>,
+): AdminDashboardUpdate[] {
+  return rows.map((row) => ({
+    id: Number(row.id),
+    reservationId: Number(row.reservationId),
+    eventType: row.eventType,
+    eventLabel: reservationEventLabel(
+      row.eventType,
+      row.fromStatus,
+      row.toStatus,
+    ),
+    customerName: row.customerName,
+    reservationDate: row.reservationDate,
+    estimatedTableLabel: placeholderTableLabels(
+      allocations.get(Number(row.reservationId)) ?? [],
+    ),
+    createdAt: row.createdAt,
+    toStatus: row.toStatus as ReservationStatus | null,
+  }));
 }
 
-function mapAnalyticsSource(row: AnalyticsSourceRow): AdminAnalytics['sources'][number] {
-  return { source: row.source, reservations: Number(row.reservations), covers: Number(row.covers) };
-}
-
-function mapAnalyticsPeakHour(row: AnalyticsPeakHourRow): AdminAnalytics['peakHours'][number] {
-  return { hour: row.hour, reservations: Number(row.reservations), covers: Number(row.covers) };
-}
-
-async function loadAssignmentTables(connection: PoolConnection, tableIds: number[]): Promise<AssignmentTableRow[]> {
+async function loadAssignmentTables(
+  connection: PoolConnection,
+  tableIds: number[],
+): Promise<AssignmentTableRow[]> {
   const [tables] = await connection.execute<AssignmentTableRow[]>(
     `SELECT id, capacity_min AS capacityMin, capacity_max AS capacityMax, joinable
      FROM restaurant_tables
@@ -489,21 +714,37 @@ async function loadAssignmentTables(connection: PoolConnection, tableIds: number
      FOR UPDATE`,
     tableIds,
   );
-  if (tables.length !== tableIds.length) throw new Error('Invalid reservation tables');
+  if (tables.length !== tableIds.length)
+    throw new Error("Invalid reservation tables");
   return tables;
 }
 
-function validateAssignmentCapacity(tables: AssignmentTableRow[], tableIds: number[], guestCount: number): void {
+function validateAssignmentCapacity(
+  tables: AssignmentTableRow[],
+  tableIds: number[],
+  guestCount: number,
+): void {
   if (tableIds.length > 1 && tables.some((table) => !table.joinable)) {
-    throw new Error('Reservation tables cannot be combined');
+    throw new Error("Reservation tables cannot be combined");
   }
-  const minimumCapacity = tables.reduce((total, table) => total + Number(table.capacityMin), 0);
-  if (guestCount < minimumCapacity) throw new Error('Reservation tables capacity minimum not met');
-  const capacity = tables.reduce((total, table) => total + Number(table.capacityMax), 0);
-  if (capacity < guestCount) throw new Error('Reservation tables capacity exceeded');
+  const minimumCapacity = tables.reduce(
+    (total, table) => total + Number(table.capacityMin),
+    0,
+  );
+  if (guestCount < minimumCapacity)
+    throw new Error("Reservation tables capacity minimum not met");
+  const capacity = tables.reduce(
+    (total, table) => total + Number(table.capacityMax),
+    0,
+  );
+  if (capacity < guestCount)
+    throw new Error("Reservation tables capacity exceeded");
 }
 
-async function validateAssignmentCombination(connection: PoolConnection, tableIds: number[]): Promise<void> {
+async function validateAssignmentCombination(
+  connection: PoolConnection,
+  tableIds: number[],
+): Promise<void> {
   if (tableIds.length < 2) return;
   const [combinations] = await connection.execute<RowDataPacket[]>(
     `SELECT tc.id
@@ -515,7 +756,8 @@ async function validateAssignmentCombination(connection: PoolConnection, tableId
      LIMIT 1`,
     [tableIds.length, ...tableIds, tableIds.length],
   );
-  if (combinations.length === 0) throw new Error('Reservation tables combination not configured');
+  if (combinations.length === 0)
+    throw new Error("Reservation tables combination not configured");
 }
 
 async function validateAssignmentConflicts(
@@ -545,12 +787,25 @@ async function validateAssignmentConflicts(
          AND h.reservation_starts_at < ?
          AND h.reservation_ends_at > ?
      ) conflict_rows`,
-    [...tableIds, reservationId, schedule.reservationDate, schedule.endTime, schedule.startTime, `${schedule.reservationDate} ${schedule.endTime}:00`, `${schedule.reservationDate} ${schedule.startTime}:00`],
+    [
+      ...tableIds,
+      reservationId,
+      schedule.reservationDate,
+      schedule.endTime,
+      schedule.startTime,
+      `${schedule.reservationDate} ${schedule.endTime}:00`,
+      `${schedule.reservationDate} ${schedule.startTime}:00`,
+    ],
   );
-  if (Number(conflicts[0]?.count ?? 0) > 0) throw new Error('Reservation tables unavailable');
+  if (Number(conflicts[0]?.count ?? 0) > 0)
+    throw new Error("Reservation tables unavailable");
 }
 
-async function validateAssignmentBlocks(connection: PoolConnection, tableIds: number[], schedule: AdminReservationSchedule): Promise<void> {
+async function validateAssignmentBlocks(
+  connection: PoolConnection,
+  tableIds: number[],
+  schedule: AdminReservationSchedule,
+): Promise<void> {
   const [blocks] = await connection.execute<RowDataPacket[]>(
     `SELECT bp.id
      FROM blocked_periods bp
@@ -564,9 +819,14 @@ async function validateAssignmentBlocks(connection: PoolConnection, tableIds: nu
        )
        AND bp.starts_at < ? AND bp.ends_at > ?
      LIMIT 1`,
-    [...tableIds, ...tableIds, `${schedule.reservationDate} ${schedule.endTime}:00`, `${schedule.reservationDate} ${schedule.startTime}:00`],
+    [
+      ...tableIds,
+      ...tableIds,
+      `${schedule.reservationDate} ${schedule.endTime}:00`,
+      `${schedule.reservationDate} ${schedule.startTime}:00`,
+    ],
   );
-  if (blocks.length > 0) throw new Error('Reservation tables blocked');
+  if (blocks.length > 0) throw new Error("Reservation tables blocked");
 }
 
 async function validateReservationTables(
@@ -580,7 +840,12 @@ async function validateReservationTables(
   const tables = await loadAssignmentTables(connection, tableIds);
   validateAssignmentCapacity(tables, tableIds, guestCount);
   await validateAssignmentCombination(connection, tableIds);
-  await validateAssignmentConflicts(connection, reservationId, tableIds, schedule);
+  await validateAssignmentConflicts(
+    connection,
+    reservationId,
+    tableIds,
+    schedule,
+  );
   await validateAssignmentBlocks(connection, tableIds, schedule);
 }
 
@@ -609,6 +874,48 @@ const reservationSelect = `
   LEFT JOIN reservation_tables rt ON rt.reservation_id = r.id
   LEFT JOIN restaurant_tables t ON t.id = rt.restaurant_table_id`;
 
+const dashboardReservationSelect = `
+  SELECT
+    r.id,
+    r.public_code AS publicCode,
+    DATE_FORMAT(r.reservation_date, '%Y-%m-%d') AS reservationDate,
+    TIME_FORMAT(r.start_time, '%H:%i') AS startTime,
+    TIME_FORMAT(r.end_time, '%H:%i') AS endTime,
+    r.guest_count AS guestCount,
+    r.status,
+    r.source,
+    DATE_FORMAT(r.checked_in_at, '%Y-%m-%d %H:%i') AS checkedInAt,
+    DATE_FORMAT(r.seated_at, '%Y-%m-%d %H:%i') AS seatedAt,
+    DATE_FORMAT(r.completed_at, '%Y-%m-%d %H:%i') AS completedAt,
+    DATE_FORMAT(r.no_show_at, '%Y-%m-%d %H:%i') AS noShowAt,
+    DATE_FORMAT(r.payment_deadline_at, '%Y-%m-%d %H:%i') AS paymentDeadlineAt,
+    DATE_FORMAT(r.seat_guarantee_expires_at, '%Y-%m-%d %H:%i') AS seatGuaranteeExpiresAt,
+    r.checkout_mode AS checkoutMode,
+    CASE WHEN r.status = 'payment_pending'
+      AND (r.checkout_mode IS NULL OR (r.seat_guarantee_expires_at > UTC_TIMESTAMP(3) AND r.payment_deadline_at > UTC_TIMESTAMP(3)))
+      THEN 1 ELSE 0 END AS paymentPendingActive,
+    c.name AS customerName,
+    c.phone AS customerPhone,
+    c.email AS customerEmail,
+    GROUP_CONCAT(DISTINCT CONCAT(t.code, ' · ', t.name) ORDER BY t.id SEPARATOR ', ') AS tableLabel,
+    GROUP_CONCAT(DISTINCT da.name ORDER BY da.id SEPARATOR ', ') AS areaName,
+    r.notes,
+    latest_payment.status AS paymentStatus
+  FROM reservations r
+  INNER JOIN customers c ON c.id = r.customer_id
+  LEFT JOIN reservation_tables rt ON rt.reservation_id = r.id
+  LEFT JOIN restaurant_tables t ON t.id = rt.restaurant_table_id
+  LEFT JOIN dining_areas da ON da.id = t.area_id
+  LEFT JOIN (
+    SELECT p.reservation_id, p.status
+    FROM payments p
+    INNER JOIN (
+      SELECT reservation_id, MAX(id) AS id
+      FROM payments
+      GROUP BY reservation_id
+    ) current_payment ON current_payment.reservation_id = p.reservation_id AND current_payment.id = p.id
+  ) latest_payment ON latest_payment.reservation_id = r.id`;
+
 const customerSummarySelect = `
   SELECT
     c.id,
@@ -628,128 +935,157 @@ const customerSummarySelect = `
     AND r.status NOT IN ('draft', 'hold', 'payment_pending', 'expired')`;
 
 export class MysqlAdminRepository implements AdminRepository {
-  async getDashboard(date: string): Promise<AdminDashboard> {
-    const [metricsResult, reservations] = await Promise.all([
-      getDatabasePool().execute<MetricsRow[]>(`
-        SELECT
-          COUNT(*) AS total,
-          SUM(r.status IN ('hold', 'payment_pending', 'pending')) AS pending,
-          SUM(r.status = 'confirmed') AS confirmed,
-          SUM(r.status = 'seated') AS seated
-        FROM reservations r
-        WHERE r.reservation_date = ?
-          AND r.status NOT IN ('cancelled', 'expired', 'no_show', 'completed')
-      `, [date]),
-      this.listReservations(date),
-    ]);
-    return {
-      date,
-      metrics: mapMetrics(metricsResult[0][0]),
-      reservations: reservations.slice(0, 8),
-    };
-  }
-
-  async getAnalytics(fromDate: string, toDate: string): Promise<AdminAnalytics> {
-    const [summaryResult, assignmentResult, dailyResult, sourceResult, peakHourResult] = await Promise.all([
-      getDatabasePool().execute<AnalyticsSummaryRow[]>(
+  async getDashboard(query: AdminDashboardQuery): Promise<AdminDashboard> {
+    const fromDate = query.fromDate;
+    const toDate = query.toDate;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 9;
+    const offset = (page - 1) * pageSize;
+    const pool = getDatabasePool();
+    const validStatusSql = "r.status NOT IN ('draft', 'hold')";
+    const activeGuestsSql =
+      "r.status IN ('payment_pending', 'pending', 'confirmed', 'seated') AND (r.status <> 'payment_pending' OR r.checkout_mode IS NULL OR (r.seat_guarantee_expires_at > UTC_TIMESTAMP(3) AND r.payment_deadline_at > UTC_TIMESTAMP(3)))";
+    const filters = dashboardFilters(query);
+    const [
+      summaryResult,
+      allRowsResult,
+      countResult,
+      pageRowsResult,
+      updatesResult,
+      areasResult,
+    ] = await Promise.all([
+      pool.execute<DashboardSummaryRow[]>(
         `SELECT COUNT(*) AS reservations,
-                COALESCE(SUM(r.guest_count), 0) AS covers,
-                COALESCE(SUM(r.status = 'completed'), 0) AS completed,
-                COALESCE(SUM(r.status = 'cancelled'), 0) AS cancelled,
-                COALESCE(SUM(r.status = 'no_show'), 0) AS noShow,
-                COUNT(DISTINCT r.customer_id) AS uniqueCustomers
+                COALESCE(SUM(CASE WHEN ${activeGuestsSql} THEN r.guest_count ELSE 0 END), 0) AS expectedGuests,
+                COALESCE(SUM(CASE WHEN r.status = 'payment_pending' AND (r.checkout_mode IS NULL OR (r.seat_guarantee_expires_at > UTC_TIMESTAMP(3) AND r.payment_deadline_at > UTC_TIMESTAMP(3))) THEN 1 ELSE 0 END), 0) AS activeGuarantees,
+                COALESCE(SUM(r.status = 'payment_pending'), 0) AS pendingPayments
          FROM reservations r
-         WHERE r.reservation_date BETWEEN ? AND ?
-           AND r.status NOT IN ('draft', 'hold', 'payment_pending', 'expired')`,
+         WHERE ${validStatusSql} AND r.reservation_date BETWEEN ? AND ?`,
         [fromDate, toDate],
       ),
-      getDatabasePool().execute<AnalyticsAssignmentRow[]>(
-        `SELECT COALESCE(SUM(assigned.guestCount), 0) AS assignedCovers,
-                COALESCE(SUM(assigned.capacity), 0) AS assignedCapacity
-         FROM (
-           SELECT r.id, r.guest_count AS guestCount, SUM(t.capacity_max) AS capacity
-           FROM reservations r
-           INNER JOIN reservation_tables rt ON rt.reservation_id = r.id
-           INNER JOIN restaurant_tables t ON t.id = rt.restaurant_table_id
-           WHERE r.reservation_date BETWEEN ? AND ?
-             AND r.status IN ('pending', 'confirmed', 'seated', 'completed')
-           GROUP BY r.id, r.guest_count
-         ) assigned`,
+      pool.execute<DashboardReservationRow[]>(
+        `${dashboardReservationSelect}
+         WHERE ${validStatusSql} AND r.reservation_date BETWEEN ? AND ?
+         GROUP BY r.id, c.id, latest_payment.status
+         ORDER BY r.reservation_date ASC, r.start_time ASC, r.id DESC`,
         [fromDate, toDate],
       ),
-      getDatabasePool().execute<AnalyticsDailyRow[]>(
-        `SELECT DATE_FORMAT(r.reservation_date, '%Y-%m-%d') AS date,
-                COUNT(*) AS reservations,
-                COALESCE(SUM(r.guest_count), 0) AS covers
-         FROM reservations r
+      pool.execute<CountRow[]>(
+        `SELECT COUNT(DISTINCT r.id) AS count
+         FROM reservations r INNER JOIN customers c ON c.id = r.customer_id
+         LEFT JOIN reservation_tables rt ON rt.reservation_id = r.id
+         LEFT JOIN restaurant_tables t ON t.id = rt.restaurant_table_id
+         WHERE ${filters.where}`,
+        filters.params,
+      ),
+      pool.execute<DashboardReservationRow[]>(
+        `${dashboardReservationSelect}
+         WHERE ${filters.where}
+         GROUP BY r.id, c.id, latest_payment.status
+         ORDER BY r.reservation_date ASC, r.start_time ASC, r.id DESC
+         LIMIT ? OFFSET ?`,
+        [...filters.params, pageSize, offset],
+      ),
+      pool.execute<DashboardUpdateRow[]>(
+        `SELECT e.id, e.reservation_id AS reservationId, e.event_type AS eventType,
+                e.from_status AS fromStatus, e.to_status AS toStatus,
+                c.name AS customerName, DATE_FORMAT(r.reservation_date, '%Y-%m-%d') AS reservationDate,
+                DATE_FORMAT(e.created_at, '%Y-%m-%d %H:%i') AS createdAt
+         FROM reservation_events e
+         INNER JOIN reservations r ON r.id = e.reservation_id
+         INNER JOIN customers c ON c.id = r.customer_id
          WHERE r.reservation_date BETWEEN ? AND ?
-           AND r.status NOT IN ('draft', 'hold', 'payment_pending', 'expired')
-         GROUP BY r.reservation_date
-         ORDER BY r.reservation_date`,
+         ORDER BY e.created_at DESC, e.id DESC
+         LIMIT 5`,
         [fromDate, toDate],
       ),
-      getDatabasePool().execute<AnalyticsSourceRow[]>(
-        `SELECT r.source,
-                COUNT(*) AS reservations,
-                COALESCE(SUM(r.guest_count), 0) AS covers
-         FROM reservations r
-         WHERE r.reservation_date BETWEEN ? AND ?
-           AND r.status NOT IN ('draft', 'hold', 'payment_pending', 'expired')
-         GROUP BY r.source
-         ORDER BY reservations DESC, r.source ASC`,
-        [fromDate, toDate],
-      ),
-      getDatabasePool().execute<AnalyticsPeakHourRow[]>(
-        `SELECT TIME_FORMAT(r.start_time, '%H:00') AS hour,
-                COUNT(*) AS reservations,
-                COALESCE(SUM(r.guest_count), 0) AS covers
-         FROM reservations r
-         WHERE r.reservation_date BETWEEN ? AND ?
-           AND r.status NOT IN ('draft', 'hold', 'payment_pending', 'expired')
-         GROUP BY HOUR(r.start_time), TIME_FORMAT(r.start_time, '%H:00')
-         ORDER BY HOUR(r.start_time)`,
-        [fromDate, toDate],
+      pool.execute<AreaRow[]>(
+        `SELECT id, code, name, active FROM dining_areas WHERE active = 1 ORDER BY name, id`,
       ),
     ]);
-    const summary = { ...(summaryResult[0][0] ?? {}), ...(assignmentResult[0][0] ?? {}) } as AnalyticsSummaryRow;
+    const allRows = allRowsResult[0];
+    const placeholderReservations = dashboardPlaceholderReservations(allRows);
+    const allocations = allocatePlaceholderTables(placeholderReservations);
+    const reservations = allRows.map((row) =>
+      mapDashboardReservation(row, allocations),
+    );
+    const summary = summaryResult[0][0];
+    const peak = peakReservedTables(allocations, placeholderReservations);
+    const totalTables = 14;
+    const distribution = dashboardDistribution(allRows);
+    const alerts = dashboardAlerts(reservations);
+    const updates = dashboardUpdates(updatesResult[0], allocations);
     return {
       fromDate,
       toDate,
-      metrics: mapAnalyticsMetrics(summary),
-      daily: dailyResult[0].map(mapAnalyticsDaily),
-      sources: sourceResult[0].map(mapAnalyticsSource),
-      peakHours: peakHourResult[0].map(mapAnalyticsPeakHour),
-      revenueMode: 'mock',
+      periodLabel: periodLabel(fromDate, toDate),
+      metrics: {
+        reservations: Number(summary?.reservations ?? 0),
+        expectedGuests: Number(summary?.expectedGuests ?? 0),
+        reservedTables: peak,
+        activeGuarantees: Number(summary?.activeGuarantees ?? 0),
+        pendingPayments: Number(summary?.pendingPayments ?? 0),
+        occupancyRate: Math.min(100, Math.round((peak / totalTables) * 100)),
+        totalTables,
+      },
+      reservations: {
+        items: pageRowsResult[0].map((row) =>
+          mapDashboardReservation(row, allocations),
+        ),
+        total: Number(countResult[0][0]?.count ?? 0),
+        page,
+        pageSize,
+      },
+      alerts,
+      updates,
+      availability: availabilityMetrics(allocations, placeholderReservations),
+      distribution,
+      tableTypes: tableCapacityMetrics(allocations, placeholderReservations),
+      areas: areasResult[0].map((area) => ({
+        id: Number(area.id),
+        code: area.code,
+        name: area.name,
+        active: Boolean(area.active),
+      })),
     };
   }
 
   async listCustomers(search?: string): Promise<AdminCustomer[]> {
-    const value = search?.trim() ?? '';
-    const filter = value ? 'WHERE c.name LIKE ? OR c.phone LIKE ? OR c.email LIKE ?' : '';
+    const value = search?.trim() ?? "";
+    const filter = value
+      ? "WHERE c.name LIKE ? OR c.phone LIKE ? OR c.email LIKE ?"
+      : "";
     const params = value ? [`%${value}%`, `%${value}%`, `%${value}%`] : [];
-    const [rows] = await getDatabasePool().execute<CustomerRow[]>(`
+    const [rows] = await getDatabasePool().execute<CustomerRow[]>(
+      `
       ${customerSummarySelect}
       ${filter}
       GROUP BY c.id
       ORDER BY MAX(r.reservation_date) DESC, c.created_at DESC, c.id DESC
       LIMIT 100
-    `, params);
+    `,
+      params,
+    );
     return rows.map(mapCustomer);
   }
 
   async getCustomerProfile(id: number): Promise<AdminCustomerProfile | null> {
     const pool = getDatabasePool();
-    const [customerRows] = await pool.execute<CustomerRow[]>(`
+    const [customerRows] = await pool.execute<CustomerRow[]>(
+      `
       ${customerSummarySelect}
       WHERE c.id = ?
       GROUP BY c.id
       LIMIT 1
-    `, [id]);
+    `,
+      [id],
+    );
     const customer = customerRows[0];
     if (!customer) return null;
 
     const [reservationRows, activityRows] = await Promise.all([
-      pool.execute<CustomerReservationRow[]>(`
+      pool.execute<CustomerReservationRow[]>(
+        `
         SELECT
           r.id,
           r.public_code AS publicCode,
@@ -768,8 +1104,11 @@ export class MysqlAdminRepository implements AdminRepository {
         GROUP BY r.id
         ORDER BY r.reservation_date DESC, r.start_time DESC, r.id DESC
         LIMIT 100
-      `, [id]),
-      pool.execute<CustomerActivityRow[]>(`
+      `,
+        [id],
+      ),
+      pool.execute<CustomerActivityRow[]>(
+        `
         SELECT
           e.id,
           e.reservation_id AS reservationId,
@@ -785,7 +1124,9 @@ export class MysqlAdminRepository implements AdminRepository {
         WHERE r.customer_id = ?
         ORDER BY e.created_at DESC, e.id DESC
         LIMIT 100
-      `, [id]),
+      `,
+        [id],
+      ),
     ]);
 
     return {
@@ -796,22 +1137,39 @@ export class MysqlAdminRepository implements AdminRepository {
   }
 
   async listReservations(date?: string): Promise<AdminReservation[]> {
-    const filter = date ? 'WHERE r.reservation_date = ?' : '';
+    const filter = date ? "WHERE r.reservation_date = ?" : "";
     const params = date ? [date] : [];
-    const [rows] = await getDatabasePool().execute<ReservationRow[]>(`
+    const [rows] = await getDatabasePool().execute<ReservationRow[]>(
+      `
       ${reservationSelect}
       ${filter}
       GROUP BY r.id, c.id
       ORDER BY r.reservation_date DESC, r.start_time ASC, r.id DESC
       LIMIT 100
-    `, params);
+    `,
+      params,
+    );
     return rows.map(mapReservation);
   }
 
+  async getReservation(id: number): Promise<AdminReservation | null> {
+    const [rows] = await getDatabasePool().execute<ReservationRow[]>(
+      `
+      ${reservationSelect}
+      WHERE r.id = ?
+      GROUP BY r.id, c.id
+      LIMIT 1
+    `,
+      [id],
+    );
+    return rows[0] ? mapReservation(rows[0]) : null;
+  }
+
   async listWaitlist(date?: string): Promise<AdminWaitlistEntry[]> {
-    const filter = date ? 'WHERE w.reservation_date = ?' : '';
+    const filter = date ? "WHERE w.reservation_date = ?" : "";
     const params = date ? [date] : [];
-    const [rows] = await getDatabasePool().execute<WaitlistRow[]>(`
+    const [rows] = await getDatabasePool().execute<WaitlistRow[]>(
+      `
       SELECT
         w.id,
         CONCAT('WL-', LPAD(w.id, 6, '0')) AS referenceCode,
@@ -829,23 +1187,33 @@ export class MysqlAdminRepository implements AdminRepository {
       ${filter}
       ORDER BY w.created_at ASC, w.id ASC
       LIMIT 100
-    `, params);
+    `,
+      params,
+    );
     return rows.map(mapWaitlist);
   }
 
   async getReservationStatus(id: number): Promise<ReservationStatus | null> {
     const [rows] = await getDatabasePool().execute<StatusRow[]>(
-      'SELECT status FROM reservations WHERE id = ? LIMIT 1',
+      "SELECT status FROM reservations WHERE id = ? LIMIT 1",
       [id],
     );
-    return rows[0] ? rows[0].status as ReservationStatus : null;
+    return rows[0] ? (rows[0].status as ReservationStatus) : null;
   }
 
-  async updateReservationStatus(id: number, fromStatus: ReservationStatus, status: ReservationStatus): Promise<void> {
+  async updateReservationStatus(
+    id: number,
+    fromStatus: ReservationStatus,
+    status: ReservationStatus,
+  ): Promise<void> {
     await withTransaction(async (connection) => {
-      const current = await this.getReservationOperationStateForConnection(connection, id);
-      if (!current) throw new Error('Reservation not found');
-      if (current.status !== fromStatus) throw new Error('Reservation state changed');
+      const current = await this.getReservationOperationStateForConnection(
+        connection,
+        id,
+      );
+      if (!current) throw new Error("Reservation not found");
+      if (current.status !== fromStatus)
+        throw new Error("Reservation state changed");
       const [result] = await connection.execute<ResultSetHeader>(
         `UPDATE reservations
          SET status = ?,
@@ -856,84 +1224,113 @@ export class MysqlAdminRepository implements AdminRepository {
          WHERE id = ? AND status = ?`,
         [status, status, status, status, status, id, fromStatus],
       );
-      if (result.affectedRows !== 1) throw new Error('Reservation state changed');
+      if (result.affectedRows !== 1)
+        throw new Error("Reservation state changed");
       await this.insertReservationEvent(connection, {
         reservationId: id,
-        eventType: status === 'cancelled' ? 'cancelled' : 'status_changed',
+        eventType: status === "cancelled" ? "cancelled" : "status_changed",
         fromStatus,
         toStatus: status,
       });
     });
   }
 
-  async getReservationOperationState(id: number): Promise<AdminReservationOperationState | null> {
-    return this.getReservationOperationStateForConnection(getDatabasePool(), id);
+  async getReservationOperationState(
+    id: number,
+  ): Promise<AdminReservationOperationState | null> {
+    return this.getReservationOperationStateForConnection(
+      getDatabasePool(),
+      id,
+    );
   }
 
   private async getReservationOperationStateForConnection(
-    connection: Pick<PoolConnection, 'execute'>,
+    connection: Pick<PoolConnection, "execute">,
     id: number,
     lock = false,
   ): Promise<AdminReservationOperationState | null> {
     const [rows] = await connection.execute<ReservationOperationStateRow[]>(
       `SELECT status, DATE_FORMAT(checked_in_at, '%Y-%m-%d %H:%i') AS checkedInAt
-       FROM reservations WHERE id = ? LIMIT 1${lock ? ' FOR UPDATE' : ''}`,
+       FROM reservations WHERE id = ? LIMIT 1${lock ? " FOR UPDATE" : ""}`,
       [id],
     );
     if (!rows[0]) return null;
-    return { status: rows[0].status as ReservationStatus, checkedInAt: rows[0].checkedInAt };
+    return {
+      status: rows[0].status as ReservationStatus,
+      checkedInAt: rows[0].checkedInAt,
+    };
   }
 
-  async applyReservationOperation(id: number, operation: ReservationOperation): Promise<void> {
+  async applyReservationOperation(
+    id: number,
+    operation: ReservationOperation,
+  ): Promise<void> {
     await withTransaction(async (connection) => {
-      const current = await this.getReservationOperationStateForConnection(connection, id, true);
-      if (!current) throw new Error('Reservation not found');
+      const current = await this.getReservationOperationStateForConnection(
+        connection,
+        id,
+        true,
+      );
+      if (!current) throw new Error("Reservation not found");
       const update = this.operationUpdate(operation);
-      const [result] = await connection.execute<ResultSetHeader>(update.sql, [id]);
-      if (result.affectedRows !== 1) throw new Error('Reservation operation could not be applied');
+      const [result] = await connection.execute<ResultSetHeader>(update.sql, [
+        id,
+      ]);
+      if (result.affectedRows !== 1)
+        throw new Error("Reservation operation could not be applied");
       await this.insertReservationEvent(connection, {
         reservationId: id,
-        eventType: operation === 'check_in' ? 'checked_in' : operation === 'seat' ? 'seated' : operation,
+        eventType:
+          operation === "check_in"
+            ? "checked_in"
+            : operation === "seat"
+              ? "seated"
+              : operation,
         fromStatus: current.status,
         toStatus: update.toStatus,
       });
     });
   }
 
-  private operationUpdate(operation: ReservationOperation): { sql: string; toStatus: ReservationStatus } {
-    if (operation === 'check_in') {
+  private operationUpdate(operation: ReservationOperation): {
+    sql: string;
+    toStatus: ReservationStatus;
+  } {
+    if (operation === "check_in") {
       return {
         sql: `UPDATE reservations
               SET checked_in_at = CURRENT_TIMESTAMP
               WHERE id = ? AND status = 'confirmed' AND checked_in_at IS NULL`,
-        toStatus: 'confirmed',
+        toStatus: "confirmed",
       };
     }
-    if (operation === 'seat') {
+    if (operation === "seat") {
       return {
         sql: `UPDATE reservations
               SET status = 'seated', checked_in_at = COALESCE(checked_in_at, CURRENT_TIMESTAMP), seated_at = CURRENT_TIMESTAMP
               WHERE id = ? AND status = 'confirmed' AND checked_in_at IS NOT NULL`,
-        toStatus: 'seated',
+        toStatus: "seated",
       };
     }
-    if (operation === 'complete') {
+    if (operation === "complete") {
       return {
         sql: `UPDATE reservations
               SET status = 'completed', completed_at = CURRENT_TIMESTAMP
               WHERE id = ? AND status = 'seated'`,
-        toStatus: 'completed',
+        toStatus: "completed",
       };
     }
     return {
       sql: `UPDATE reservations
             SET status = 'no_show', no_show_at = CURRENT_TIMESTAMP
             WHERE id = ? AND status IN ('confirmed', 'seated')`,
-      toStatus: 'no_show',
+      toStatus: "no_show",
     };
   }
 
-  async listReservationTimeline(id: number): Promise<AdminReservationTimelineEntry[]> {
+  async listReservationTimeline(
+    id: number,
+  ): Promise<AdminReservationTimelineEntry[]> {
     const [rows] = await getDatabasePool().execute<ReservationTimelineRow[]>(
       `SELECT id, event_type AS eventType, from_status AS fromStatus, to_status AS toStatus,
               actor_type AS actorType, actor_label AS actorLabel,
@@ -955,7 +1352,9 @@ export class MysqlAdminRepository implements AdminRepository {
     }));
   }
 
-  async getReservationAssignment(id: number): Promise<AdminReservationAssignment> {
+  async getReservationAssignment(
+    id: number,
+  ): Promise<AdminReservationAssignment> {
     const [rows] = await getDatabasePool().execute<ReservationScheduleRow[]>(
       `SELECT DATE_FORMAT(r.reservation_date, '%Y-%m-%d') AS reservationDate,
               TIME_FORMAT(r.start_time, '%H:%i') AS startTime,
@@ -969,10 +1368,10 @@ export class MysqlAdminRepository implements AdminRepository {
       [id],
     );
     const row = rows[0];
-    if (!row) throw new Error('Reservation not found');
+    if (!row) throw new Error("Reservation not found");
     const floorMap = await this.getFloorMap(row.reservationDate, row.startTime);
     return {
-      tableIds: row.tableIds ? row.tableIds.split(',').map(Number) : [],
+      tableIds: row.tableIds ? row.tableIds.split(",").map(Number) : [],
       options: floorMap.tables,
     };
   }
@@ -988,11 +1387,23 @@ export class MysqlAdminRepository implements AdminRepository {
         [id],
       );
       const reservation = rows[0];
-      if (!reservation) throw new Error('Reservation not found');
-      if (!['pending', 'confirmed', 'seated'].includes(reservation.status)) throw new Error('Reservation tables locked');
-      const ids = [...new Set(tableIds)].sort((first, second) => first - second);
-      await validateReservationTables(connection, id, ids, reservation, Number(reservation.guestCount));
-      await connection.execute('DELETE FROM reservation_tables WHERE reservation_id = ?', [id]);
+      if (!reservation) throw new Error("Reservation not found");
+      if (!["pending", "confirmed", "seated"].includes(reservation.status))
+        throw new Error("Reservation tables locked");
+      const ids = [...new Set(tableIds)].sort(
+        (first, second) => first - second,
+      );
+      await validateReservationTables(
+        connection,
+        id,
+        ids,
+        reservation,
+        Number(reservation.guestCount),
+      );
+      await connection.execute(
+        "DELETE FROM reservation_tables WHERE reservation_id = ?",
+        [id],
+      );
       for (const tableId of ids) {
         await connection.execute(
           `INSERT INTO reservation_tables (reservation_id, restaurant_table_id)
@@ -1002,14 +1413,17 @@ export class MysqlAdminRepository implements AdminRepository {
       }
       await this.insertReservationEvent(connection, {
         reservationId: id,
-        eventType: 'table_changed',
+        eventType: "table_changed",
         fromStatus: reservation.status as ReservationStatus,
         toStatus: reservation.status as ReservationStatus,
       });
     });
   }
 
-  async updateReservationSchedule(id: number, schedule: AdminReservationSchedule): Promise<void> {
+  async updateReservationSchedule(
+    id: number,
+    schedule: AdminReservationSchedule,
+  ): Promise<void> {
     await withTransaction(async (connection) => {
       const [rows] = await connection.execute<ReservationScheduleRow[]>(
         `SELECT DATE_FORMAT(reservation_date, '%Y-%m-%d') AS reservationDate,
@@ -1020,24 +1434,38 @@ export class MysqlAdminRepository implements AdminRepository {
         [id],
       );
       const current = rows[0];
-      if (!current) throw new Error('Reservation not found');
-      if (!['pending', 'confirmed'].includes(current.status)) throw new Error('Reservation schedule is locked');
+      if (!current) throw new Error("Reservation not found");
+      if (!["pending", "confirmed"].includes(current.status))
+        throw new Error("Reservation schedule is locked");
       const [assigned] = await connection.execute<RowDataPacket[]>(
-        'SELECT restaurant_table_id AS tableId FROM reservation_tables WHERE reservation_id = ? ORDER BY restaurant_table_id',
+        "SELECT restaurant_table_id AS tableId FROM reservation_tables WHERE reservation_id = ? ORDER BY restaurant_table_id",
         [id],
       );
       const tableIds = assigned.map((row) => Number(row.tableId));
-      await validateReservationTables(connection, id, tableIds, schedule, Number(current.guestCount));
+      await validateReservationTables(
+        connection,
+        id,
+        tableIds,
+        schedule,
+        Number(current.guestCount),
+      );
       const [result] = await connection.execute<ResultSetHeader>(
         `UPDATE reservations
          SET reservation_date = ?, start_time = ?, end_time = ?
          WHERE id = ? AND status = ?`,
-        [schedule.reservationDate, schedule.startTime, schedule.endTime, id, current.status],
+        [
+          schedule.reservationDate,
+          schedule.startTime,
+          schedule.endTime,
+          id,
+          current.status,
+        ],
       );
-      if (result.affectedRows !== 1) throw new Error('Reservation state changed');
+      if (result.affectedRows !== 1)
+        throw new Error("Reservation state changed");
       await this.insertReservationEvent(connection, {
         reservationId: id,
-        eventType: 'schedule_changed',
+        eventType: "schedule_changed",
         fromStatus: current.status as ReservationStatus,
         toStatus: current.status as ReservationStatus,
       });
@@ -1045,7 +1473,7 @@ export class MysqlAdminRepository implements AdminRepository {
   }
 
   private async insertReservationEvent(
-    connection: Pick<PoolConnection, 'execute'>,
+    connection: Pick<PoolConnection, "execute">,
     event: {
       reservationId: number;
       eventType: string;
@@ -1058,7 +1486,13 @@ export class MysqlAdminRepository implements AdminRepository {
       `INSERT INTO reservation_events
         (reservation_id, event_type, from_status, to_status, actor_type, event_key)
        VALUES (?, ?, ?, ?, 'admin', ?)`,
-      [event.reservationId, event.eventType, event.fromStatus, event.toStatus, event.eventKey ?? null],
+      [
+        event.reservationId,
+        event.eventType,
+        event.fromStatus,
+        event.toStatus,
+        event.eventKey ?? null,
+      ],
     );
   }
 
@@ -1074,7 +1508,8 @@ export class MysqlAdminRepository implements AdminRepository {
        FOR UPDATE`,
       tableIds,
     );
-    if (tables.length !== tableIds.length) throw new Error('Invalid walk-in tables');
+    if (tables.length !== tableIds.length)
+      throw new Error("Invalid walk-in tables");
     const [conflicts] = await connection.execute<CountRow[]>(
       `SELECT COUNT(*) AS count
        FROM reservations r
@@ -1083,9 +1518,15 @@ export class MysqlAdminRepository implements AdminRepository {
          AND r.reservation_date = ?
          AND r.status IN ('hold', 'payment_pending', 'pending', 'confirmed', 'seated')
          AND r.start_time < ? AND r.end_time > ?`,
-      [...tableIds, input.reservation.reservationDate, input.reservation.endTime, input.reservation.startTime],
+      [
+        ...tableIds,
+        input.reservation.reservationDate,
+        input.reservation.endTime,
+        input.reservation.startTime,
+      ],
     );
-    if (Number(conflicts[0]?.count ?? 0) > 0) throw new Error('Walk-in tables unavailable');
+    if (Number(conflicts[0]?.count ?? 0) > 0)
+      throw new Error("Walk-in tables unavailable");
   }
 
   private async insertWalkInReservation(
@@ -1122,22 +1563,27 @@ export class MysqlAdminRepository implements AdminRepository {
     if (tableIds.length === 0) return;
     await connection.execute(
       `INSERT INTO reservation_tables (reservation_id, restaurant_table_id)
-       VALUES ${tableIds.map(() => '(?, ?)').join(', ')}`,
+       VALUES ${tableIds.map(() => "(?, ?)").join(", ")}`,
       tableIds.flatMap((tableId) => [reservationId, tableId]),
     );
   }
 
-  async createWalkInReservation(input: CreateWalkInReservationInput): Promise<number> {
+  async createWalkInReservation(
+    input: CreateWalkInReservationInput,
+  ): Promise<number> {
     return withTransaction(async (connection) => {
       const tableIds = [...new Set(input.tableIds)];
       await this.validateWalkInTables(connection, input, tableIds);
-      const reservationId = await this.insertWalkInReservation(connection, input);
+      const reservationId = await this.insertWalkInReservation(
+        connection,
+        input,
+      );
       await this.assignWalkInTables(connection, reservationId, tableIds);
       await this.insertReservationEvent(connection, {
         reservationId,
-        eventType: 'walk_in_created',
+        eventType: "walk_in_created",
         fromStatus: null,
-        toStatus: 'confirmed',
+        toStatus: "confirmed",
         eventKey: `reservation:${reservationId}:walk_in_created`,
       });
       return reservationId;
@@ -1146,28 +1592,34 @@ export class MysqlAdminRepository implements AdminRepository {
 
   async getWaitlistStatus(id: number): Promise<WaitlistStatus | null> {
     const [rows] = await getDatabasePool().execute<StatusRow[]>(
-      'SELECT status FROM waitlist WHERE id = ? LIMIT 1',
+      "SELECT status FROM waitlist WHERE id = ? LIMIT 1",
       [id],
     );
-    return rows[0] ? rows[0].status as WaitlistStatus : null;
+    return rows[0] ? (rows[0].status as WaitlistStatus) : null;
   }
 
-  async updateWaitlistStatus(id: number, status: WaitlistStatus): Promise<void> {
+  async updateWaitlistStatus(
+    id: number,
+    status: WaitlistStatus,
+  ): Promise<void> {
     await getDatabasePool().execute(
-      'UPDATE waitlist SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      "UPDATE waitlist SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
       [status, id],
     );
   }
 
   async getConfiguration(): Promise<AdminConfiguration> {
     const pool = getDatabasePool();
-    const [areas, tableTypes, tables, shifts, businessHours] = await Promise.all([
-      pool.execute<AreaRow[]>('SELECT id, code, name, active FROM dining_areas WHERE active = 1 ORDER BY name'),
-      pool.execute<TableTypeRow[]>(`
+    const [areas, tableTypes, tables, shifts, businessHours] =
+      await Promise.all([
+        pool.execute<AreaRow[]>(
+          "SELECT id, code, name, active FROM dining_areas WHERE active = 1 ORDER BY name",
+        ),
+        pool.execute<TableTypeRow[]>(`
         SELECT id, code, name, capacity_min AS capacityMin, capacity_max AS capacityMax, active
         FROM table_types WHERE active = 1 ORDER BY name
       `),
-      pool.execute<TableRow[]>(`
+        pool.execute<TableRow[]>(`
         SELECT
           t.id, t.code, t.name, t.area_id AS areaId, a.name AS areaName,
           t.table_type_id AS tableTypeId, tt.name AS tableTypeName,
@@ -1180,14 +1632,14 @@ export class MysqlAdminRepository implements AdminRepository {
         WHERE t.active = 1 AND a.active = 1 AND tt.active = 1
         ORDER BY a.name, t.name
       `),
-      pool.execute<ShiftRow[]>(`
+        pool.execute<ShiftRow[]>(`
         SELECT id, code, name,
           TIME_FORMAT(starts_at, '%H:%i') AS startsAt,
           TIME_FORMAT(ends_at, '%H:%i') AS endsAt,
           active
         FROM service_shifts WHERE active = 1 ORDER BY starts_at
       `),
-      pool.execute<BusinessHourRow[]>(`
+        pool.execute<BusinessHourRow[]>(`
         SELECT
           bh.id, bh.day_of_week AS dayOfWeek, bh.service_shift_id AS shiftId,
           ss.name AS shiftName,
@@ -1199,7 +1651,7 @@ export class MysqlAdminRepository implements AdminRepository {
         WHERE bh.active = 1 AND ss.active = 1
         ORDER BY bh.day_of_week, bh.opens_at
       `),
-    ]);
+      ]);
     return {
       areas: areas[0].map(mapArea),
       tableTypes: tableTypes[0].map(mapTableType),
@@ -1211,7 +1663,7 @@ export class MysqlAdminRepository implements AdminRepository {
 
   async createArea(input: CreateAreaInput): Promise<number> {
     const [result] = await getDatabasePool().execute<ResultSetHeader>(
-      'INSERT INTO dining_areas (code, name) VALUES (?, ?)',
+      "INSERT INTO dining_areas (code, name) VALUES (?, ?)",
       [input.code, input.name],
     );
     return result.insertId;
@@ -1231,7 +1683,16 @@ export class MysqlAdminRepository implements AdminRepository {
       `INSERT INTO restaurant_tables
         (code, name, area_id, table_type_id, capacity_min, capacity_max, shape, joinable)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [input.code, input.name, input.areaId, input.tableTypeId, input.capacityMin, input.capacityMax, input.shape, input.joinable],
+      [
+        input.code,
+        input.name,
+        input.areaId,
+        input.tableTypeId,
+        input.capacityMin,
+        input.capacityMax,
+        input.shape,
+        input.joinable,
+      ],
     );
     return result.insertId;
   }
@@ -1261,34 +1722,63 @@ export class MysqlAdminRepository implements AdminRepository {
     let params: Array<string | number | boolean>;
 
     switch (input.resource) {
-      case 'area':
-        sql = 'UPDATE dining_areas SET code = ?, name = ? WHERE id = ? AND active = 1';
+      case "area":
+        sql =
+          "UPDATE dining_areas SET code = ?, name = ? WHERE id = ? AND active = 1";
         params = [input.code, input.name, input.id];
         break;
-      case 'table_type':
+      case "table_type":
         sql = `UPDATE table_types
                SET code = ?, name = ?, capacity_min = ?, capacity_max = ?
                WHERE id = ? AND active = 1`;
-        params = [input.code, input.name, input.capacityMin, input.capacityMax, input.id];
+        params = [
+          input.code,
+          input.name,
+          input.capacityMin,
+          input.capacityMax,
+          input.id,
+        ];
         break;
-      case 'table':
+      case "table":
         sql = `UPDATE restaurant_tables
                SET code = ?, name = ?, area_id = ?, table_type_id = ?,
                    capacity_min = ?, capacity_max = ?, shape = ?, joinable = ?
                WHERE id = ? AND active = 1`;
-        params = [input.code, input.name, input.areaId, input.tableTypeId, input.capacityMin, input.capacityMax, input.shape, input.joinable, input.id];
+        params = [
+          input.code,
+          input.name,
+          input.areaId,
+          input.tableTypeId,
+          input.capacityMin,
+          input.capacityMax,
+          input.shape,
+          input.joinable,
+          input.id,
+        ];
         break;
-      case 'shift':
+      case "shift":
         sql = `UPDATE service_shifts
                SET code = ?, name = ?, starts_at = ?, ends_at = ?
                WHERE id = ? AND active = 1`;
-        params = [input.code, input.name, input.startsAt, input.endsAt, input.id];
+        params = [
+          input.code,
+          input.name,
+          input.startsAt,
+          input.endsAt,
+          input.id,
+        ];
         break;
-      case 'business_hour':
+      case "business_hour":
         sql = `UPDATE business_hours
                SET day_of_week = ?, service_shift_id = ?, opens_at = ?, closes_at = ?
                WHERE id = ? AND active = 1`;
-        params = [input.dayOfWeek, input.shiftId, input.opensAt, input.closesAt, input.id];
+        params = [
+          input.dayOfWeek,
+          input.shiftId,
+          input.opensAt,
+          input.closesAt,
+          input.id,
+        ];
         break;
     }
 
@@ -1298,22 +1788,27 @@ export class MysqlAdminRepository implements AdminRepository {
         `SELECT id FROM ${configurationTable(input.resource)} WHERE id = ? AND active = 1 LIMIT 1`,
         [input.id],
       );
-      if (rows.length === 0) throw new Error('Configuration not found');
+      if (rows.length === 0) throw new Error("Configuration not found");
     }
   }
 
-  async deactivateConfiguration(resource: ConfigurationResource, id: number): Promise<void> {
+  async deactivateConfiguration(
+    resource: ConfigurationResource,
+    id: number,
+  ): Promise<void> {
     const [result] = await getDatabasePool().execute<ResultSetHeader>(
       `UPDATE ${configurationTable(resource)} SET active = 0 WHERE id = ? AND active = 1`,
       [id],
     );
-    if (result.affectedRows !== 1) throw new Error('Configuration not found');
+    if (result.affectedRows !== 1) throw new Error("Configuration not found");
   }
 
   async getFloorMap(date: string, time: string): Promise<AdminFloorMap> {
     const pool = getDatabasePool();
-    const [tableResult, combinationResult, blockedResult, settingsResult] = await Promise.all([
-      pool.execute<FloorTableRow[]>(`
+    const [tableResult, combinationResult, blockedResult, settingsResult] =
+      await Promise.all([
+        pool.execute<FloorTableRow[]>(
+          `
         SELECT
           t.id, t.code, t.name, t.area_id AS areaId, a.name AS areaName,
           t.table_type_id AS tableTypeId, tt.name AS tableTypeName,
@@ -1353,8 +1848,10 @@ export class MysqlAdminRepository implements AdminRepository {
         INNER JOIN table_types tt ON tt.id = t.table_type_id
         WHERE t.active = 1 AND a.active = 1 AND tt.active = 1
         ORDER BY a.name, t.id
-      `, [date, time, date, time, date, time, time, date, time, date, time]),
-      pool.execute<CombinationRow[]>(`
+      `,
+          [date, time, date, time, date, time, time, date, time, date, time],
+        ),
+        pool.execute<CombinationRow[]>(`
         SELECT
           tc.id, tc.code, tc.name, tc.active,
           GROUP_CONCAT(t.id ORDER BY t.id SEPARATOR ',') AS tableIds,
@@ -1368,7 +1865,8 @@ export class MysqlAdminRepository implements AdminRepository {
         HAVING SUM(t.active = 0 OR t.joinable = 0 OR a.active = 0) = 0
         ORDER BY tc.name
       `),
-      pool.execute<BlockedPeriodRow[]>(`
+        pool.execute<BlockedPeriodRow[]>(
+          `
         SELECT
           bp.id, bp.dining_area_id AS areaId, a.name AS areaName,
           bp.restaurant_table_id AS tableId, t.name AS tableName,
@@ -1382,14 +1880,16 @@ export class MysqlAdminRepository implements AdminRepository {
           AND bp.starts_at < DATE_ADD(CONCAT(?, ' 00:00:00'), INTERVAL 1 DAY)
           AND bp.ends_at > CONCAT(?, ' 00:00:00')
         ORDER BY bp.starts_at
-      `, [date, date]),
-      pool.execute<FloorPlanSettingsRow[]>(`
+      `,
+          [date, date],
+        ),
+        pool.execute<FloorPlanSettingsRow[]>(`
         SELECT background_url AS backgroundUrl, background_opacity AS backgroundOpacity
         FROM floor_plan_settings
         WHERE id = 1
         LIMIT 1
       `),
-    ]);
+      ]);
     return {
       date,
       time,
@@ -1404,7 +1904,7 @@ export class MysqlAdminRepository implements AdminRepository {
     const connection = await getDatabasePool().getConnection();
     try {
       await connection.beginTransaction();
-      const placeholders = input.tableIds.map(() => '?').join(', ');
+      const placeholders = input.tableIds.map(() => "?").join(", ");
       const [tableRows] = await connection.execute<CountRow[]>(
         `SELECT COUNT(*) AS count
          FROM restaurant_tables
@@ -1412,10 +1912,10 @@ export class MysqlAdminRepository implements AdminRepository {
         input.tableIds,
       );
       if (Number(tableRows[0]?.count ?? 0) !== input.tableIds.length) {
-        throw new Error('Invalid combination tables');
+        throw new Error("Invalid combination tables");
       }
       const [result] = await connection.execute<ResultSetHeader>(
-        'INSERT INTO table_combinations (code, name) VALUES (?, ?)',
+        "INSERT INTO table_combinations (code, name) VALUES (?, ?)",
         [input.code, input.name],
       );
       for (const tableId of input.tableIds) {
@@ -1437,37 +1937,45 @@ export class MysqlAdminRepository implements AdminRepository {
 
   async deactivateCombination(id: number): Promise<void> {
     const [result] = await getDatabasePool().execute<ResultSetHeader>(
-      'UPDATE table_combinations SET active = 0 WHERE id = ? AND active = 1',
+      "UPDATE table_combinations SET active = 0 WHERE id = ? AND active = 1",
       [id],
     );
-    if (result.affectedRows !== 1) throw new Error('Combination not found');
+    if (result.affectedRows !== 1) throw new Error("Combination not found");
   }
 
   async createBlockedPeriod(input: CreateBlockedPeriodInput): Promise<number> {
     if (input.areaId !== null) {
       const [areas] = await getDatabasePool().execute<RowDataPacket[]>(
-        'SELECT id FROM dining_areas WHERE id = ? AND active = 1 LIMIT 1',
+        "SELECT id FROM dining_areas WHERE id = ? AND active = 1 LIMIT 1",
         [input.areaId],
       );
-      if (areas.length === 0) throw new Error('Invalid blocked period area');
+      if (areas.length === 0) throw new Error("Invalid blocked period area");
     }
     if (input.tableId !== null) {
       const [tables] = await getDatabasePool().execute<RowDataPacket[]>(
-        'SELECT id FROM restaurant_tables WHERE id = ? AND active = 1 LIMIT 1',
+        "SELECT id FROM restaurant_tables WHERE id = ? AND active = 1 LIMIT 1",
         [input.tableId],
       );
-      if (tables.length === 0) throw new Error('Invalid blocked period table');
+      if (tables.length === 0) throw new Error("Invalid blocked period table");
     }
     const [result] = await getDatabasePool().execute<ResultSetHeader>(
       `INSERT INTO blocked_periods
         (dining_area_id, restaurant_table_id, starts_at, ends_at, reason)
        VALUES (?, ?, ?, ?, ?)`,
-      [input.areaId, input.tableId, input.startsAt.replace('T', ' '), input.endsAt.replace('T', ' '), input.reason],
+      [
+        input.areaId,
+        input.tableId,
+        input.startsAt.replace("T", " "),
+        input.endsAt.replace("T", " "),
+        input.reason,
+      ],
     );
     return result.insertId;
   }
 
-  async updateFloorPlanSettings(input: UpdateFloorPlanSettingsInput): Promise<void> {
+  async updateFloorPlanSettings(
+    input: UpdateFloorPlanSettingsInput,
+  ): Promise<void> {
     await getDatabasePool().execute(
       `INSERT INTO floor_plan_settings (id, background_url, background_opacity)
        VALUES (1, ?, ?)
@@ -1479,10 +1987,10 @@ export class MysqlAdminRepository implements AdminRepository {
   async updateTablePosition(input: UpdateTablePositionInput): Promise<void> {
     const pool = getDatabasePool();
     const [tables] = await pool.execute<RowDataPacket[]>(
-      'SELECT id FROM restaurant_tables WHERE id = ? AND active = 1 LIMIT 1',
+      "SELECT id FROM restaurant_tables WHERE id = ? AND active = 1 LIMIT 1",
       [input.tableId],
     );
-    if (tables.length === 0) throw new Error('Table not found');
+    if (tables.length === 0) throw new Error("Table not found");
     await pool.execute(
       `UPDATE restaurant_tables SET position_x = ?, position_y = ? WHERE id = ?`,
       [input.positionX, input.positionY, input.tableId],

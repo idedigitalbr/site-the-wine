@@ -18,10 +18,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, useWatch, type FieldErrors, type FieldPath, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
 import { whatsappLinks } from '@/config/social';
-import { MockPaymentDemo } from './MockPaymentDemo';
+import { ReservationCheckout } from './ReservationCheckout';
+import { customerAuthHref } from '@/lib/customer-auth-destination';
 import { WaitlistForm } from './WaitlistForm';
 import { authenticatedPublicReservationSchema, type AuthenticatedPublicReservationInput } from '@/modules/reservations/schemas/public-reservation-schema';
-import { CustomerAuthStep } from './CustomerAuthStep';
+import { ReservationAccessGate } from './ReservationAccessGate';
 import { ReservationPreferencesStep } from './ReservationPreferencesStep';
 import { StepDateAndTime } from './StepDateAndTime';
 import { StepGuests } from './StepGuests';
@@ -63,6 +64,34 @@ type CreatedReservationHold = {
 type FormValues = AuthenticatedPublicReservationInput;
 
 type ReservationUser = { id: string; name: string };
+
+type CancelableDelay = {
+  promise: Promise<void>;
+  cancel: () => void;
+};
+
+function createCancelableDelay(milliseconds: number): CancelableDelay {
+  let timer: number | null = null;
+  let resolveDelay: (() => void) | null = null;
+  const promise = new Promise<void>((resolve) => {
+    resolveDelay = resolve;
+    timer = window.setTimeout(() => {
+      timer = null;
+      resolveDelay = null;
+      resolve();
+    }, milliseconds);
+  });
+
+  return {
+    promise,
+    cancel: () => {
+      if (timer !== null) window.clearTimeout(timer);
+      timer = null;
+      resolveDelay?.();
+      resolveDelay = null;
+    },
+  };
+}
 type SessionResponse = { status?: string; user?: ReservationUser };
 type ApiErrorResponse = { error?: string; message?: string; parseFailed?: boolean };
 
@@ -543,27 +572,7 @@ function EmptyAvailability({ label, date, guests }: { label: string; date: strin
 }
 
 function Confirmation({ reservation }: { reservation: CreatedReservation }) {
-  return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="reservation-confirmation-container mx-auto max-w-xl rounded-[var(--radius-lg)] border border-border bg-surface p-8 text-center shadow-sm sm:p-12">
-      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-        <Check aria-hidden="true" size={28} strokeWidth={2.2} />
-      </span>
-      <p className="mt-6 text-xs font-semibold uppercase tracking-[0.24em] text-primary">Reserva recebida</p>
-      <h2 className="mt-3 font-display text-4xl text-foreground">Sua experiência está a caminho.</h2>
-      <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted">Anotamos sua reserva. Guarde o código abaixo e acesse o link privado para acompanhar os detalhes.</p>
-      <div className="mt-7 rounded-[var(--radius-md)] border border-border bg-surface-muted p-4">
-        <span className="block text-xs uppercase tracking-[0.2em] text-muted">Código da reserva</span>
-        <strong className="mt-2 block text-xl tracking-[0.18em] text-primary">{reservation.publicCode}</strong>
-      </div>
-      <Link href={`/minha-reserva/${reservation.secureToken}`} className="mt-5 inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-primary bg-primary/10 px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/20">
-        Acessar minha reserva <ArrowRight aria-hidden="true" size={16} />
-      </Link>
-      <MockPaymentDemo reservationId={reservation.reservationId} publicCode={reservation.publicCode} />
-      <Link href="/" className="mt-8 inline-flex items-center gap-2 rounded-[var(--radius-sm)] bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover">
-        Voltar ao site <ArrowRight aria-hidden="true" size={16} />
-      </Link>
-    </motion.div>
-  );
+  return <ReservationCheckout reservationId={reservation.reservationId} publicCode={reservation.publicCode} />;
 }
 
 function StepIndicators({ currentStep }: { currentStep: number }) {
@@ -600,7 +609,6 @@ type WizardContentProps = {
   specialNeeds: string[];
   notes?: string;
   holdExpiresAt: number | null;
-  onAuthenticated: () => Promise<boolean>;
 };
 
 function WizardContent({
@@ -619,15 +627,14 @@ function WizardContent({
   specialNeeds,
   notes = '',
   holdExpiresAt,
-  onAuthenticated,
 }: WizardContentProps) {
-  return <div className="reservation-wizard-step"><WizardStepContent step={step} date={date} guests={guests} register={register} errors={errors} slots={slots} isLoading={isLoading} hasError={hasError} selectedTime={selectedTime} selectedTableIds={selectedTableIds} hasActiveHold={hasActiveHold} setValue={setValue} specialNeeds={specialNeeds} notes={notes} holdExpiresAt={holdExpiresAt} onAuthenticated={onAuthenticated} /></div>;
+  return <div className="reservation-wizard-step"><WizardStepContent step={step} date={date} guests={guests} register={register} errors={errors} slots={slots} isLoading={isLoading} hasError={hasError} selectedTime={selectedTime} selectedTableIds={selectedTableIds} hasActiveHold={hasActiveHold} setValue={setValue} specialNeeds={specialNeeds} notes={notes} holdExpiresAt={holdExpiresAt} /></div>;
 }
 
-function WizardStepContent({ step, date, guests, register, errors, slots, isLoading, hasError, selectedTime, selectedTableIds, hasActiveHold = false, setValue, specialNeeds, notes = '', onAuthenticated }: WizardContentProps) {
+function WizardStepContent({ step, date, guests, register, errors, slots, isLoading, hasError, selectedTime, selectedTableIds, hasActiveHold = false, setValue, specialNeeds, notes = '' }: WizardContentProps) {
   const selectedSlot = slots.find((candidate) => candidate.startTime === selectedTime);
   const contentByStep = {
-    1: <CustomerAuthStep onAuthenticated={onAuthenticated} />,
+    1: <ReservationAccessGate />,
     2: <StepDateAndTime register={register as never} selectedDate={date} dateError={errors.date?.message} timeError={errors.time?.message} slots={slots} isLoading={isLoading} hasError={hasError} selectedTime={selectedTime} setValue={setValue as never} />,
     3: <StepGuests register={register as never} setValue={setValue as never} selectedGuests={guests} selectedTime={selectedTime} slot={selectedSlot} selectedTableIds={selectedTableIds} hasActiveHold={hasActiveHold} error={errors.guests?.message} />,
     4: <ReservationPreferencesStep register={register} setValue={setValue} selectedNeeds={specialNeeds} notes={notes} errors={errors} />,
@@ -754,7 +761,6 @@ type ReservationShellProps = {
   onNext: () => void;
   handleSubmit: ReturnType<typeof useForm<FormValues>>['handleSubmit'];
   user: ReservationUser | null;
-  onAuthenticated: () => Promise<boolean>;
 };
 
 function ReservationShell({
@@ -784,7 +790,6 @@ function ReservationShell({
   onNext,
   handleSubmit,
   user,
-  onAuthenticated,
 }: ReservationShellProps) {
   return (
     <>
@@ -821,7 +826,6 @@ function ReservationShell({
           onNext={onNext}
           handleSubmit={handleSubmit}
           user={user}
-          onAuthenticated={onAuthenticated}
         />
       </div>
     </>
@@ -838,7 +842,7 @@ function ReservationInitialization({
   onRetry: () => void;
 }) {
   if (authState === 'checking') {
-    return <main className="reservation-theme min-h-screen bg-background px-5 py-24 text-foreground"><p className="mx-auto flex max-w-md items-center justify-center gap-3 text-sm text-muted" role="status"><LoaderCircle aria-hidden="true" className="animate-spin text-primary" size={18} /> Verificando seu acesso…</p></main>;
+    return <main className="reservation-theme min-h-screen bg-background px-5 py-24 text-foreground"><p className="mx-auto flex max-w-md items-center justify-center gap-3 text-sm text-muted" role="status"><LoaderCircle aria-hidden="true" className="animate-spin text-primary" size={18} /> Confirmando seu acesso…</p></main>;
   }
   return <main className="reservation-theme min-h-screen bg-background px-5 py-24 text-foreground"><section className="mx-auto max-w-lg rounded-[var(--radius-lg)] border border-border bg-surface p-6 text-center sm:p-9"><CircleAlert aria-hidden="true" className="mx-auto text-primary" size={28} /><h1 className="mt-4 font-display text-3xl">Não conseguimos iniciar sua reserva</h1><p className="mt-3 text-sm leading-relaxed text-muted">{message}</p><button type="button" onClick={onRetry} className="reservation-primary-button mt-6 justify-center"><ArrowRight aria-hidden="true" size={16} /> Tentar novamente</button><Link href="/" className="mt-5 block text-sm text-muted underline underline-offset-4">Voltar ao site</Link></section></main>;
 }
@@ -860,10 +864,14 @@ function ReservationWizardContent({
     return <ReservationInitialization authState={authState} message={authError} onRetry={onRetry} />;
   }
 
+  if (confirmation) {
+    return <Confirmation reservation={confirmation} />;
+  }
+
   return (
     <main className="reservation-theme reservation-page-wrapper font-sans text-foreground">
       <div className="reservation-page-content">
-        {confirmation ? <Confirmation reservation={confirmation} /> : <ReservationShell {...shellProps} />}
+        <ReservationShell {...shellProps} />
       </div>
     </main>
   );
@@ -896,7 +904,12 @@ export function ReservationWizard() {
   const navigationLock = useRef(false);
   const holdLock = useRef(false);
   const submitLock = useRef(false);
+  const visitedStepsRef = useRef(new Set<number>());
+  const previousRenderedStepRef = useRef(step);
   const submissionKeys = useRef(new Map<string, string>());
+  const initializationId = useRef(0);
+  const initializationDelay = useRef<CancelableDelay | null>(null);
+  const mountedRef = useRef(false);
   const {
     register,
     handleSubmit,
@@ -944,51 +957,77 @@ export function ReservationWizard() {
     setAttemptId('');
     setAttemptRevision(0);
     setHold(null);
-    router.replace(`/?auth=${reason}`);
+    router.replace(customerAuthHref('/reservas', reason));
   }, [resetForm, resetWizard, router]);
 
-  const onAuthenticated = useCallback(async () => {
-    const result = await requestSessionFlow();
-    if (result.kind === 'authenticated') {
-      acceptAuthenticatedFlow(result.user, result.flowId, result.attemptId, result.revision);
-      return true;
+  const applyReservationSessionResult = useCallback((result: SessionFlowResult) => {
+    if (result.kind === 'anonymous') {
+      setUser(null);
+      setStep(1);
+      setAuthState('ready');
+      return;
     }
-    if (result.kind === 'error' && (result.error === 'session_expired' || result.error === 'account_changed')) {
-      redirectAfterSessionLoss(result.error === 'account_changed' ? 'changed' : 'expired');
+    if (result.kind === 'error') {
+      if (result.error === 'session_expired' || result.error === 'account_changed') {
+        redirectAfterSessionLoss(result.error === 'account_changed' ? 'changed' : 'expired');
+        return;
+      }
+      setAuthError(result.message);
+      setAuthState('error');
+      return;
     }
-    return false;
-  }, [acceptAuthenticatedFlow, redirectAfterSessionLoss]);
+    acceptAuthenticatedFlow(result.user, result.flowId, result.attemptId, result.revision);
+  }, [acceptAuthenticatedFlow, redirectAfterSessionLoss, setStep]);
+
+  const initializeReservationSession = useCallback(async () => {
+    if (!mountedRef.current) return;
+    const currentId = ++initializationId.current;
+    initializationDelay.current?.cancel();
+    const delay = createCancelableDelay(1000);
+    initializationDelay.current = delay;
+    setAuthState('checking');
+    const [result] = await Promise.all([requestSessionFlow(), delay.promise]);
+    if (!mountedRef.current || currentId !== initializationId.current) return;
+    initializationDelay.current = null;
+    applyReservationSessionResult(result);
+  }, [applyReservationSessionResult]);
 
   useEffect(() => {
-    let active = true;
+    mountedRef.current = true;
     resetWizard();
     resetForm(defaultReservationValues);
-
-    void requestSessionFlow().then((result) => {
-      if (!active) return;
-      if (result.kind === 'anonymous') {
-        setUser(null);
-        setStep(1);
-        setAuthState('ready');
-        return;
-      }
-      if (result.kind === 'error') {
-        if (result.error === 'session_expired' || result.error === 'account_changed') {
-          redirectAfterSessionLoss(result.error === 'account_changed' ? 'changed' : 'expired');
-          return;
-        }
-        setAuthError(result.message);
-        setAuthState('error');
-        return;
-      }
-      acceptAuthenticatedFlow(result.user, result.flowId, result.attemptId, result.revision);
-    });
+    queueMicrotask(() => { void initializeReservationSession(); });
 
     return () => {
-      active = false;
+      mountedRef.current = false;
+      initializationId.current += 1;
+      initializationDelay.current?.cancel();
+      initializationDelay.current = null;
       resetWizard();
     };
-  }, [acceptAuthenticatedFlow, redirectAfterSessionLoss, resetForm, resetWizard, setStep]);
+  }, [initializeReservationSession, resetForm, resetWizard]);
+
+  useEffect(() => {
+    const previousStep = previousRenderedStepRef.current;
+    const isFirstEntryIntoNewStep = step > previousStep && !visitedStepsRef.current.has(step);
+
+    visitedStepsRef.current.add(step);
+    previousRenderedStepRef.current = step;
+
+    if (isFirstEntryIntoNewStep) {
+      let secondFrame: number | null = null;
+      const firstFrame = window.requestAnimationFrame(() => {
+        secondFrame = window.requestAnimationFrame(() => {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+        });
+      });
+
+      return () => {
+        window.cancelAnimationFrame(firstFrame);
+        if (secondFrame !== null) window.cancelAnimationFrame(secondFrame);
+      };
+    }
+  }, [step]);
 
   const invalidateSession = (reason: 'expired' | 'changed') => {
     redirectAfterSessionLoss(reason);
@@ -1073,27 +1112,6 @@ export function ReservationWizard() {
     if (!canGoBack || navigationLock.current || holdLock.current || submitLock.current) return;
     setStep(step - 1);
   };
-  const retryInitialization = async () => {
-    setAuthState('checking');
-    const result = await requestSessionFlow();
-    if (result.kind === 'authenticated') {
-      acceptAuthenticatedFlow(result.user, result.flowId, result.attemptId, result.revision);
-      return;
-    }
-    if (result.kind === 'anonymous') {
-      setUser(null);
-      setStep(1);
-      setAuthState('ready');
-      return;
-    }
-    if (result.error === 'session_expired' || result.error === 'account_changed') {
-      redirectAfterSessionLoss(result.error === 'account_changed' ? 'changed' : 'expired');
-      return;
-    }
-    setAuthError(result.message);
-    setAuthState('error');
-  };
-
   const submit = async (input: FormValues) => {
     if (submitLock.current) return;
     submitLock.current = true;
@@ -1110,6 +1128,7 @@ export function ReservationWizard() {
         submissionId,
       });
       if (result.kind === 'created') {
+        router.replace(`/reservas?checkoutReservationId=${result.reservation.reservationId}`, { scroll: false });
         setConfirmation(result.reservation);
         setStep(6);
         return;
@@ -1156,7 +1175,7 @@ export function ReservationWizard() {
     <ReservationWizardContent
       authState={authState}
       authError={authError}
-      onRetry={() => { void retryInitialization(); }}
+      onRetry={() => { void initializeReservationSession(); }}
       confirmation={confirmation}
       shellProps={{
         step,
@@ -1179,7 +1198,6 @@ export function ReservationWizard() {
         isAdvancing,
         isSubmitting,
         user,
-        onAuthenticated,
         onSubmit: submit,
         onInvalid: onInvalidSubmit,
         onEdit: (editStep) => setStep(editStep),

@@ -53,24 +53,31 @@ function safeEqual(first: string, second: string): boolean {
     && timingSafeEqual(firstBuffer, secondBuffer);
 }
 
-function decodeSession(value: string, signingKey: string): AdminSession | null {
-  const [payload, suppliedSignature] = value.split('.');
-  if (!payload || !suppliedSignature || !safeEqual(signature(payload, signingKey), suppliedSignature)) {
-    return null;
-  }
-
+function parseSessionPayload(payload: string): Partial<AdminSession> | null {
   try {
-    const session = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as Partial<AdminSession>;
-    if (session.role !== 'manager' || !session.email || !session.expiresAt) return null;
-    if (session.expiresAt <= Date.now()) return null;
-    return {
-      email: session.email,
-      role: session.role,
-      expiresAt: session.expiresAt,
-    };
+    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as Partial<AdminSession>;
   } catch {
     return null;
   }
+}
+
+function isValidSession(session: Partial<AdminSession> | null): session is AdminSession {
+  if (!session || session.role !== 'manager' || !session.email || !session.expiresAt) return false;
+  return session.expiresAt > Date.now();
+}
+
+function decodeSession(value: string, signingKey: string): AdminSession | null {
+  const [payload, suppliedSignature] = value.split('.');
+  if (!payload || !suppliedSignature) return null;
+  if (!safeEqual(signature(payload, signingKey), suppliedSignature)) return null;
+
+  const session = parseSessionPayload(payload);
+  if (!isValidSession(session)) return null;
+  return {
+    email: session.email,
+    role: session.role,
+    expiresAt: session.expiresAt,
+  };
 }
 
 function valuesMatch(expected: string, supplied: string): boolean {

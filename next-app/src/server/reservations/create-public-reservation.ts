@@ -7,15 +7,18 @@ import type { CreatedReservationHold } from '@/modules/reservations/application/
 import type { AuthenticatedPublicReservationInput, AutomaticReservationHoldInput, ReservationHoldInput } from '@/modules/reservations/schemas/public-reservation-schema';
 import { MysqlAvailabilityRepository } from '@/modules/reservations/infrastructure/mysql-availability-repository';
 import { MysqlReservationRepository } from '@/modules/reservations/infrastructure/mysql-reservation-repository';
-import { queueReservationNotification } from '@/server/notifications/composition';
 import { canonicalReservationFingerprint } from '@/modules/reservations/application/confirm-reservation-attempt';
 import { configuredReplayKey, decryptReplayPayload, encryptReplayPayload } from '@/server/reservations/replay-crypto';
 import { createAutomaticReservationHold } from '@/modules/reservations/application/manage-reservation-hold';
+import { queueReservationNotification } from '@/server/notifications/composition';
 
 const availabilityRepository = new MysqlAvailabilityRepository();
 const reservationRepository = new MysqlReservationRepository();
 
 type PublicReservationConfirmation = CreatedPublicReservation & { secureToken: string };
+
+// The old reservation_confirmation notification is intentionally not queued here:
+// creation now means payment_pending; definitive confirmation belongs to checkout completion.
 
 function createPublicCode(): string {
   return `TW-${randomBytes(8).toString('hex').toUpperCase()}`;
@@ -54,20 +57,7 @@ export function submitPublicReservation(
     availability: availabilityRepository,
     reservations: reservationRepository,
   }).then(async (result): Promise<PublicReservationConfirmation> => {
-    try {
-      await queueReservationNotification({
-        email: customer.email,
-        template: 'reservation_confirmation',
-        publicCode: result.publicCode,
-        reservationDate: input.date,
-        startTime: input.time,
-        endTime: calculateEndTime(input.time, input.duration),
-        guestCount: input.guests,
-        dedupeKey: `reservation:${result.reservationId}:confirmation`,
-      });
-    } catch (error) {
-      console.error('Reservation confirmation notification could not be queued', error);
-    }
+    await queuePendingPaymentNotification(customer.email, result, input);
     return { ...result, secureToken: confirmationToken.raw };
   });
 }
@@ -90,7 +80,7 @@ async function submitAutomaticPublicReservation(
     notes: input.notes,
   });
   const replay = encryptReplayPayload({
-    status: 'confirmed',
+    status: 'payment_pending',
     secureToken: confirmationToken.raw,
     attemptId: input.attemptId,
     publicCode,
@@ -110,7 +100,7 @@ async function submitAutomaticPublicReservation(
       startTime: input.time,
       endTime: calculateEndTime(input.time, input.duration),
       guestCount: input.guests,
-      status: 'confirmed',
+      status: 'payment_pending',
       source: 'website',
       notes: input.notes,
     },
@@ -125,28 +115,30 @@ async function submitAutomaticPublicReservation(
   const responsePayload = result.kind === 'replay'
     ? decryptReplayPayload<{ secureToken: string }>(result.replay, configuredReplayKey())
     : { secureToken: confirmationToken.raw };
-  if (result.kind === 'created') {
-    try {
-      await queueReservationNotification({
-        email: customer.email,
-        template: 'reservation_confirmation',
-        publicCode: result.publicCode,
-        reservationDate: input.date,
-        startTime: input.time,
-        endTime: calculateEndTime(input.time, input.duration),
-        guestCount: input.guests,
-        dedupeKey: `reservation:${result.reservationId}:confirmation`,
-      });
-    } catch (error) {
-      console.error('Reservation confirmation notification could not be queued', error);
-    }
-  }
+  if (result.kind === 'created') await queuePendingPaymentNotification(customer.email, result, input);
   return {
     reservationId: result.reservationId,
     publicCode: result.publicCode,
-    status: 'confirmed',
+    status: 'payment_pending',
     secureToken: responsePayload.secureToken,
   };
+}
+
+async function queuePendingPaymentNotification(email: string, result: { reservationId: number; publicCode: string }, input: { date: string; time: string; duration: number; guests: number }): Promise<void> {
+  try {
+    await queueReservationNotification({
+      email,
+      template: 'reservation_payment_pending',
+      publicCode: result.publicCode,
+      reservationDate: input.date,
+      startTime: input.time,
+      endTime: calculateEndTime(input.time, input.duration),
+      guestCount: input.guests,
+      dedupeKey: `reservation:${result.reservationId}:payment-pending`,
+    });
+  } catch (error) {
+    console.error('Reservation payment-pending notification could not be queued', error);
+  }
 }
 
 export function submitReservationHold(

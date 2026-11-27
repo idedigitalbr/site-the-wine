@@ -4,6 +4,10 @@
 @import 'tailwindcss/utilities.css' layer(utilities);
 @import '../styles/reservation-tokens.css';
 
+html[data-reservation-checkout='true'] [data-reservation-checkout-footer] {
+  display: none;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -479,6 +483,14 @@ main.reservation-page-wrapper {
 .reservation-theme .reservation-stepper-connector-completed { background: var(--primary); }
 .reservation-theme .reservation-panel { overflow: hidden; border: 1px solid rgb(211 185 123 / 52%); border-radius: 13px; background: #080806; padding: 22px 22px 0; box-shadow: 0 10px 40px rgb(0 0 0 / 22%); }
 .reservation-theme .reservation-panel > .reservation-wizard-actions { width: calc(100% + 44px); margin-right: -22px; margin-left: -22px; }
+.reservation-theme .reservation-access-gate { display: flex; flex-direction: column; align-items: center; padding: 18px 20px 34px; text-align: center; }
+.reservation-theme .reservation-access-gate-icon { display: inline-flex; width: 100px; height: 100px; align-items: center; justify-content: center; border: 1px solid var(--primary); border-radius: 999px; color: var(--primary); }
+.reservation-theme .reservation-access-gate-title { margin: 18px 0 0; color: var(--foreground); font-family: var(--font-display-ui); font-size: clamp(1.85rem, 3.2vw, 2.55rem); font-weight: 400; line-height: 1.15; }
+.reservation-theme .reservation-access-gate-copy { max-width: 680px; margin: 18px auto 0; color: #b7c7d2; font-size: 1rem; line-height: 1.65; }
+.reservation-theme .reservation-access-gate-cta { display: flex; width: 100%; min-height: 56px; align-items: center; justify-content: center; gap: 18px; margin-top: 30px; border-radius: 10px; background: linear-gradient(90deg, #f5cc5a 0%, #e5c05b 100%); color: #12100a; font-size: 1rem; font-weight: 700; text-decoration: none; transition: filter 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
+.reservation-theme .reservation-access-gate-cta:hover { filter: brightness(1.06); box-shadow: 0 8px 24px rgb(229 192 91 / 22%); }
+.reservation-theme .reservation-access-gate-cta:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.reservation-theme .reservation-access-gate-cta:active { transform: translateY(1px); }
 .reservation-theme .reservation-step-heading { display: flex; align-items: flex-start; gap: 11px; color: var(--primary); }
 .reservation-theme .reservation-step-heading h2 { margin: 0; color: var(--foreground); font-family: var(--font-body-ui); font-size: .9rem; font-weight: 600; }
 .reservation-theme .reservation-step-heading p { margin: 3px 0 0; color: var(--muted); font-size: .72rem; line-height: 1.4; }
@@ -519,6 +531,12 @@ main.reservation-page-wrapper {
   .reservation-theme .reservation-stepper-label { max-width: 62px; overflow: hidden; text-overflow: ellipsis; font-size: .48rem; letter-spacing: .1em; text-align: center; }
   .reservation-theme .reservation-panel { padding: 18px 14px 0; }
   .reservation-theme .reservation-panel > .reservation-wizard-actions { width: calc(100% + 28px); margin-right: -14px; margin-left: -14px; }
+  .reservation-theme .reservation-access-gate { padding: 16px 4px 28px; }
+  .reservation-theme .reservation-access-gate-icon { width: 82px; height: 82px; }
+  .reservation-theme .reservation-access-gate-icon svg { width: 40px; height: 40px; }
+  .reservation-theme .reservation-access-gate-title { font-size: clamp(1.55rem, 8vw, 2rem); }
+  .reservation-theme .reservation-access-gate-copy { font-size: .88rem; line-height: 1.55; }
+  .reservation-theme .reservation-access-gate-cta { min-height: 52px; margin-top: 24px; font-size: .9rem; }
   .reservation-theme .reservation-time-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .reservation-theme .reservation-calendar-day { min-width: 34px; height: 34px; }
 }
@@ -609,6 +627,131 @@ main.reservation-page-wrapper {
   .reservation-theme .reservation-review-summary-photo { height: 150px; }
 }
 
+/* Mobile reservation composition: preserve the desktop grid and remove only
+ * the secondary review surface that does not fit the approved phone flow. */
+@media (max-width: 639px) {
+  .reservation-theme .reservation-page-content {
+    padding: 42px 10px calc(64px + env(safe-area-inset-bottom));
+  }
+
+  .reservation-theme .reservation-header-container h1 {
+    font-size: clamp(2.25rem, 12vw, 3rem);
+    line-height: 0.98;
+  }
+
+  .reservation-theme .reservation-stepper-label {
+    max-width: 62px;
+    font-size: 0.46rem;
+    letter-spacing: 0.08em;
+    line-height: 1.1;
+  }
+
+  .reservation-theme .reservation-panel {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .reservation-theme .reservation-step-heading h2 {
+    font-size: 0.88rem;
+  }
+
+  .reservation-theme .reservation-step-heading p {
+    font-size: 0.72rem;
+  }
+
+  .reservation-theme .reservation-calendar {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .reservation-theme .reservation-calendar-grid {
+    column-gap: 2px;
+  }
+
+  .reservation-theme .reservation-calendar-day {
+    min-width: 0;
+  }
+
+  .reservation-theme .reservation-time-choice {
+    min-height: 47px;
+  }
+
+  .reservation-theme .reservation-guest-summary > div {
+    padding-right: 7px;
+    padding-left: 7px;
+  }
+
+  .reservation-theme .reservation-guest-summary strong {
+    font-size: 0.61rem;
+    line-height: 1.2;
+  }
+
+  .reservation-theme .reservation-guest-summary span:not(.reservation-guest-summary-dot) {
+    font-size: 0.56rem;
+    line-height: 1.35;
+  }
+
+  .reservation-theme .reservation-review-grid {
+    display: block;
+  }
+
+  .reservation-theme .reservation-review-summary {
+    display: none;
+  }
+
+  .reservation-theme .reservation-review-row {
+    height: auto;
+    min-height: 56px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+  }
+
+  .reservation-theme .reservation-review-row-copy strong {
+    font-size: 0.68rem;
+    line-height: 1.15;
+  }
+
+  .reservation-theme .reservation-panel-review > .reservation-wizard-actions {
+    margin-top: 18px;
+  }
+}
+
+@media (max-width: 370px) {
+  .reservation-theme .reservation-page-content {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .reservation-theme .reservation-stepper-label {
+    max-width: 56px;
+    font-size: 0.44rem;
+  }
+
+  .reservation-theme .reservation-panel {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .reservation-theme .reservation-panel > .reservation-wizard-actions {
+    width: calc(100% + 24px);
+    margin-right: -12px;
+    margin-left: -12px;
+  }
+
+  .reservation-theme .reservation-wizard-action {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .reservation-theme .reservation-wizard-action--back {
+    flex-basis: 6.4rem;
+  }
+
+  .reservation-theme .reservation-wizard-action--forward {
+    flex-basis: 9.4rem;
+  }
+}
+
 .reservation-admin-theme .admin-label {
   display: block;
   margin-bottom: 0.375rem;
@@ -655,3 +798,66 @@ main.reservation-page-wrapper {
   border-color: var(--primary);
   color: var(--primary);
 }
+
+.floor-plan-editor { display: grid; grid-template-columns: 190px minmax(0, 1fr) 290px; gap: 1rem; align-items: stretch; }
+.floor-plan-palette, .floor-plan-properties, .floor-plan-canvas-panel { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); box-shadow: 0 8px 24px rgba(55, 43, 25, .05); }
+.floor-plan-palette, .floor-plan-properties { padding: 1rem; }
+.floor-plan-palette { min-height: 620px; }
+.floor-plan-properties { min-height: 620px; overflow-y: auto; }
+.floor-plan-canvas-panel { min-width: 0; padding: 1.25rem; }
+.floor-plan-canvas { min-height: 620px; height: min(68vh, 720px); overflow: hidden; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); background: #f4f0e8; }
+.floor-plan-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; }
+.floor-plan-tool { display: flex; width: 100%; align-items: center; gap: .55rem; border: 1px solid transparent; border-radius: var(--radius-sm); padding: .55rem .65rem; color: var(--muted); font-size: .8rem; text-align: left; transition: background 140ms ease, color 140ms ease, border-color 140ms ease; }
+.floor-plan-tool:hover, .floor-plan-tool.is-active { border-color: color-mix(in srgb, var(--primary) 38%, transparent); background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--foreground); }
+.floor-plan-group-label { margin-bottom: .35rem; color: var(--muted); font-size: .65rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+.floor-plan-field { display: block; margin-top: .9rem; color: var(--muted); font-size: .7rem; font-weight: 700; }
+.floor-plan-field span { display: block; margin-bottom: .35rem; }
+.floor-plan-field input { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-muted); padding: .55rem .65rem; color: var(--foreground); font-size: .82rem; outline: none; }
+.floor-plan-field input:focus { border-color: var(--focus-ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 18%, transparent); }
+.admin-icon-button { display: inline-flex; height: 2.35rem; width: 2.35rem; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--muted); background: var(--surface); }
+.admin-icon-button:hover:not(:disabled) { border-color: var(--border-strong); color: var(--foreground); }
+.admin-icon-button:disabled { cursor: not-allowed; opacity: .42; }
+@media (max-width: 1280px) { .floor-plan-editor { grid-template-columns: 160px minmax(0, 1fr); } .floor-plan-properties { grid-column: 1 / -1; min-height: auto; } }
+@media (max-width: 760px) { .floor-plan-toolbar { align-items: flex-start; flex-direction: column; } .floor-plan-editor { display: flex; flex-direction: column; } .floor-plan-palette { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .35rem; min-height: 0; } .floor-plan-palette > div:first-child, .floor-plan-palette > .floor-plan-group-label, .floor-plan-palette > .floor-plan-palette-tip, .floor-plan-palette > .floor-plan-background-settings { grid-column: 1 / -1; } .floor-plan-tool { width: auto; } .floor-plan-canvas { min-height: 420px; height: 58vh; } }
+
+/* Floor plan editor: the camera belongs to React Flow; the document remains native SVG. */
+.floor-plan-canvas-shell { position: relative; min-height: 560px; height: min(72vh, 820px); overflow: hidden; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); background: #f4f0e8; }
+.floor-plan-canvas-shell .react-flow { background: #f4f0e8; }
+.floor-plan-canvas-shell .react-flow__pane { cursor: grab; }
+.floor-plan-canvas-shell .react-flow__pane:active { cursor: grabbing; }
+.floor-plan-canvas-shell .react-flow__viewport-portal, .floor-plan-scene-svg { pointer-events: auto; }
+.floor-plan-scene-svg { display: block; overflow: visible; user-select: none; cursor: grab; }
+.floor-plan-scene-svg:active { cursor: grabbing; }
+.floor-plan-object { cursor: grab; }
+.floor-plan-object:active { cursor: grabbing; }
+.floor-plan-pencil { display: flex; height: 30px; width: 30px; align-items: center; justify-content: center; border: 1px solid #a98445; border-radius: 999px; background: #fffaf1; color: #87652f; box-shadow: 0 3px 10px rgba(55, 43, 25, .2); cursor: pointer; position: relative; z-index: 30; }
+.floor-plan-pencil:hover { background: #a98445; color: #fffaf1; }
+.floor-plan-transform-overlay { pointer-events: none; }
+.floor-plan-transform-overlay > rect:first-child { cursor: move; pointer-events: stroke; }
+.floor-plan-handle { pointer-events: all; }
+.floor-plan-handle.handle-nw, .floor-plan-handle.handle-se { cursor: nwse-resize; }
+.floor-plan-handle.handle-ne, .floor-plan-handle.handle-sw { cursor: nesw-resize; }
+.floor-plan-handle.handle-n, .floor-plan-handle.handle-s { cursor: ns-resize; }
+.floor-plan-handle.handle-e, .floor-plan-handle.handle-w { cursor: ew-resize; }
+.floor-plan-rotate-hit { cursor: grab; pointer-events: all; }
+.floor-plan-rotate-hit:active { cursor: grabbing; }
+.floor-plan-rotate-handle { cursor: grab; pointer-events: all; }
+.floor-plan-rotate-handle:active { cursor: grabbing; }
+.floor-plan-zoom-controls { position: absolute; right: 14px; bottom: 14px; z-index: 5; display: flex; gap: .3rem; border: 1px solid var(--border); border-radius: .6rem; background: rgba(255, 252, 246, .94); padding: .3rem; box-shadow: 0 4px 16px rgba(55, 43, 25, .12); }
+.floor-plan-zoom-controls button { display: flex; height: 32px; width: 32px; align-items: center; justify-content: center; border-radius: .4rem; color: var(--foreground); }
+.floor-plan-zoom-controls button:hover { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); }
+.floor-plan-toggle { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; margin-top: .8rem; color: var(--foreground); font-size: .8rem; }
+.floor-plan-toggle strong { display: block; font-weight: 600; }
+.floor-plan-toggle small { display: block; margin-top: .2rem; color: var(--muted); font-size: .7rem; line-height: 1.35; }
+.floor-plan-toggle input { margin-top: .15rem; accent-color: var(--primary); }
+.floor-plan-settings { margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+.floor-plan-settings-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.floor-plan-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .1rem 1.25rem; }
+.floor-plan-toggle.is-disabled { opacity: .55; }
+.floor-plan-toggle input:disabled { cursor: not-allowed; }
+.floor-plan-field input[type='color'] { height: 2.35rem; padding: .2rem; }
+@media (min-width: 1440px) { .floor-plan-editor { grid-template-columns: 180px minmax(0, 1fr) 280px; } }
+@media (max-width: 1439px) and (min-width: 1024px) { .floor-plan-editor { grid-template-columns: 160px minmax(0, 1fr); } .floor-plan-properties { position: static; grid-column: 1 / -1; width: auto; min-height: 0; max-height: 420px; box-shadow: none; } .floor-plan-canvas-panel { grid-column: 2; } }
+@media (max-width: 1023px) { .floor-plan-editor { display: flex; flex-direction: column; } .floor-plan-palette { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 0; gap: .35rem; } .floor-plan-palette > div:first-child, .floor-plan-palette > .floor-plan-group-label, .floor-plan-palette > .floor-plan-palette-tip, .floor-plan-palette > .floor-plan-background-settings { grid-column: 1 / -1; } .floor-plan-canvas-shell { min-height: 460px; height: 65vh; } .floor-plan-properties { min-height: 0; } }
+@media (max-width: 640px) { .floor-plan-toolbar h1 { font-size: 2.1rem; } .floor-plan-palette { grid-template-columns: repeat(2, minmax(0, 1fr)); } .floor-plan-canvas-shell { min-height: 420px; height: 62vh; } .floor-plan-properties { max-height: 60vh; } }
+@media (max-width: 767px) { .floor-plan-settings-grid { grid-template-columns: 1fr; } }

@@ -1,10 +1,10 @@
-import type { AdminDashboard, AdminRepository } from './ports';
+import type { AdminDashboard, AdminDashboardQuery, AdminRepository } from './ports';
 
 export type GetDashboardDependencies = { admin: AdminRepository };
 
 export function getAdminDashboard(
-  date: string,
+  query: AdminDashboardQuery,
   dependencies: GetDashboardDependencies,
 ): Promise<AdminDashboard> {
-  return dependencies.admin.getDashboard(date);
+  return dependencies.admin.getDashboard(query);
 }
